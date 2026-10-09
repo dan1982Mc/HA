@@ -75,65 +75,67 @@ button_card_templates:
               return active ? "#2471A3" : "var(--card-background-color, #1c1c1e)";
             ]]]
       grid:
-        - grid-template-areas: |
-            [[[
-              return window.innerWidth <= 700 ? '"i" "n" "l"' : '"i n" "i l"';
-            ]]]
-        - grid-template-columns: |
-            [[[
-              return window.innerWidth <= 700 ? "1fr" : "38% minmax(0, 1fr)";
-            ]]]
-        - grid-template-rows: |
-            [[[
-              return window.innerWidth <= 700 ? "1fr min-content min-content" : "1fr min-content";
-            ]]]
+        - grid-template-areas: '"i" "n" "l"'
+        - grid-template-columns: 1fr
+        - grid-template-rows: 1fr min-content min-content
       icon:
+        - position: absolute
+        - top: 50%
+        - left: 50%
+        - transform: translate(-50%, -50%)
         - width: |
             [[[
-              return window.innerWidth <= 700 ? "42%" : "48%";
+              return window.innerWidth <= 700 ? "40%" : "32%";
             ]]]
+        - max-width: 72px
         - color: white
-        - justify-self: center
-        - align-self: center
       name:
+        - position: absolute
+        - top: 8px
+        - right: 10px
+        - max-width: 66%
         - font-weight: bold
         - font-size: |
             [[[
               return window.innerWidth <= 700 ? "11px" : "14px";
             ]]]
         - color: white
-        - justify-self: |
-            [[[
-              return window.innerWidth <= 700 ? "center" : "start";
-            ]]]
-        - align-self: end
+        - justify-self: end
+        - text-align: right
         - white-space: normal
       label:
+        - position: absolute
+        - bottom: 8px
+        - left: 50%
+        - transform: translateX(-50%)
+        - width: 90%
+        - text-align: center
         - font-size: 10px
         - color: "#E0E0E0"
         - white-space: normal
-        - justify-self: |
-            [[[
-              return window.innerWidth <= 700 ? "center" : "start";
-            ]]]
-        - align-self: start
 
   automation_header:
     show_icon: false
     show_state: false
     show_name: true
+    update_timer: 5000
+    triggers_update: update_timer
     tap_action:
       action: none
     styles:
       card:
         - width: 100%
         - min-width: 0
+        - max-width: 100%
+        - box-sizing: border-box
         - border-radius: 8px
         - padding: 8px 4px
         - background-color: "#252525"
         - box-shadow: none
         - overflow: visible
       grid:
+        - width: 100%
+        - min-width: 0
         - grid-template-areas: |
             [[[
               if (window.innerWidth <= 700)
@@ -208,12 +210,16 @@ button_card_templates:
       card:
         - width: 100%
         - min-width: 0
+        - max-width: 100%
+        - box-sizing: border-box
         - border-radius: 0
         - padding: 6px 4px
         - box-shadow: none
         - border-bottom: 1px solid var(--divider-color)
         - overflow: visible
       grid:
+        - width: 100%
+        - min-width: 0
         - grid-template-areas: |
             [[[
               if (window.innerWidth <= 700)
@@ -461,9 +467,7 @@ views:
             name: Name
           - type: custom:auto-entities
             card:
-              type: grid
-              columns: 1
-              square: false
+              type: vertical-stack
             card_param: cards
             show_empty: true
             filter:
