@@ -124,9 +124,7 @@ button_card_templates:
       action: none
     styles:
       card:
-        - width: 100%
         - min-width: 0
-        - max-width: 100%
         - box-sizing: border-box
         - border-radius: 8px
         - padding: 8px 4px
@@ -208,9 +206,7 @@ button_card_templates:
       action: more-info
     styles:
       card:
-        - width: 100%
         - min-width: 0
-        - max-width: 100%
         - box-sizing: border-box
         - border-radius: 0
         - padding: 6px 4px
@@ -462,12 +458,11 @@ views:
           - type: heading
             heading: Automations
             heading_style: title
-          - type: custom:button-card
-            template: automation_header
-            name: Name
           - type: custom:auto-entities
             card:
-              type: vertical-stack
+              type: grid
+              columns: 1
+              square: false
             card_param: cards
             show_empty: true
             filter:
@@ -535,7 +530,11 @@ views:
                   "eva alexa quiet lock": "Prevent 2e Echo from playing during Eva final school departure period",
                   "unused room lights - master": "Turn off room lights when all assigned activity sensors have been inactive",
                 } %}
-                {% set ns = namespace(items=[]) %}
+                {% set ns = namespace(items=[{
+                  'type': 'custom:button-card',
+                  'template': 'automation_header',
+                  'name': 'Name'
+                }]) %}
                 {% set recent = states.automation
                   | selectattr('attributes.last_triggered')
                   | sort(attribute='attributes.last_triggered', reverse=true)
