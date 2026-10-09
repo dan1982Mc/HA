@@ -1,0 +1,251 @@
+title: Automation Control
+button_card_templates:
+  motion_template:
+    show_state: false
+    show_icon: true
+    show_last_changed: true
+    show_label: true
+    styles:
+      card:
+        - border-radius: 12px
+        - padding: 12px
+        - aspect-ratio: 1/1
+        - position: relative
+        - background-color: |
+            [[[
+              if (['unavailable', 'unknown'].includes(entity.state)) return '#333333';
+              if (entity.state === 'on') return '#3498db';
+              return 'var(--card-background-color)';
+            ]]]
+      icon:
+        - width: 45%
+      name:
+        - font-weight: bold
+        - font-size: 12px
+      label:
+        - font-size: 10px
+views:
+  - title: Automations
+    path: automation-control
+    icon: mdi:robot
+    type: sections
+    max_columns: 1
+    sections:
+      - type: grid
+        cards:
+          - type: heading
+            heading: AUTOMATION CONTROL
+            heading_style: title
+          - type: custom:button-card
+            entity: input_select.automation_room_filter
+            name: All rooms
+            icon: mdi:home
+            show_state: false
+            tap_action:
+              action: call-service
+              service: input_select.select_option
+              target:
+                entity_id: input_select.automation_room_filter
+              data:
+                option: All rooms
+            styles:
+              card:
+                - border-radius: 12px
+                - padding: 10px
+                - background: '#333333'
+              name:
+                - color: white
+                - font-weight: bold
+          - type: grid
+            columns: 5
+            square: true
+            cards:
+              - type: custom:button-card
+                entity: binary_sensor.big_bedroom_motion_occupancy
+                name: Big bed
+                template: motion_template
+                tap_action:
+                  action: call-service
+                  service: input_select.select_option
+                  target:
+                    entity_id: input_select.automation_room_filter
+                  data:
+                    option: Big bed
+              - type: custom:button-card
+                entity: binary_sensor.contactsensor_rear_door
+                name: Entry
+                template: motion_template
+                tap_action:
+                  action: call-service
+                  service: input_select.select_option
+                  target:
+                    entity_id: input_select.automation_room_filter
+                  data:
+                    option: Entry
+              - type: custom:button-card
+                entity: binary_sensor.small_bedroom_motion_occupancy
+                name: Small bed
+                template: motion_template
+                tap_action:
+                  action: call-service
+                  service: input_select.select_option
+                  target:
+                    entity_id: input_select.automation_room_filter
+                  data:
+                    option: Small bed
+              - type: custom:button-card
+                entity: sun.sun
+                name: Bath
+                template: motion_template
+                show_last_changed: false
+                label: ' '
+                state:
+                  - operator: default
+                    icon: mdi:motion-sensor-off
+                styles:
+                  card:
+                    - background-color: '#333333'
+                    - opacity: 0.5
+                  icon:
+                    - color: '#888888'
+                  name:
+                    - color: '#888888'
+                tap_action:
+                  action: call-service
+                  service: input_select.select_option
+                  target:
+                    entity_id: input_select.automation_room_filter
+                  data:
+                    option: Bath
+              - type: custom:button-card
+                entity: binary_sensor.hal_motion_all
+                name: Hal
+                template: motion_template
+                tap_action:
+                  action: call-service
+                  service: input_select.select_option
+                  target:
+                    entity_id: input_select.automation_room_filter
+                  data:
+                    option: Hal
+              - type: custom:button-card
+                entity: sun.sun
+                name: Storage
+                template: motion_template
+                show_last_changed: false
+                label: ' '
+                state:
+                  - operator: default
+                    icon: mdi:motion-sensor-off
+                styles:
+                  card:
+                    - background-color: '#333333'
+                    - opacity: 0.5
+                  icon:
+                    - color: '#888888'
+                  name:
+                    - color: '#888888'
+                tap_action:
+                  action: call-service
+                  service: input_select.select_option
+                  target:
+                    entity_id: input_select.automation_room_filter
+                  data:
+                    option: Storage
+              - type: custom:button-card
+                entity: binary_sensor.living_room_motion_all
+                name: Living room
+                template: motion_template
+                tap_action:
+                  action: call-service
+                  service: input_select.select_option
+                  target:
+                    entity_id: input_select.automation_room_filter
+                  data:
+                    option: Living room
+              - type: custom:button-card
+                entity: binary_sensor.kitchen_motion_sensor
+                name: Kitchen
+                template: motion_template
+                tap_action:
+                  action: call-service
+                  service: input_select.select_option
+                  target:
+                    entity_id: input_select.automation_room_filter
+                  data:
+                    option: Kitchen
+              - type: custom:button-card
+                entity: binary_sensor.eva_motion_occupancy
+                name: Eva bed
+                template: motion_template
+                tap_action:
+                  action: call-service
+                  service: input_select.select_option
+                  target:
+                    entity_id: input_select.automation_room_filter
+                  data:
+                    option: Eva bed
+              - type: custom:button-card
+                entity: binary_sensor.contactsensor_front_door
+                name: Dining
+                template: motion_template
+                tap_action:
+                  action: call-service
+                  service: input_select.select_option
+                  target:
+                    entity_id: input_select.automation_room_filter
+                  data:
+                    option: Dining
+      - type: grid
+        cards:
+          - type: heading
+            heading: AUTOMATIONS
+            heading_style: title
+          - type: entities
+            title: Current filter
+            entities:
+              - entity: input_select.automation_room_filter
+                name: Room filter
+            show_header_toggle: false
+          - type: custom:auto-entities
+            card:
+              type: entities
+              title: All eligible automations
+              show_header_toggle: false
+              state_color: true
+            filter:
+              template: >
+                {% set selected = states('input_select.automation_room_filter')
+                %}
+
+                {% set ns = namespace(items=[]) %}
+
+                {% for a in states.automation %}
+                  {% set name = (state_attr(a.entity_id, 'friendly_name') or a.name) | lower %}
+                  {% set excluded =
+                    'must fix' in name or
+                    'not working' in name or
+                    'old' in name %}
+                  {% set room_match =
+                    selected == 'All rooms' or
+                    (selected == 'Kitchen' and 'kitchen' in name) or
+                    (selected == 'Small bed' and ('small bedroom' in name or 'small bed' in name)) or
+                    (selected == 'Big bed' and ('big bedroom' in name or 'big bed' in name or 'master bedroom' in name)) or
+                    (selected == 'Bath' and ('bathroom' in name or 'bath' in name)) or
+                    (selected == 'Entry' and ('entry' in name or 'front door' in name or 'rear door' in name)) or
+                    (selected == 'Hal' and ('hall' in name or 'hal' in name or 'hallway' in name)) or
+                    (selected == 'Storage' and 'storage' in name) or
+                    (selected == 'Living room' and ('living room' in name or 'living-room' in name)) or
+                    (selected == 'Eva bed' and 'eva' in name) or
+                    (selected == 'Dining' and 'dining' in name) %}
+                  {% if not excluded and room_match %}
+                    {% set ns.items = ns.items + [a.entity_id] %}
+                  {% endif %}
+                {% endfor %}
+
+                {{ ns.items }}
+            sort:
+              method: attribute
+              attribute: last_triggered
+              reverse: true
+            show_empty: true
