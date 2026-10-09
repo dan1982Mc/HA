@@ -50,7 +50,10 @@ button_card_templates:
       card:
         - border-radius: 12px
         - padding: 12px
-        - aspect-ratio: 1/1
+        - aspect-ratio: |
+            [[[
+              return window.innerWidth <= 700 ? "1/1" : "1.7/1";
+            ]]]
         - position: relative
         - border: |
             [[[
@@ -71,17 +74,49 @@ button_card_templates:
               });
               return active ? "#2471A3" : "var(--card-background-color, #1c1c1e)";
             ]]]
+      grid:
+        - grid-template-areas: |
+            [[[
+              return window.innerWidth <= 700 ? '"i" "n" "l"' : '"i n" "i l"';
+            ]]]
+        - grid-template-columns: |
+            [[[
+              return window.innerWidth <= 700 ? "1fr" : "38% minmax(0, 1fr)";
+            ]]]
+        - grid-template-rows: |
+            [[[
+              return window.innerWidth <= 700 ? "1fr min-content min-content" : "1fr min-content";
+            ]]]
       icon:
-        - width: 42%
+        - width: |
+            [[[
+              return window.innerWidth <= 700 ? "42%" : "48%";
+            ]]]
         - color: white
+        - justify-self: center
+        - align-self: center
       name:
         - font-weight: bold
-        - font-size: 12px
+        - font-size: |
+            [[[
+              return window.innerWidth <= 700 ? "11px" : "14px";
+            ]]]
         - color: white
+        - justify-self: |
+            [[[
+              return window.innerWidth <= 700 ? "center" : "start";
+            ]]]
+        - align-self: end
+        - white-space: normal
       label:
         - font-size: 10px
         - color: "#E0E0E0"
         - white-space: normal
+        - justify-self: |
+            [[[
+              return window.innerWidth <= 700 ? "center" : "start";
+            ]]]
+        - align-self: start
 
   automation_header:
     show_icon: false
@@ -99,9 +134,19 @@ button_card_templates:
         - box-shadow: none
         - overflow: visible
       grid:
-        - grid-template-areas: '"n description last_triggered count actions"'
-        - grid-template-columns: minmax(0, 1.35fr) minmax(0, 1.5fr) minmax(74px, 1fr) minmax(58px, 0.6fr) minmax(132px, 1.4fr)
-        - column-gap: 5px
+        - grid-template-areas: |
+            [[[
+              if (window.innerWidth <= 700)
+                return '"n n actions" "description last_triggered count"';
+              return '"n description last_triggered count actions"';
+            ]]]
+        - grid-template-columns: |
+            [[[
+              if (window.innerWidth <= 700)
+                return 'minmax(0, 1.2fr) minmax(0, 1fr) minmax(84px, 0.8fr)';
+              return 'minmax(0, 1.15fr) minmax(0, 1.45fr) minmax(0, 0.95fr) minmax(0, 0.7fr) minmax(0, 1.2fr)';
+            ]]]
+        - column-gap: 8px
       name:
         - min-width: 0
         - justify-self: start
@@ -153,6 +198,8 @@ button_card_templates:
     show_state: false
     show_label: false
     show_name: true
+    update_timer: 60000
+    triggers_update: update_timer
     tap_action:
       action: more-info
     hold_action:
@@ -167,9 +214,19 @@ button_card_templates:
         - border-bottom: 1px solid var(--divider-color)
         - overflow: visible
       grid:
-        - grid-template-areas: '"n description last_triggered count actions"'
-        - grid-template-columns: minmax(0, 1.35fr) minmax(0, 1.5fr) minmax(74px, 1fr) minmax(58px, 0.6fr) minmax(132px, 1.4fr)
-        - column-gap: 5px
+        - grid-template-areas: |
+            [[[
+              if (window.innerWidth <= 700)
+                return '"n n actions" "description last_triggered count"';
+              return '"n description last_triggered count actions"';
+            ]]]
+        - grid-template-columns: |
+            [[[
+              if (window.innerWidth <= 700)
+                return 'minmax(0, 1.2fr) minmax(0, 1fr) minmax(84px, 0.8fr)';
+              return 'minmax(0, 1.15fr) minmax(0, 1.45fr) minmax(0, 0.95fr) minmax(0, 0.7fr) minmax(0, 1.2fr)';
+            ]]]
+        - column-gap: 8px
       name:
         - min-width: 0
         - justify-self: start
@@ -214,13 +271,10 @@ button_card_templates:
         [[[
           const value = entity.attributes.last_triggered;
           if (!value) return "Never";
-          const dt = new Date(value);
-          return dt.toLocaleString([], {
-            day: "2-digit",
-            month: "2-digit",
-            hour: "2-digit",
-            minute: "2-digit"
-          });
+          const timestamp = new Date(value).getTime();
+          if (!Number.isFinite(timestamp)) return "Never";
+          const minutes = Math.max(0, Math.floor((Date.now() - timestamp) / 60000));
+          return minutes === 1 ? "1 min ago" : minutes + " min ago";
         ]]]
       count: |
         [[[
@@ -427,13 +481,13 @@ views:
                       {
                         'type': 'custom:button-card',
                         'entity': a.entity_id,
-                        'name': 'Toggle',
+                        'name': 'Off',
                         'icon': 'mdi:toggle-switch',
                         'show_name': true,
                         'show_state': false,
                         'state': [
-                          {'value': 'on', 'name': 'Disable', 'icon': 'mdi:toggle-switch-off-outline'},
-                          {'value': 'off', 'name': 'Enable', 'icon': 'mdi:toggle-switch'}
+                          {'value': 'on', 'name': 'Off', 'icon': 'mdi:toggle-switch-off-outline'},
+                          {'value': 'off', 'name': 'On', 'icon': 'mdi:toggle-switch'}
                         ],
                         'tap_action': {
                           'action': 'call-service',
@@ -441,10 +495,10 @@ views:
                           'target': {'entity_id': a.entity_id}
                         },
                         'styles': {
-                          'card': [{'background': 'transparent'}, {'box-shadow': 'none'}, {'padding': '2px 0'}, {'width': '40px'}, {'min-height': '42px'}],
-                          'grid': [{'grid-template-areas': '"i" "n"'}, {'grid-template-columns': '1fr'}, {'grid-template-rows': '20px min-content'}],
-                          'icon': [{'width': '19px'}],
-                          'name': [{'font-size': '9px'}, {'justify-self': 'center'}, {'white-space': 'nowrap'}]
+                          'card': [{'background': 'transparent'}, {'box-shadow': 'none'}, {'padding': '0'}, {'width': '24px'}, {'min-height': '38px'}],
+                          'grid': [{'grid-template-areas': '"i" "n"'}, {'grid-template-columns': '1fr'}, {'grid-template-rows': '18px min-content'}],
+                          'icon': [{'width': '16px'}],
+                          'name': [{'font-size': '8px'}, {'justify-self': 'center'}, {'white-space': 'nowrap'}]
                         }
                       },
                       {
@@ -460,10 +514,10 @@ views:
                           'data': {'variables': {'automation_entity': a.entity_id, 'duration_mode': 'hour'}}
                         },
                         'styles': {
-                          'card': [{'background': 'transparent'}, {'box-shadow': 'none'}, {'padding': '2px 0'}, {'width': '40px'}, {'min-height': '42px'}],
-                          'grid': [{'grid-template-areas': '"i" "n"'}, {'grid-template-columns': '1fr'}, {'grid-template-rows': '20px min-content'}],
-                          'icon': [{'width': '18px'}],
-                          'name': [{'font-size': '9px'}, {'justify-self': 'center'}, {'white-space': 'nowrap'}]
+                          'card': [{'background': 'transparent'}, {'box-shadow': 'none'}, {'padding': '0'}, {'width': '24px'}, {'min-height': '38px'}],
+                          'grid': [{'grid-template-areas': '"i" "n"'}, {'grid-template-columns': '1fr'}, {'grid-template-rows': '18px min-content'}],
+                          'icon': [{'width': '15px'}],
+                          'name': [{'font-size': '8px'}, {'justify-self': 'center'}, {'white-space': 'nowrap'}]
                         }
                       },
                       {
@@ -479,10 +533,10 @@ views:
                           'data': {'variables': {'automation_entity': a.entity_id, 'duration_mode': 'tomorrow'}}
                         },
                         'styles': {
-                          'card': [{'background': 'transparent'}, {'box-shadow': 'none'}, {'padding': '2px 0'}, {'width': '44px'}, {'min-height': '42px'}],
-                          'grid': [{'grid-template-areas': '"i" "n"'}, {'grid-template-columns': '1fr'}, {'grid-template-rows': '20px min-content'}],
-                          'icon': [{'width': '18px'}],
-                          'name': [{'font-size': '9px'}, {'justify-self': 'center'}, {'white-space': 'nowrap'}]
+                          'card': [{'background': 'transparent'}, {'box-shadow': 'none'}, {'padding': '0'}, {'width': '24px'}, {'min-height': '38px'}],
+                          'grid': [{'grid-template-areas': '"i" "n"'}, {'grid-template-columns': '1fr'}, {'grid-template-rows': '18px min-content'}],
+                          'icon': [{'width': '15px'}],
+                          'name': [{'font-size': '8px'}, {'justify-self': 'center'}, {'white-space': 'nowrap'}]
                         }
                       }
                     ] %}
@@ -494,7 +548,9 @@ views:
                       'custom_fields': {
                         'actions': {
                           'card': {
-                            'type': 'horizontal-stack',
+                            'type': 'grid',
+                            'columns': 3,
+                            'square': false,
                             'cards': action_cards
                           }
                         }
