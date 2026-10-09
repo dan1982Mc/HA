@@ -6,7 +6,8 @@ button_card_templates:
     show_icon: true
     show_label: true
     show_name: true
-    update_interval: 60
+    update_timer: 60000
+    triggers_update: update_timer
     variables:
       room: ""
       room_keywords: []
@@ -325,7 +326,6 @@ views:
             square: true
             cards:
               - type: custom:button-card
-                entity: sun.sun
                 name: Big bed
                 icon: mdi:bed-king
                 template: room_activity
@@ -333,7 +333,6 @@ views:
                   room: Big bed
                   room_keywords: ["big bedroom", "big bed", "master bedroom"]
               - type: custom:button-card
-                entity: sun.sun
                 name: Entry
                 icon: mdi:door
                 template: room_activity
@@ -341,7 +340,6 @@ views:
                   room: Entry
                   room_keywords: ["entry", "front door", "rear door", "doorbell"]
               - type: custom:button-card
-                entity: sun.sun
                 name: Small bed
                 icon: mdi:bed-single
                 template: room_activity
@@ -349,7 +347,6 @@ views:
                   room: Small bed
                   room_keywords: ["small bedroom", "small bed"]
               - type: custom:button-card
-                entity: sun.sun
                 name: Bath
                 icon: mdi:shower
                 template: room_activity
@@ -357,7 +354,6 @@ views:
                   room: Bath
                   room_keywords: ["bathroom", "bath", "toilet"]
               - type: custom:button-card
-                entity: sun.sun
                 name: Hal
                 icon: mdi:coat-rack
                 template: room_activity
@@ -365,7 +361,6 @@ views:
                   room: Hal
                   room_keywords: ["hallway", "hall"]
               - type: custom:button-card
-                entity: sun.sun
                 name: Storage
                 icon: mdi:archive
                 template: room_activity
@@ -373,7 +368,6 @@ views:
                   room: Storage
                   room_keywords: ["storage"]
               - type: custom:button-card
-                entity: sun.sun
                 name: Living room
                 icon: mdi:sofa
                 template: room_activity
@@ -381,7 +375,6 @@ views:
                   room: Living room
                   room_keywords: ["living room", "livingroom", "living-room"]
               - type: custom:button-card
-                entity: sun.sun
                 name: Kitchen
                 icon: mdi:chef-hat
                 template: room_activity
@@ -389,7 +382,6 @@ views:
                   room: Kitchen
                   room_keywords: ["kitchen"]
               - type: custom:button-card
-                entity: sun.sun
                 name: Eva bed
                 icon: mdi:bed
                 template: room_activity
@@ -397,7 +389,6 @@ views:
                   room: Eva bed
                   room_keywords: ["eva bedroom", "eva bed", "eva light"]
               - type: custom:button-card
-                entity: sun.sun
                 name: Dining
                 icon: mdi:table-chair
                 template: room_activity
