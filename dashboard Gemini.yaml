@@ -1,0 +1,1372 @@
+kiosk_mode:
+  user_settings:
+    - users:
+        - kiosktablet
+      kiosk: true
+button_card_templates:
+  light_template:
+    show_state: false
+    show_icon: true
+    tap_action:
+      action: fire-dom-event
+      browser_mod:
+        service: browser_mod.popup
+        data:
+          title: '[[[ return variables.var_name + '' Lights'' ]]]'
+          size: normal
+          content:
+            type: vertical-stack
+            cards: >-
+              [[[ return variables.lights_list.map(light => ({ type: 'tile',
+              entity: light, features: [{ type: 'light-brightness' }] })) ]]]
+    hold_action:
+      action: more-info
+    double_tap_action:
+      action: toggle
+    styles:
+      card:
+        - border-radius: 12px
+        - padding: 12px
+        - aspect-ratio: 1/1
+      grid:
+        - grid-template-areas: '"i" "n"'
+      name:
+        - font-weight: bold
+        - font-size: 14px
+        - justify-self: middle
+    state:
+      - value: 'on'
+        styles:
+          card:
+            - background-color: orange
+          name:
+            - color: white
+          icon:
+            - color: white
+      - value:
+          - unavailable
+          - unknown
+          - none
+          - 'null'
+        operator: in
+        styles:
+          card:
+            - background-color: '#333333'
+            - opacity: 0.5
+          name:
+            - color: '#ff4444'
+          icon:
+            - color: '#ff4444'
+        icon: mdi:lightbulb-alert
+  contact_template:
+    show_state: false
+    show_icon: true
+    show_last_changed: true
+    show_label: true
+    styles:
+      card:
+        - border-radius: 12px
+        - padding: 12px
+        - aspect-ratio: 1/1
+        - position: relative
+        - background-color: |
+            [[[
+              const offline = ['unavailable', 'unknown', 'none', 'null'];
+              if (offline.includes(entity.state) || !entity.state) return '#333333';
+              
+              if (entity.state === 'on') {
+                const diffMinutes = (new Date() - new Date(entity.last_changed)) / 1000 / 60;
+                if (diffMinutes <= 5) return '#f1c40f';  // Yellow
+                if (diffMinutes <= 30) return '#e67e22'; // Orange
+                return '#e74c3c';                        // Red
+              }
+              return 'var(--card-background-color, #1c1c1e)';
+            ]]]
+        - opacity: |
+            [[[
+              const offline = ['unavailable', 'unknown', 'none', 'null'];
+              return (offline.includes(entity.state) || !entity.state) ? 0.5 : 1.0;
+            ]]]
+      icon:
+        - width: 45%
+        - position: absolute
+        - top: 50%
+        - left: 50%
+        - transform: translate(-50%, -50%)
+        - color: |
+            [[[
+              const offline = ['unavailable', 'unknown', 'none', 'null'];
+              if (offline.includes(entity.state) || !entity.state) return '#888888';
+              if (entity.state === 'on') return '#FFFFFF';
+              return 'var(--primary-text-color)';
+            ]]]
+      name:
+        - font-weight: bold
+        - font-size: 12px
+        - position: absolute
+        - top: 10px
+        - right: 10px
+        - color: |
+            [[[
+              const offline = ['unavailable', 'unknown', 'none', 'null'];
+              if (offline.includes(entity.state) || !entity.state) return '#888888';
+              if (entity.state === 'on') return '#FFFFFF';
+              return 'var(--primary-text-color)';
+            ]]]
+      label:
+        - font-size: 10px
+        - position: absolute
+        - bottom: 10px
+        - left: 50%
+        - transform: translateX(-50%)
+        - color: |
+            [[[
+              const offline = ['unavailable', 'unknown', 'none', 'null'];
+              if (offline.includes(entity.state) || !entity.state) return '#888888';
+              if (entity.state === 'on') return '#E0E0E0';
+              return 'var(--secondary-text-color)';
+            ]]]
+    state:
+      - value: unavailable
+        icon: mdi:help-circle-outline
+      - value: unknown
+        icon: mdi:help-circle-outline
+      - value: none
+        icon: mdi:help-circle-outline
+      - value: 'null'
+        icon: mdi:help-circle-outline
+  motion_template:
+    show_state: false
+    show_icon: true
+    show_last_changed: true
+    show_label: true
+    styles:
+      card:
+        - border-radius: 12px
+        - padding: 12px
+        - aspect-ratio: 1/1
+        - position: relative
+        - background-color: |
+            [[[
+              const offline = ['unavailable', 'unknown', 'none', 'null'];
+              if (offline.includes(entity.state) || !entity.state) return '#333333';
+              
+              if (entity.state === 'on') {
+                const now = new Date();
+                const lastChanged = new Date(entity.last_changed);
+                const diffMinutes = Math.floor((now - lastChanged) / 1000 / 60);
+
+                if (diffMinutes < 5) return '#3498db';   // 0-5 mins: Light Blue
+                if (diffMinutes < 30) return '#1f3a60';  // 5-30 mins: Dark Blue
+                return '#9b59b6';                        // 30+ mins: Light Purple
+              }
+              
+              return 'var(--card-background-color, #1c1c1e)';
+            ]]]
+        - opacity: |
+            [[[
+              const offline = ['unavailable', 'unknown', 'none', 'null'];
+              // If state is any of the offline strings, dim the card to 50%
+              return (offline.includes(entity.state) || !entity.state) ? 0.5 : 1.0;
+            ]]]
+      icon:
+        - width: 45%
+        - position: absolute
+        - top: 50%
+        - left: 50%
+        - transform: translate(-50%, -50%)
+        - color: |
+            [[[
+              const offline = ['unavailable', 'unknown', 'none', 'null'];
+              if (offline.includes(entity.state) || !entity.state) return '#888888';
+              
+              if (entity.state === 'on') return '#FFFFFF';
+              return 'var(--primary-text-color)';
+            ]]]
+      name:
+        - font-weight: bold
+        - font-size: 12px
+        - position: absolute
+        - top: 10px
+        - right: 10px
+        - color: |
+            [[[
+              const offline = ['unavailable', 'unknown', 'none', 'null'];
+              if (offline.includes(entity.state) || !entity.state) return '#888888';
+              if (entity.state === 'on') return '#FFFFFF';
+              return 'var(--primary-text-color)';
+            ]]]
+      label:
+        - font-size: 10px
+        - position: absolute
+        - bottom: 10px
+        - left: 50%
+        - transform: translateX(-50%)
+        - color: |
+            [[[
+              const offline = ['unavailable', 'unknown', 'none', 'null'];
+              if (offline.includes(entity.state) || !entity.state) return '#888888';
+              if (entity.state === 'on') return '#E0E0E0';
+              return 'var(--secondary-text-color)';
+            ]]]
+    state:
+      - value: 'on'
+        icon: mdi:motion-sensor
+      - value: 'off'
+        icon: mdi:motion-sensor-off
+      - value: unavailable
+        icon: mdi:help-circle-outline
+      - value: unknown
+        icon: mdi:help-circle-outline
+      - value: none
+        icon: mdi:help-circle-outline
+      - value: 'null'
+        icon: mdi:help-circle-outline
+  media_player_template:
+    show_state: true
+    show_icon: true
+    styles:
+      card:
+        - border-radius: 12px
+        - padding: 12px
+        - aspect-ratio: 1/1
+      grid:
+        - grid-template-areas: '"i n" "s s"'
+        - grid-template-columns: 1fr 2fr
+        - grid-template-rows: 1fr 1fr
+      name:
+        - font-weight: bold
+        - font-size: 12px
+        - align-self: start
+        - justify-self: start
+      state:
+        - font-size: 10px
+        - align-self: end
+        - justify-self: start
+        - text-transform: capitalize
+    state:
+      - value: playing
+        styles:
+          card:
+            - background-color: '#2980b9'
+          icon:
+            - color: white
+          name:
+            - color: white
+          state:
+            - color: '#d1d1d1'
+      - value: buffering
+        styles:
+          card:
+            - background-color: orange
+      - value: 'off'
+        styles:
+          card:
+            - background-color: '#333333'
+            - opacity: 0.5
+          icon:
+            - color: '#888888'
+          name:
+            - color: '#888888'
+      - value: unavailable
+        styles:
+          card:
+            - background-color: '#333333'
+            - opacity: 0.5
+          name:
+            - color: '#ff4444'
+          icon:
+            - color: '#ff4444'
+  volume_cycle_template:
+    template: light_template
+    show_label: true
+    label: |
+      [[[ 
+        let v = entity.attributes.volume_level;
+        if (v === undefined) return '0%';
+        return Math.round(v * 100) + '%';
+      ]]]
+    styles:
+      icon:
+        - color: |
+            [[[
+              let v = entity.attributes.volume_level;
+              if (v <= 0.3) return '#2ecc71';
+              if (v <= 0.6) return '#f1c40f';
+              return '#e74c3c';
+            ]]]
+      label:
+        - font-size: 11px
+        - color: '#888888'
+  media_icon_only:
+    show_state: true
+    show_name: true
+    styles:
+      card:
+        - border-radius: 12px
+        - padding: 12px
+        - aspect-ratio: 1/1
+      grid:
+        - grid-template-areas: '"n" "i" "s"'
+        - grid-template-rows: min-content 1fr min-content
+        - grid-template-columns: 1fr
+      name:
+        - font-weight: bold
+        - font-size: 12px
+        - justify-self: end
+        - color: white
+      icon:
+        - width: 40%
+        - align-self: center
+        - justify-self: center
+      state:
+        - justify-self: center
+        - font-weight: bold
+        - font-size: 11px
+        - text-transform: capitalize
+        - color: white
+    state:
+      - value: playing
+        styles:
+          card:
+            - background-color: '#2980b9'
+          icon:
+            - color: white
+          name:
+            - color: white
+          state:
+            - color: white
+      - value: 'off'
+        styles:
+          card:
+            - background-color: '#333333'
+            - opacity: 0.5
+          icon:
+            - color: '#888888'
+          name:
+            - color: white
+            - opacity: 1
+          state:
+            - color: white
+            - opacity: 1
+      - value: idle
+        styles:
+          card:
+            - background-color: '#2c2c2e'
+          icon:
+            - color: '#3498db'
+          name:
+            - color: white
+            - opacity: 1
+          state:
+            - color: white
+            - opacity: 1
+      - value: unavailable
+        styles:
+          card:
+            - background-color: '#333333'
+            - opacity: 0.5
+          name:
+            - color: '#ff4444'
+          icon:
+            - color: '#ff4444'
+          state:
+            - color: '#ff4444'
+  appliance_template:
+    show_state: false
+    show_icon: true
+    show_label: true
+    tap_action:
+      action: more-info
+    double_tap_action:
+      action: toggle
+    styles:
+      card:
+        - border-radius: 12px
+        - padding: 12px
+        - aspect-ratio: 1/1
+        - animation: |
+            [[[
+              if (entity.state === 'run' || entity.state === 'cleaning' || entity.state === 'on') 
+                return 'blink 3s ease-in-out infinite';
+              return 'none';
+            ]]]
+      grid:
+        - grid-template-areas: '"n" "i" "l"'
+        - grid-template-rows: min-content 1fr min-content
+      name:
+        - font-weight: bold
+        - font-size: 12px
+        - justify-self: end
+      icon:
+        - width: 40%
+        - align-self: center
+        - justify-self: center
+      label:
+        - justify-self: center
+        - font-weight: bold
+        - font-size: 11px
+    label: |
+      [[[
+        if (!entity) return "";
+
+        // 1. Check if the appliance is currently running
+        const isRunning = ['run', 'cleaning', 'on'].includes(entity.state);
+
+        if (isRunning) {
+          // 2. Calculate elapsed time using last_changed
+          const startTime = new Date(entity.last_changed);
+          const now = new Date();
+          const diffMs = now - startTime;
+
+          // 3. Convert milliseconds to Hours and Minutes
+          const diffHrs = Math.floor(diffMs / 3600000);
+          const diffMins = Math.floor((diffMs % 3600000) / 60000);
+
+          // 4. Format the output string (e.g., "1h 15m" or "45m")
+          let elapsedStr = "";
+          if (diffHrs > 0) {
+            elapsedStr += diffHrs + "h ";
+          }
+          elapsedStr += diffMins + "m";
+
+          return "Running: " + elapsedStr;
+        }
+
+        // Fallback for when the machine is idle/off
+        return "Ready";
+      ]]]
+  vacuum_template:
+    show_state: false
+    show_icon: true
+    show_label: true
+    styles:
+      card:
+        - border-radius: 12px
+        - padding: 12px
+        - aspect-ratio: 1/1
+        - animation: |
+            [[[
+              if (entity.state === 'run' || entity.state === 'cleaning' || entity.state === 'on') 
+                return 'blink 3s ease-in-out infinite';
+              return 'none';
+            ]]]
+      grid:
+        - grid-template-areas: '"n" "i" "l" "status"'
+        - grid-template-rows: min-content 1fr min-content min-content
+      name:
+        - font-weight: bold
+        - font-size: 12px
+        - justify-self: end
+      icon:
+        - width: 40%
+        - align-self: center
+        - justify-self: center
+      label:
+        - justify-self: center
+        - font-weight: bold
+        - font-size: 11px
+        - margin-bottom: 2px
+      custom_fields:
+        status:
+          - justify-self: center
+          - font-size: 10px
+          - opacity: 0.6
+          - text-transform: capitalize
+    label: |
+      [[[
+        if (!entity || !entity.attributes) return "";
+        const remain = entity.attributes.remaining_time || entity.attributes.time_remaining;
+        return remain ? remain + " left" : "Ready";
+      ]]]
+    custom_fields:
+      status: |
+        [[[
+          if (!entity) return "";
+          let stateText = entity.state.replace(/_/g, ' ');
+          return stateText;
+        ]]]
+  plug_appliance_template:
+    update_interval: 1m
+    show_state: false
+    show_icon: true
+    show_label: true
+    tap_action:
+      action: more-info
+    double_tap_action:
+      action: perform-action
+      perform_action: homeassistant.toggle
+      target:
+        entity_id: '[[[ return entity.entity_id ]]]'
+    lock:
+      enabled: |
+        [[[ 
+          if (!variables.binary_sensor || !states[variables.binary_sensor]) return false;
+          return states[variables.binary_sensor].state === 'on';
+        ]]]
+      duration: 3
+    variables:
+      power_sensor: ''
+      binary_sensor: ''
+    styles:
+      card:
+        - border-radius: 12px
+        - padding: 12px
+        - aspect-ratio: 1/1
+        - animation: |
+            [[[
+              if (!variables.binary_sensor || !states[variables.binary_sensor]) return 'none';
+              // Mimics your appliance_template's blinking behavior when running
+              if (states[variables.binary_sensor].state === 'on') 
+                return 'blink 3s ease-in-out infinite';
+              return 'none';
+            ]]]
+      grid:
+        - grid-template-areas: '"n" "i" "l"'
+        - grid-template-rows: min-content 1fr min-content
+      name:
+        - font-weight: bold
+        - font-size: 12px
+        - justify-self: end
+        - align-self: start
+      icon:
+        - width: 40%
+        - align-self: center
+        - justify-self: center
+      label:
+        - justify-self: center
+        - font-weight: bold
+        - font-size: 11px
+    label: |
+      [[[
+        // Force UI updates via sensor.time clock synchronization
+        const timeTrigger = states['sensor.time']?.state;
+
+        if (!variables.binary_sensor || !states[variables.binary_sensor]) return "No Sensor";
+        
+        const isRunning = states[variables.binary_sensor].state === 'on';
+
+        if (isRunning) {
+          // Calculate elapsed time using the binary sensor's continuous running timeframe
+          const startTime = new Date(states[variables.binary_sensor].last_changed);
+          const now = new Date();
+          const diffMs = now - startTime;
+
+          // Convert milliseconds to Hours and Minutes
+          const diffHrs = Math.floor(diffMs / 3600000);
+          const diffMins = Math.floor((diffMs % 3600000) / 60000);
+
+          let elapsedStr = "";
+          if (diffHrs > 0) {
+            elapsedStr += diffHrs + "h ";
+          }
+          elapsedStr += diffMins + "m";
+
+          return "Running: " + elapsedStr;
+        }
+
+        // Exact fallback string match from your appliance_template
+        return "Ready";
+      ]]]
+  timer_circle_template:
+    aspect_ratio: 1/1
+    show_name: true
+    show_icon: false
+    show_state: false
+    styles:
+      card:
+        - border-radius: 12px
+        - padding: 10px
+      grid:
+        - grid-template-areas: '"n" "circle" "l"'
+        - grid-template-rows: min-content 1fr min-content
+      name:
+        - justify-self: start
+        - font-weight: bold
+        - font-size: 12px
+      custom_fields:
+        circle:
+          - justify-self: center
+          - align-self: center
+          - width: 80%
+    custom_fields:
+      circle: |
+        [[[
+          if (!entity || entity.state === 'unavailable' || entity.state === 'unknown' || entity.state === 'idle') return '';
+          
+          let remaining = 0;
+          let total = 600; // Default 10-minute fallback scale
+
+          // Check if it is a Native Home Assistant Timer Entity
+          if (entity.entity_id.startsWith('timer.')) {
+            if (entity.state !== 'active') return '';
+            
+            const finTime = new Date(entity.attributes.finishes_at).getTime();
+            const nowTime = new Date().getTime();
+            remaining = Math.max(0, (finTime - nowTime) / 1000);
+            
+            // Parse total duration if available (e.g. "00:10:00")
+            if (entity.attributes.duration) {
+              const parts = entity.attributes.duration.split(':');
+              total = (+parts[0]) * 3600 + (+parts[1]) * 60 + (+parts[2]);
+            }
+          } else {
+            // Fallback to Echo Dot / Timestamp sensor logic
+            const end = new Date(entity.state).getTime();
+            const now = new Date().getTime();
+            remaining = Math.max(0, (end - now) / 1000);
+          }
+          
+          const stroke = 283;
+          const offset = stroke - (Math.min(remaining, total) / total) * stroke;
+
+          // Dynamic time formatting (shows MM:SS if under a minute, otherwise MMm)
+          let timeText = Math.floor(remaining / 60) + "m";
+          if (remaining < 60) {
+            timeText = Math.floor(remaining) + "s";
+          }
+
+          return `
+            <svg viewBox="0 0 100 100">
+              <circle cx="50" cy="50" r="45" fill="none" stroke="#333" stroke-width="5" />
+              <circle cx="50" cy="50" r="45" fill="none" stroke="#2ecc71" stroke-width="5" 
+                stroke-dasharray="${stroke}" style="stroke-dashoffset: ${offset}; transition: stroke-dashoffset 1s linear;" 
+                transform="rotate(-90 50 50)" />
+              <text x="50" y="55" fill="white" font-size="14" font-weight="bold" text-anchor="middle">
+                ${timeText}
+              </text>
+            </svg>
+          `;
+        ]]]
+views:
+  - type: sections
+    max_columns: 2
+    badges:
+      - type: custom:button-card
+        entity: weather.forecast_home
+        show_name: false
+        show_icon: true
+        show_state: false
+        show_label: true
+        label: |
+          [[[ 
+            var temp = entity.attributes.temperature;
+            if (temp === undefined || temp === null) temp = '--';
+            
+            var rain = 0;
+            if (entity.attributes.forecast && entity.attributes.forecast[0]) {
+              rain = entity.attributes.forecast[0].precipitation;
+            }
+            if (rain === undefined || rain === null) rain = 0;
+
+            if (rain == 0) {
+              return temp + '°C • Dry';
+            } else {
+              return temp + '°C • ' + rain + 'mm rain';
+            }
+          ]]]
+        icon: |
+          [[[
+            var rain = 0;
+            if (entity.attributes.forecast && entity.attributes.forecast[0]) {
+              rain = entity.attributes.forecast[0].precipitation;
+            }
+            return (rain > 0) ? 'mdi:weather-pouring' : 'mdi:weather-partly-cloudy';
+          ]]]
+        tap_action:
+          action: more-info
+        styles:
+          card:
+            - height: 42px
+            - padding: 0px 14px
+            - border-radius: 20px
+            - background-color: 'var(--ha-card-background, #2c3e50)'
+            - border: '1px solid var(--divider-color, #404040)'
+            - width: auto !important
+          grid:
+            - grid-template-areas: '"i l"'
+            - grid-template-columns: min-content max-content
+            - gap: 8px
+            - align-items: center
+          icon:
+            - width: 22px
+            - height: 22px
+            - color: |
+                [[[
+                  var rain = 0;
+                  if (entity.attributes.forecast && entity.attributes.forecast[0]) {
+                    rain = entity.attributes.forecast[0].precipitation;
+                  }
+                  return (rain > 0) ? '#3498db' : '#f1c40f';
+                ]]]
+          label:
+            - font-size: 14px
+            - font-weight: '500'
+            - color: var(--primary-text-color, white)
+            - white-space: nowrap
+      - type: custom:button-card
+        entity: calendar.zile_de_nastere
+        show_name: false
+        show_icon: true
+        show_label: true
+        icon: mdi:cake-variant
+        label: |
+          [[[ 
+            if (!entity || !entity.attributes.message) return "";
+            return entity.attributes.message; 
+          ]]]
+        styles:
+          card:
+            - display: |
+                [[[
+                  return states['calendar.zile_de_nastere'].state === 'on' ? 'grid' : 'none';
+                ]]]
+            - height: 42px
+            - padding: 0px 14px
+            - border-radius: 20px
+            - background-color: '#d35400'
+            - border: '1px solid #e67e22'
+            - width: auto !important
+          grid:
+            - grid-template-areas: '"i l"'
+            - grid-template-columns: min-content max-content
+            - gap: 8px
+            - align-items: center
+          icon:
+            - width: 22px
+            - height: 22px
+            - color: '#f1c40f'
+          label:
+            - font-size: 14px
+            - font-weight: '600'
+            - color: white
+            - white-space: nowrap
+      - type: custom:button-card
+        entity: calendar.familie_macarie
+        show_name: false
+        show_icon: true
+        show_label: true
+        icon: mdi:calendar-star
+        label: |
+          [[[ 
+            if (!entity || !entity.attributes.message) return "";
+            return entity.attributes.message; 
+          ]]]
+        styles:
+          card:
+            - display: |
+                [[[
+                  // 1. Safety check
+                  if (!entity || !entity.state || !entity.attributes.message) return 'none';
+                  
+                  var msg = entity.attributes.message.toLowerCase();
+
+                  // 2. EXCLUSION RULES: If the next event is Trash or Vacation, HIDE this badge
+                  if (msg.startsWith('gunoi') || msg === 'eva - vacanta') {
+                    return 'none';
+                  }
+
+                  // 3. SHOW RULE: Only show this badge if a regular event is currently active ('on')
+                  if (entity.state === 'on') {
+                    return 'grid';
+                  }
+
+                  return 'none';
+                ]]]
+            - height: 42px
+            - padding: 0px 14px
+            - border-radius: 20px
+            - background-color: '#27ae60'
+            - border: '1px solid #2ecc71'
+            - width: auto !important
+          grid:
+            - grid-template-areas: '"i l"'
+            - grid-template-columns: min-content max-content
+            - gap: 8px
+            - align-items: center
+          icon:
+            - width: 22px
+            - height: 22px
+            - color: '#ffffff'
+          label:
+            - font-size: 14px
+            - font-weight: '600'
+            - color: white
+            - white-space: nowrap
+      - type: custom:button-card
+        entity: calendar.familie_macarie
+        show_name: false
+        show_icon: true
+        show_label: true
+        icon: mdi:delete-empty
+        label: |
+          [[[ 
+            if (!entity || !entity.attributes.message) return "";
+            return entity.attributes.message; 
+          ]]]
+        styles:
+          card:
+            - display: |
+                [[[
+                  if (!entity || !entity.attributes.start_time || !entity.attributes.message) return 'none';
+                  
+                  var msg = entity.attributes.message.toLowerCase();
+                  var startTime = new Date(entity.attributes.start_time).getTime();
+                  var now = new Date().getTime();
+                  var hoursUntilEvent = (startTime - now) / (1000 * 60 * 60);
+
+                  // Show if the trash event is currently happening OR is happening in the next 24 hours
+                  if (msg.startsWith('gunoi')) {
+                    if (entity.state === 'on' || (hoursUntilEvent > 0 && hoursUntilEvent <= 24)) {
+                      return 'grid';
+                    }
+                  }
+                  return 'none';
+                ]]]
+            - height: 42px
+            - padding: 0px 14px
+            - border-radius: 20px
+            - background-color: '#9b59b6'
+            - border: '1px solid #8e44ad'
+            - width: auto !important
+          grid:
+            - grid-template-areas: '"i l"'
+            - grid-template-columns: min-content max-content
+            - gap: 8px
+            - align-items: center
+          icon:
+            - width: 22px
+            - height: 22px
+            - color: '#ffffff'
+          label:
+            - font-size: 14px
+            - font-weight: '600'
+            - color: white
+            - white-space: nowrap
+      - type: custom:button-card
+        entity: calendar.familie_macarie
+        show_name: false
+        show_icon: true
+        show_label: true
+        icon: mdi:island
+        label: |
+          [[[ 
+            if (!entity || !entity.attributes.message) return "";
+            return entity.attributes.message; 
+          ]]]
+        styles:
+          card:
+            - display: |
+                [[[
+                  if (!entity || !entity.attributes.start_time || !entity.attributes.message) return 'none';
+                  
+                  var msg = entity.attributes.message.toLowerCase();
+                  var startTime = new Date(entity.attributes.start_time).getTime();
+                  var now = new Date().getTime();
+                  var hoursUntilEvent = (startTime - now) / (1000 * 60 * 60);
+
+                  // Show if the vacation is currently happening OR starts within the next 7 days (168 hours)
+                  if (msg === 'eva - vacanta') {
+                    if (entity.state === 'on' || (hoursUntilEvent > 0 && hoursUntilEvent <= 168)) {
+                      return 'grid';
+                    }
+                  }
+                  return 'none';
+                ]]]
+            - height: 42px
+            - padding: 0px 14px
+            - border-radius: 20px
+            - background-color: '#3498db'
+            - border: '1px solid #2980b9'
+            - width: auto !important
+          grid:
+            - grid-template-areas: '"i l"'
+            - grid-template-columns: min-content max-content
+            - gap: 8px
+            - align-items: center
+          icon:
+            - width: 22px
+            - height: 22px
+            - color: '#ffffff'
+          label:
+            - font-size: 14px
+            - font-weight: '600'
+            - color: white
+            - white-space: nowrap
+    sections:
+      - type: grid
+        cards:
+          - type: heading
+            heading: LIGHTS
+          - type: grid
+            columns: 3
+            square: true
+            cards:
+              - type: custom:button-card
+                entity: light.kitchen_lights_all
+                name: Kitchen
+                template: light_template
+                variables:
+                  var_name: Kitchen
+                  lights_list:
+                    - light.kitchen_light_1
+                    - light.kitchen_light_2
+                    - light.kitchen_light_3
+                    - light.kitchen_light_4
+              - type: custom:button-card
+                entity: light.dining_lights_all
+                name: Dining
+                template: light_template
+                variables:
+                  var_name: Dining
+                  lights_list:
+                    - light.dining_light_1
+                    - light.dining_light_2
+                    - light.dining_light_3
+              - type: custom:button-card
+                entity: light.living_lights_all
+                name: Living Room
+                template: light_template
+                variables:
+                  var_name: Living Room
+                  lights_list:
+                    - light.yeelink_mono6_2ed7_light
+                    - light.yeelink_mono6_e86b_switch_status
+                    - light.light_living_led_strip
+          - type: grid
+            columns: 3
+            square: true
+            cards:
+              - type: custom:button-card
+                entity: light.hal_lights_all_incl_eva
+                name: Hallway
+                template: light_template
+                variables:
+                  var_name: Hallway
+                  lights_list:
+                    - light.eva_light
+                    - light.hal_light_4
+                    - light.hal_light_3
+                    - light.hal_light_2
+                    - light.hal_light_1
+              - type: custom:button-card
+                entity: light.eva_bedroom_light
+                name: Eva Bed
+                template: light_template
+                variables:
+                  var_name: Eva's Room
+                  lights_list:
+                    - light.eva_bedroom_light
+              - type: custom:button-card
+                entity: light.big_bedroom_light
+                name: Big Bed
+                template: light_template
+                variables:
+                  var_name: Master Bedroom
+                  lights_list:
+                    - light.big_bedroom_light
+          - type: grid
+            columns: 4
+            square: true
+            cards:
+              - type: custom:button-card
+                entity: light.entry_light
+                name: Entry
+                template: light_template
+                variables:
+                  var_name: Entryway
+                  lights_list:
+                    - light.entry_light
+              - type: custom:button-card
+                entity: light.yeelink_mono6_dc53_light
+                name: Terrace
+                template: light_template
+                variables:
+                  var_name: Terrace
+                  lights_list:
+                    - light.yeelink_mono6_dc53_light
+              - type: custom:button-card
+                entity: light.bathroom_lights_all
+                name: Bath
+                template: light_template
+                variables:
+                  var_name: Bathroom
+                  lights_list:
+                    - light.bathroom_light_1
+                    - light.bathroom_light_2
+                    - light.bathroom_light_3
+              - type: custom:button-card
+                entity: light.small_bed_lights_all
+                name: Small Bed
+                template: light_template
+                variables:
+                  var_name: Small Bedroom
+                  lights_list:
+                    - light.small_bed_light_1
+                    - light.small_bed_light_2
+                    - light.small_bed_light_3
+      - type: grid
+        cards:
+          - type: heading
+            heading: MEDIA & PLAYERS
+          - type: grid
+            columns: 2
+            square: true
+            cards:
+              - type: custom:button-card
+                entity: media_player.2e_echo_dot_dan
+                template: media_icon_only
+                name: Living room Alexa
+                icon: mdi:waveform
+                label: '[[[ return entity.state ]]]'
+                tap_action:
+                  action: call-service
+                  service: media_player.volume_mute
+                  service_data:
+                    entity_id: media_player.2e_echo_dot_dan
+                    is_volume_muted: '[[[ return !entity.attributes.is_volume_muted ]]]'
+                double_tap_action:
+                  action: more-info
+                hold_action:
+                  action: call-service
+                  service: switch.toggle
+                  service_data:
+                    entity_id: switch.2e_echo_dot_dan_do_not_disturb_switch
+              - type: custom:button-card
+                entity: media_player.dan_s_echo_dot
+                template: media_icon_only
+                name: Eva Alexa
+                icon: mdi:play-circle-outline
+                label: '[[[ return entity.state ]]]'
+                tap_action:
+                  action: call-service
+                  service: media_player.volume_mute
+                  service_data:
+                    entity_id: media_player.dan_s_echo_dot
+                    is_volume_muted: '[[[ return !entity.attributes.is_volume_muted ]]]'
+                double_tap_action:
+                  action: more-info
+                hold_action:
+                  action: call-service
+                  service: switch.toggle
+                  service_data:
+                    entity_id: switch.dan_s_echo_dot_do_not_disturb_switch
+              - type: custom:button-card
+                entity: media_player.kitchen_clock
+                template: media_icon_only
+                name: Kitchen clock
+                icon: mdi:clock-digital
+                label: '[[[ return entity.state ]]]'
+                tap_action:
+                  action: call-service
+                  service: media_player.volume_mute
+                  service_data:
+                    entity_id: media_player.kitchen_clock
+                    is_volume_muted: '[[[ return !entity.attributes.is_volume_muted ]]]'
+                double_tap_action:
+                  action: more-info
+                hold_action:
+                  action: call-service
+                  service: media_player.toggle
+                  service_data:
+                    entity_id: media_player.kitchen_clock
+              - type: custom:button-card
+                entity: media_player.mibox_master_control
+                template: media_icon_only
+                name: TV
+                icon: mdi:television
+                label: '[[[ return entity.state ]]]'
+                tap_action:
+                  action: call-service
+                  service: media_player.volume_mute
+                  target:
+                    entity_id: media_player.mibox_master_control
+                  data:
+                    is_volume_muted: toggle
+                double_tap_action:
+                  action: more-info
+                hold_action:
+                  action: call-service
+                  service: media_player.toggle
+                  target:
+                    entity_id: media_player.mibox_master_control
+      - type: grid
+        cards:
+          - type: heading
+            heading: 🧺 APPLIANCES & UTILITIES
+          - type: grid
+            columns: 3
+            square: true
+            cards:
+              - type: custom:button-card
+                entity: switch.dishwasher_power
+                name: Dishwasher
+                icon: mdi:dishwasher
+                template: appliance_template
+              - type: custom:button-card
+                entity: switch.oven_power
+                name: Oven
+                icon: mdi:stove
+                template: appliance_template
+              - type: custom:button-card
+                entity: switch.water_valve
+                name: Watering
+                icon: mdi:sprinkler-variant
+                template: appliance_template
+                label: |
+                  [[[
+                    if (entity.state === 'on') {
+                      return entity.attributes.time_left ? entity.attributes.time_left + "m left" : "Watering";
+                    }
+                    return "Idle";
+                  ]]]
+          - type: grid
+            columns: 3
+            square: true
+            cards:
+              - type: custom:button-card
+                entity: switch.smart_plug_3
+                name: Washer
+                icon: mdi:washing-machine
+                template: plug_appliance_template
+                variables:
+                  binary_sensor: binary_sensor.washing_machine_running
+                  power_sensor: sensor.smart_plug_3_current
+              - type: custom:button-card
+                entity: switch.fridge_2
+                name: Dryer
+                icon: mdi:tumble-dryer
+                template: plug_appliance_template
+                variables:
+                  binary_sensor: binary_sensor.dryer_running
+                  power_sensor: sensor.fridge_2_current
+              - type: custom:button-card
+                entity: vacuum.roborock_s5e_a709_robot_cleaner
+                name: Vacuum
+                icon: mdi:robot-vacuum
+                template: vacuum_template
+                tap_action:
+                  action: perform-action
+                  perform_action: |
+                    [[[ 
+                      return (entity.state === 'cleaning' || entity.state === 'on') 
+                        ? 'vacuum.pause' 
+                        : 'vacuum.start'; 
+                    ]]]
+                  target:
+                    entity_id: vacuum.roborock_s5e_a709_robot_cleaner
+                double_tap_action:
+                  action: perform-action
+                  perform_action: vacuum.return_to_base
+                  target:
+                    entity_id: vacuum.roborock_s5e_a709_robot_cleaner
+                hold_action:
+                  action: more-info
+      - type: grid
+        columns: 1
+        square: false
+        cards:
+          - type: heading
+            heading: 🔔 RUNNING TIMERS
+            visibility:
+              - condition: or
+                conditions:
+                  - condition: state
+                    entity: sensor.2e_echo_dot_dan_next_timer
+                    state_not: unavailable
+                  - condition: state
+                    entity: sensor.2e_echo_dot_dan_next_timer
+                    state_not: unknown
+                  - condition: state
+                    entity: sensor.2e_echo_dot_dan_next_timer
+                    state_not: idle
+                  - condition: state
+                    entity: sensor.dan_s_echo_dot_next_timer
+                    state_not: unavailable
+                  - condition: state
+                    entity: sensor.dan_s_echo_dot_next_timer
+                    state_not: unknown
+                  - condition: state
+                    entity: sensor.dan_s_echo_dot_next_timer
+                    state_not: idle
+                  - condition: state
+                    entity: timer.assistant_timer
+                    state: active
+          - type: grid
+            columns: 3
+            square: true
+            cards:
+              - type: conditional
+                conditions:
+                  - condition: state
+                    entity: sensor.2e_echo_dot_dan_next_timer
+                    state_not: unavailable
+                  - condition: state
+                    entity: sensor.2e_echo_dot_dan_next_timer
+                    state_not: unknown
+                  - condition: state
+                    entity: sensor.2e_echo_dot_dan_next_timer
+                    state_not: idle
+                card:
+                  type: custom:button-card
+                  template: timer_circle_template
+                  entity: sensor.2e_echo_dot_dan_next_timer
+                  name: Living Timer
+              - type: conditional
+                conditions:
+                  - condition: state
+                    entity: sensor.dan_s_echo_dot_next_timer
+                    state_not: unavailable
+                  - condition: state
+                    entity: sensor.dan_s_echo_dot_next_timer
+                    state_not: unknown
+                  - condition: state
+                    entity: sensor.dan_s_echo_dot_next_timer
+                    state_not: idle
+                card:
+                  type: custom:button-card
+                  template: timer_circle_template
+                  entity: sensor.dan_s_echo_dot_next_timer
+                  name: Eva Timer
+              - type: conditional
+                conditions:
+                  - condition: state
+                    entity: timer.assistant_timer
+                    state: active
+                card:
+                  type: custom:button-card
+                  template: timer_circle_template
+                  entity: timer.assistant_timer
+                  name: Assist Timer
+      - type: grid
+        cards:
+          - type: heading
+            heading: WINDOWS & DOORS
+          - type: grid
+            columns: 3
+            square: true
+            cards:
+              - type: custom:button-card
+                entity: binary_sensor.contactsensor_rear_door_2
+                name: Front Door
+                template: contact_template
+              - type: custom:button-card
+                entity: binary_sensor.bid_bedroom_window_contact
+                name: Big Bed
+                template: contact_template
+              - type: custom:button-card
+                entity: binary_sensor.small_bedroom_window_contact
+                name: Small Bed
+                template: contact_template
+          - type: grid
+            columns: 3
+            square: true
+            cards:
+              - type: custom:button-card
+                entity: binary_sensor.contactsensor_front_door_2
+                name: Dining
+                template: contact_template
+              - type: custom:button-card
+                entity: binary_sensor.kitchen_window_contact
+                name: Kitchen
+                template: contact_template
+              - type: custom:button-card
+                entity: binary_sensor.eva_door_contact
+                name: Eva Bed
+                template: contact_template
+      - type: grid
+        square: false
+        columns: 1
+        cards:
+          - type: heading
+            heading: MOTION
+          - type: grid
+            columns: 3
+            square: true
+            cards:
+              - type: custom:button-card
+                entity: binary_sensor.big_bedroom_motion_occupancy
+                name: Big bed
+                template: motion_template
+              - type: custom:button-card
+                entity: binary_sensor.contactsensor_rear_door
+                name: Entry
+                template: motion_template
+              - type: custom:button-card
+                entity: binary_sensor.small_bedroom_motion_occupancy
+                name: Small bed
+                template: motion_template
+              - type: custom:button-card
+                entity: sun.sun
+                name: Bath
+                template: motion_template
+                show_last_changed: false
+                label: ' '
+                state:
+                  - operator: default
+                    icon: mdi:motion-sensor-off
+                styles:
+                  card:
+                    - background-color: '#333333'
+                    - opacity: 0.5
+                  icon:
+                    - color: '#888888'
+                  name:
+                    - color: '#888888'
+              - type: custom:button-card
+                entity: binary_sensor.hal_motion_all
+                name: Hal
+                template: motion_template
+              - type: custom:button-card
+                entity: sun.sun
+                name: Storage
+                template: motion_template
+                show_last_changed: false
+                label: ' '
+                state:
+                  - operator: default
+                    icon: mdi:motion-sensor-off
+                styles:
+                  card:
+                    - background-color: '#333333'
+                    - opacity: 0.5
+                  icon:
+                    - color: '#888888'
+                  name:
+                    - color: '#888888'
+              - type: custom:button-card
+                entity: binary_sensor.living_room_motion_all
+                name: Living room
+                template: motion_template
+              - type: custom:button-card
+                entity: binary_sensor.kitchen_motion_sensor
+                name: Kitchen
+                template: motion_template
+              - type: custom:button-card
+                entity: binary_sensor.eva_motion_occupancy
+                name: Eva bed
+                template: motion_template
+              - type: custom:button-card
+                entity: binary_sensor.contactsensor_front_door
+                name: Dining
+                template: motion_template
+              - type: custom:button-card
+                color_type: blank-card
+              - type: custom:button-card
+                color_type: blank-card
+      - type: grid
+        cards:
+          - type: heading
+            heading: 🗣️ BROADCAST & VOLUME
+          - type: entities
+            entities:
+              - entity: input_text.tts_custom_text
+                name: Message to Speak
+              - entity: input_select.tts_target_speaker
+                name: Select Target Speaker
+              - entity: input_number.broadcast_volume
+                name: Volume
+                icon: mdi:volume-high
+              - entity: script.run_dashboard_tts
+                name: Send Announcement
+                icon: mdi:bullhorn

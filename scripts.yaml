@@ -1,0 +1,465 @@
+get_weather_info:
+  alias: Get Weather info
+  sequence:
+  - service: weather.get_forecasts
+    metadata: {}
+    data:
+      type: daily
+    response_variable: daily
+    target:
+      entity_id: weather.forecast_home
+  - service: tts.speak
+    metadata: {}
+    data:
+      cache: true
+      message: The weather is {{ daily }}
+      media_player_entity_id: media_player.kitchen_clock
+  description: ''
+  icon: mdi:weather-cloudy
+xiaomi_siren_triggered:
+  alias: Xiaomi Siren triggered
+  sequence:
+  - repeat:
+      sequence:
+      - metadata: {}
+        data:
+          gw_mac: 28:6C:07:FA:35:73
+          ringtone_id: '0'
+          ringtone_vol: 10
+        action: xiaomi_aqara.play_ringtone
+      - metadata: {}
+        data:
+          gw_mac: 04:CF:8C:A0:91:FF
+          ringtone_id: '0'
+          ringtone_vol: 10
+        action: xiaomi_aqara.play_ringtone
+      until:
+      - condition: state
+        entity_id: alarm_control_panel.alarmo
+        state: disarmed
+  description: ''
+  icon: mdi:alarm-light
+xiaomi_siren_stop:
+  alias: Xiaomi Siren stop
+  sequence:
+  - service: light.turn_off
+    target:
+      entity_id:
+      - light.alarm_kitchen_light
+      - light.alarm_living_light
+    data: {}
+  - service: xiaomi_aqara.stop_ringtone
+    metadata: {}
+    data:
+      gw_mac: 28:6C:07:FA:35:73
+  - service: xiaomi_aqara.stop_ringtone
+    metadata: {}
+    data:
+      gw_mac: 04:CF:8C:A0:91:FF
+  description: ''
+  icon: mdi:alarm-light-outline
+flashing_light:
+  alias: Flashing light
+  sequence:
+  - repeat:
+      sequence:
+      - service: light.turn_on
+        target:
+          entity_id:
+          - light.alarm_living_light
+          - light.alarm_kitchen_light
+        data:
+          rgb_color:
+          - 255
+          - 0
+          - 0
+          brightness_pct: 100
+      - delay:
+          hours: 0
+          minutes: 0
+          seconds: 0
+          milliseconds: 300
+      - service: light.turn_off
+        target:
+          entity_id:
+          - light.alarm_living_light
+          - light.alarm_kitchen_light
+        data: {}
+      - delay:
+          hours: 0
+          minutes: 0
+          seconds: 0
+          milliseconds: 300
+      until:
+      - condition: state
+        entity_id: alarm_control_panel.alarmo
+        state: disarmed
+  description: ''
+  icon: mdi:flash
+xiaomi_siren_triggered_duplicate:
+  alias: Xiaomi Siren triggered (Duplicate)
+  sequence:
+  - repeat:
+      sequence:
+      - service: xiaomi_aqara.play_ringtone
+        metadata: {}
+        data:
+          gw_mac: 04:CF:8C:A0:91:FF
+          ringtone_id: '0'
+          ringtone_vol: 100
+      count: 1
+  description: ''
+  icon: mdi:alarm-light
+lili_volume_test:
+  alias: Lili Volume Test
+  sequence:
+  - action: media_player.volume_set
+    target:
+      entity_id: media_player.2e_echo_dot_dan
+    data:
+      volume_level: 0.5
+  - action: tts.speak
+    target:
+      entity_id: tts.piper
+    data:
+      media_player_entity_id: media_player.2e_echo_dot_dan
+      message: Test de volum. Sistemul este pregătit.
+      options:
+        voice: ro_RO-lili-medium
+        preferred_format: mp3
+  mode: single
+  description: ''
+xiaomi_siren_triggered_2:
+  alias: Xiaomi Siren triggered (2)
+  sequence:
+  - action: light.turn_on
+    target:
+      entity_id:
+      - light.alarm_kitchen_light
+      - light.alarm_living_light
+    data:
+      rgb_color:
+      - 255
+      - 0
+      - 0
+      brightness_pct: 100
+  - repeat:
+      while:
+      - condition: state
+        entity_id: alarm_control_panel.alarmo
+        state: triggered
+      sequence:
+      - data:
+          gw_mac: 28:6C:07:FA:35:73
+          ringtone_id: '0'
+          ringtone_vol: 10
+        action: xiaomi_aqara.play_ringtone
+      - data:
+          gw_mac: 04:CF:8C:A0:91:FF
+          ringtone_id: '0'
+          ringtone_vol: 10
+        action: xiaomi_aqara.play_ringtone
+      - delay:
+          seconds: 5
+  description: Loops siren and flashes lights until disarmed
+  icon: mdi:alarm-light
+xiaomi_siren_stop_2:
+  alias: Xiaomi Siren Stop (2)
+  sequence:
+  - action: light.turn_off
+    target:
+      entity_id:
+      - light.alarm_kitchen_light
+      - light.alarm_living_light
+  - action: xiaomi_aqara.stop_ringtone
+    data:
+      gw_mac: 28:6C:07:FA:35:73
+  - action: xiaomi_aqara.stop_ringtone
+    data:
+      gw_mac: 04:CF:8C:A0:91:FF
+  description: ''
+run_dashboard_tts:
+  alias: Run Dashboard TTS
+  sequence:
+  - action: tts.speak
+    target:
+      entity_id: tts.piper
+    data:
+      cache: true
+      media_player_entity_id: "{% if is_state('input_select.tts_target_speaker', 'Alexa
+        1') %}\n  media_player.2e_echo_dot_dan\n{% elif is_state('input_select.tts_target_speaker',
+        'Alexa 2') %}\n  media_player.dan_s_echo_dot\n{% elif is_state('input_select.tts_target_speaker',
+        'Xiaomi Clock') %}\n  media_player.kitchen_clock\n{% endif %}"
+      message: '{{ states(''input_text.tts_custom_text'') }}'
+      options:
+        voice: ro_RO-lili-medium
+  mode: single
+doorbell:
+  sequence:
+  - action: xiaomi_aqara.play_ringtone
+    data:
+      gw_mac: 04:CF:8C:A0:91:FF
+      ringtone_id: '10'
+      ringtone_vol: 35
+  - delay:
+      seconds: 5
+  - action: xiaomi_aqara.stop_ringtone
+    data:
+      gw_mac: 04:CF:8C:A0:91:FF
+eva_wake_06_50:
+  alias: Eva Wake 06 50
+  description: Rooster alarm for Eva
+  mode: restart
+  sequence:
+  - action: media_player.volume_set
+    target:
+      entity_id: media_player.dan_s_echo_dot
+    data:
+      volume_level: 0.3
+  - repeat:
+      count: 5
+      sequence:
+      - action: media_player.play_media
+        target:
+          entity_id: media_player.dan_s_echo_dot
+        data:
+          media:
+            media_content_id: amzn_sfx_rooster_crow_01
+            media_content_type: sound
+            metadata: {}
+      - delay: 00:00:03
+eva_wake_up_06_55:
+  alias: Eva Breakfast 2
+  description: Second breakfast reminder
+  mode: restart
+  sequence:
+  - action: media_player.volume_set
+    target:
+      entity_id: media_player.2e_echo_dot_dan
+    data:
+      volume_level: 0.3
+  - action: media_player.play_media
+    target:
+      entity_id: media_player.2e_echo_dot_dan
+    data:
+      media:
+        media_content_id: bell_02
+        media_content_type: sound
+        metadata: {}
+  - delay: 00:00:01
+  - action: tts.speak
+    target:
+      entity_id: tts.piper
+    data:
+      cache: true
+      media_player_entity_id: media_player.2e_echo_dot_dan
+      message: Eva! Hai la masă să mănânci! Nu mai aștepta să fii invitată!
+      options:
+        voice: ro_RO-lili-medium
+eva_breakfast_1:
+  alias: Eva Breakfast 1
+  description: First breakfast reminder
+  mode: restart
+  sequence:
+  - action: media_player.volume_set
+    target:
+      entity_id: media_player.dan_s_echo_dot
+    data:
+      volume_level: 0.3
+  - action: media_player.play_media
+    target:
+      entity_id: media_player.dan_s_echo_dot
+    data:
+      media:
+        media_content_id: bell_02
+        media_content_type: sound
+        metadata: {}
+  - delay: 00:00:01
+  - action: tts.speak
+    target:
+      entity_id: tts.piper
+    data:
+      cache: true
+      media_player_entity_id: media_player.dan_s_echo_dot
+      message: Eva! Nu mai dormi, trezește-te și mergi să mănânci!
+      options:
+        voice: ro_RO-lili-medium
+eva_breakfast_3:
+  alias: Eva Breakfast 3
+  description: Third breakfast reminder
+  mode: restart
+  sequence:
+  - action: media_player.volume_set
+    target:
+      entity_id: media_player.2e_echo_dot_dan
+    data:
+      volume_level: 0.3
+  - action: media_player.play_media
+    target:
+      entity_id: media_player.2e_echo_dot_dan
+    data:
+      media:
+        media_content_id: bell_02
+        media_content_type: sound
+        metadata: {}
+  - delay: 00:00:01
+  - action: tts.speak
+    target:
+      entity_id: tts.piper
+    data:
+      cache: true
+      media_player_entity_id: media_player.2e_echo_dot_dan
+      message: Eva! Este târziu și trebuie să mănânci. Treci acum la masă!
+      options:
+        voice: ro_RO-lili-medium
+eva_finish_breakfast:
+  alias: Eva Finish Breakfast
+  description: Reminder to finish breakfast
+  mode: restart
+  sequence:
+  - action: media_player.volume_set
+    target:
+      entity_id: media_player.2e_echo_dot_dan
+    data:
+      volume_level: 0.2
+  - action: media_player.play_media
+    target:
+      entity_id: media_player.2e_echo_dot_dan
+    data:
+      media:
+        media_content_id: bell_02
+        media_content_type: sound
+        metadata: {}
+  - delay: 00:00:01
+  - action: tts.speak
+    target:
+      entity_id: tts.piper
+    data:
+      cache: true
+      media_player_entity_id: media_player.2e_echo_dot_dan
+      message: Eva! Nu mai este timp, trebuie să termini de mâncat!
+      options:
+        voice: ro_RO-lili-medium
+eva_teeth_bathroom:
+  alias: Eva Teeth & Bathroom
+  description: Reminder to clear the table and go to the bathroom
+  mode: restart
+  sequence:
+  - action: media_player.volume_set
+    target:
+      entity_id: media_player.2e_echo_dot_dan
+    data:
+      volume_level: 0.3
+  - action: media_player.play_media
+    target:
+      entity_id: media_player.2e_echo_dot_dan
+    data:
+      media:
+        media_content_id: bell_02
+        media_content_type: sound
+        metadata: {}
+  - delay: 00:00:01
+  - action: tts.speak
+    target:
+      entity_id: tts.piper
+    data:
+      cache: true
+      media_player_entity_id: media_player.2e_echo_dot_dan
+      message: Eva! Este târziu. Trebuie să mergi să te speli pe dinți. Strânge masa
+        și mergi la baie!
+      options:
+        voice: ro_RO-lili-medium
+eva_leave_warning:
+  alias: Eva Leave Warning
+  description: Five-minute warning before leaving for school
+  mode: restart
+  sequence:
+  - action: media_player.volume_set
+    target:
+      entity_id: media_player.dan_s_echo_dot
+    data:
+      volume_level: 0.2
+  - action: media_player.play_media
+    target:
+      entity_id: media_player.dan_s_echo_dot
+    data:
+      media:
+        media_content_id: bell_02
+        media_content_type: sound
+        metadata: {}
+  - delay: 00:00:01
+  - action: tts.speak
+    target:
+      entity_id: tts.piper
+    data:
+      cache: true
+      media_player_entity_id: media_player.dan_s_echo_dot
+      message: Eva! Mai ai cinci minute și trebuie să te pregătești să plecăm! Nu
+        uita să tragi perdeaua.
+      options:
+        voice: ro_RO-lili-medium
+eva_leave_now:
+  alias: Eva Leave Now
+  description: Final reminder to leave for school and pause 2e Echo
+  mode: restart
+  sequence:
+  - action: media_player.media_pause
+    target:
+      entity_id: media_player.dan_s_echo_dot
+  - action: media_player.volume_set
+    target:
+      entity_id: media_player.dan_s_echo_dot
+    data:
+      volume_level: 0.3
+  - action: media_player.play_media
+    target:
+      entity_id: media_player.dan_s_echo_dot
+    data:
+      media:
+        media_content_id: bell_02
+        media_content_type: sound
+        metadata: {}
+  - delay: 00:00:01
+  - action: tts.speak
+    target:
+      entity_id: tts.piper
+    data:
+      cache: true
+      media_player_entity_id: media_player.dan_s_echo_dot
+      message: Eva! Trebuie să plecăm la școală! Ia ghiozdanul și haina și mergi să
+        te încalți. Nu mai aștepta! Trebuie să mergem! Sper că nu ai uitat să tragi
+        perdeaua.
+      options:
+        voice: ro_RO-lili-medium
+  - delay: 00:00:02
+  - action: media_player.media_pause
+    target:
+      entity_id: media_player.2e_echo_dot_dan
+eva_wake_up:
+  alias: Eva Wake Up
+  description: First wake-up message
+  mode: restart
+  sequence:
+  - action: media_player.volume_set
+    target:
+      entity_id: media_player.dan_s_echo_dot
+    data:
+      volume_level: 0.2
+  - action: media_player.play_media
+    target:
+      entity_id: media_player.dan_s_echo_dot
+    data:
+      media:
+        media_content_id: bell_02
+        media_content_type: sound
+        metadata: {}
+  - delay: 00:00:01
+  - action: tts.speak
+    target:
+      entity_id: tts.piper
+    data:
+      cache: true
+      media_player_entity_id: media_player.dan_s_echo_dot
+      message: Eva, e timpul să ne trezim. Trebuie să ne pregătim pentru școală.
+      options:
+        voice: ro_RO-lili-medium
