@@ -568,75 +568,189 @@ button_card_templates:
         // Exact fallback string match from your appliance_template
         return "Ready";
       ]]]
-  timer_circle_template:
-    aspect_ratio: 1/1
-    show_name: true
+  timer_dashboard_template:
+    show_name: false
     show_icon: false
     show_state: false
+    show_label: false
+    update_timer: 1s
+    triggers_update:
+      - sensor.2e_echo_dot_dan_next_timer
+      - sensor.dan_s_echo_dot_next_timer
+      - timer.assistant_timer
+    tap_action:
+      action: none
+    hold_action:
+      action: none
+    hidden: |
+      [[[
+        const now = Date.now();
+        const hasEchoTimers = (entityId) => {
+          const attrs = states[entityId]?.attributes || {};
+          const records = Array.isArray(attrs.sorted_active) && attrs.sorted_active.length
+            ? attrs.sorted_active
+            : (Array.isArray(attrs.active) && attrs.active.length ? attrs.active : []);
+          return records.some((timer) => {
+            const status = String(timer.status || 'ON').toUpperCase();
+            const end = Number(timer.triggerTime);
+            const remaining = end > 0 ? end - now : Number(timer.remainingTime) || 0;
+            return status === 'ON' && remaining > 0;
+          });
+        };
+        const assist = states['timer.assistant_timer'];
+        return !hasEchoTimers('sensor.2e_echo_dot_dan_next_timer')
+          && !hasEchoTimers('sensor.dan_s_echo_dot_next_timer')
+          && assist?.state !== 'active';
+      ]]]
     styles:
       card:
-        - border-radius: 12px
-        - padding: 10px
+        - background: none
+        - box-shadow: none
+        - border: none
+        - padding: 0
+        - overflow: visible
       grid:
-        - grid-template-areas: '"n" "circle" "l"'
-        - grid-template-rows: min-content 1fr min-content
-      name:
-        - justify-self: start
-        - font-weight: bold
-        - font-size: 12px
+        - grid-template-areas: '"timers"'
+        - grid-template-columns: 1fr
+        - grid-template-rows: auto
       custom_fields:
-        circle:
-          - justify-self: center
-          - align-self: center
-          - width: 80%
+        timers:
+          - width: 100%
+          - justify-self: stretch
+          - align-self: stretch
     custom_fields:
-      circle: |
+      timers: |
         [[[
-          if (!entity || entity.state === 'unavailable' || entity.state === 'unknown' || entity.state === 'idle') return '';
-          
-          let remaining = 0;
-          let total = 600; // Default 10-minute fallback scale
+          const esc = (value) => String(value ?? '').replace(/[&<>"']/g, (ch) => ({
+            '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+          }[ch]));
 
-          // Check if it is a Native Home Assistant Timer Entity
-          if (entity.entity_id.startsWith('timer.')) {
-            if (entity.state !== 'active') return '';
-            
-            const finTime = new Date(entity.attributes.finishes_at).getTime();
-            const nowTime = new Date().getTime();
-            remaining = Math.max(0, (finTime - nowTime) / 1000);
-            
-            // Parse total duration if available (e.g. "00:10:00")
-            if (entity.attributes.duration) {
-              const parts = entity.attributes.duration.split(':');
-              total = (+parts[0]) * 3600 + (+parts[1]) * 60 + (+parts[2]);
+          const getEchoTimers = (entityId, now) => {
+            const attrs = states[entityId]?.attributes || {};
+            const records = Array.isArray(attrs.sorted_active) && attrs.sorted_active.length
+              ? attrs.sorted_active
+              : (Array.isArray(attrs.active) && attrs.active.length
+                ? attrs.active
+                : (Array.isArray(attrs.all) ? attrs.all : []));
+            return records.map((record) => {
+              const end = Number(record.triggerTime);
+              const remaining = end > 0 ? end - now : Number(record.remainingTime) || 0;
+              return {
+                record,
+                remainingMs: remaining,
+                durationMs: Number(record.originalDurationInMillis) || 0
+              };
+            }).filter((item) => {
+              const status = String(item.record.status || 'ON').toUpperCase();
+              return status === 'ON' && item.remainingMs > 0;
+            });
+          };
+
+          const parseDurationMs = (value) => {
+            const text = String(value || '').trim();
+            const parts = text.split(':');
+            if (parts.length === 3 && parts.every((part) => Number.isFinite(Number(part)))) {
+              return ((Number(parts[0]) * 3600) + (Number(parts[1]) * 60) + Number(parts[2])) * 1000;
             }
-          } else {
-            // Fallback to Echo Dot / Timestamp sensor logic
-            const end = new Date(entity.state).getTime();
-            const now = new Date().getTime();
-            remaining = Math.max(0, (end - now) / 1000);
-          }
-          
-          const stroke = 283;
-          const offset = stroke - (Math.min(remaining, total) / total) * stroke;
+            if (parts.length === 2 && parts.every((part) => Number.isFinite(Number(part)))) {
+              return ((Number(parts[0]) * 60) + Number(parts[1])) * 1000;
+            }
+            const number = Number(value);
+            return Number.isFinite(number) && number > 0 ? number * 1000 : 0;
+          };
 
-          // Dynamic time formatting (shows MM:SS if under a minute, otherwise MMm)
-          let timeText = Math.floor(remaining / 60) + "m";
-          if (remaining < 60) {
-            timeText = Math.floor(remaining) + "s";
+          const formatRemaining = (milliseconds) => {
+            const seconds = Math.max(0, Math.ceil(milliseconds / 1000));
+            const hours = Math.floor(seconds / 3600);
+            const minutes = Math.floor((seconds % 3600) / 60);
+            const secs = seconds % 60;
+            return hours > 0
+              ? hours + ':' + String(minutes).padStart(2, '0') + ':' + String(secs).padStart(2, '0')
+              : minutes + ':' + String(secs).padStart(2, '0');
+          };
+
+          const formatDuration = (milliseconds) => {
+            const seconds = Math.max(0, Math.round(milliseconds / 1000));
+            const hours = Math.floor(seconds / 3600);
+            const minutes = Math.floor((seconds % 3600) / 60);
+            const secs = seconds % 60;
+            if (hours > 0) return hours + 'h ' + (minutes > 0 ? minutes + 'm' : '');
+            if (minutes > 0) return minutes + ' min' + (secs > 0 ? ' ' + secs + 's' : '');
+            return secs + ' sec';
+          };
+
+          const renderTimerRow = (item, index, count, fallbackLabel) => {
+            const record = item.record || {};
+            const label = record.timerLabel || record.label || record.reminderLabel
+              || record.reminderSubLabel || record.alarmLabel || fallbackLabel
+              || (count === 1 ? 'Timer' : 'Timer ' + (index + 1));
+            const remaining = Math.max(0, item.remainingMs);
+            const duration = item.durationMs > 0 ? item.durationMs : Math.max(remaining, 1);
+            const fraction = Math.max(0, Math.min(1, remaining / duration));
+            const strokeOffset = 283 * (1 - fraction);
+            const elapsedPercent = Math.round((1 - fraction) * 100);
+            const timeText = formatRemaining(remaining);
+            const fontSize = timeText.length > 5 ? 11 : (timeText.length > 4 ? 13 : 16);
+            return ''
+              + '<div style="display:flex;align-items:center;gap:10px;width:100%;padding:5px 0;box-sizing:border-box;">'
+              +   '<svg viewBox="0 0 100 100" width="66" height="66" style="flex-shrink:0;display:block;">'
+              +     '<circle cx="50" cy="50" r="45" fill="none" stroke="#333333" stroke-width="7"></circle>'
+              +     '<circle cx="50" cy="50" r="45" fill="none" stroke="#2ecc71" stroke-width="7" stroke-dasharray="283" stroke-dashoffset="' + strokeOffset + '" stroke-linecap="round" transform="rotate(-90 50 50)"></circle>'
+              +     '<text x="50" y="55" fill="var(--primary-text-color)" font-size="' + fontSize + '" font-weight="bold" text-anchor="middle">' + timeText + '</text>'
+              +   '</svg>'
+              +   '<div style="flex:1;min-width:0;">'
+              +     '<div style="font-size:13px;font-weight:600;color:var(--primary-text-color);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">' + esc(label) + '</div>'
+              +     '<div style="font-size:11px;color:var(--secondary-text-color);margin-top:3px;">' + esc(formatDuration(duration)) + ' total</div>'
+              +     '<div style="height:4px;background:#333333;border-radius:4px;overflow:hidden;margin-top:7px;">'
+              +       '<div style="height:100%;width:' + elapsedPercent + '%;background:#2ecc71;transition:width 1s linear;"></div>'
+              +     '</div>'
+              +   '</div>'
+              + '</div>';
+          };
+
+          const renderPanel = (title, timers, fallbackLabel) => {
+            if (!timers.length) return '';
+            return ''
+              + '<div style="background:var(--ha-card-background,var(--card-background-color));border:1px solid var(--divider-color);border-radius:12px;padding:12px;min-width:0;box-sizing:border-box;">'
+              +   '<div style="font-size:13px;font-weight:700;color:var(--primary-text-color);margin-bottom:6px;">' + esc(title) + '</div>'
+              +   timers.map((timer, index) => renderTimerRow(timer, index, timers.length, fallbackLabel)).join('')
+              + '</div>';
+          };
+
+          const now = Date.now();
+          const panels = [];
+          const livingTimers = getEchoTimers('sensor.2e_echo_dot_dan_next_timer', now);
+          const evaTimers = getEchoTimers('sensor.dan_s_echo_dot_next_timer', now);
+          const livingPanel = renderPanel('Living Room Alexa', livingTimers, null);
+          const evaPanel = renderPanel("Eva's Alexa", evaTimers, null);
+          if (livingPanel) panels.push(livingPanel);
+          if (evaPanel) panels.push(evaPanel);
+
+          const assist = states['timer.assistant_timer'];
+          if (assist && assist.state === 'active') {
+            const attrs = assist.attributes || {};
+            const finish = Date.parse(attrs.finishes_at || '');
+            const durationMs = parseDurationMs(attrs.duration);
+            const remainingMs = Number.isFinite(finish)
+              ? Math.max(0, finish - now)
+              : parseDurationMs(attrs.remaining);
+            if (remainingMs > 0) {
+              panels.push(renderPanel('Assist Timer', [{
+                record: { timerLabel: 'Running' },
+                remainingMs,
+                durationMs: durationMs || remainingMs
+              }], 'Running'));
+            }
           }
 
-          return `
-            <svg viewBox="0 0 100 100">
-              <circle cx="50" cy="50" r="45" fill="none" stroke="#333" stroke-width="5" />
-              <circle cx="50" cy="50" r="45" fill="none" stroke="#2ecc71" stroke-width="5" 
-                stroke-dasharray="${stroke}" style="stroke-dashoffset: ${offset}; transition: stroke-dashoffset 1s linear;" 
-                transform="rotate(-90 50 50)" />
-              <text x="50" y="55" fill="white" font-size="14" font-weight="bold" text-anchor="middle">
-                ${timeText}
-              </text>
-            </svg>
-          `;
+          if (!panels.length) return '';
+          return ''
+            + '<div style="width:100%;box-sizing:border-box;">'
+            +   '<div style="font-size:16px;font-weight:700;color:var(--primary-text-color);margin:0 0 12px 0;">🔔 RUNNING TIMERS</div>'
+            +   '<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:12px;width:100%;">'
+            +     panels.join('')
+            +   '</div>'
+            + '</div>';
         ]]]
 views:
   - type: sections
@@ -1166,78 +1280,8 @@ views:
         columns: 1
         square: false
         cards:
-          - type: heading
-            heading: 🔔 RUNNING TIMERS
-            visibility:
-              - condition: or
-                conditions:
-                  - condition: state
-                    entity: sensor.2e_echo_dot_dan_next_timer
-                    state_not: unavailable
-                  - condition: state
-                    entity: sensor.2e_echo_dot_dan_next_timer
-                    state_not: unknown
-                  - condition: state
-                    entity: sensor.2e_echo_dot_dan_next_timer
-                    state_not: idle
-                  - condition: state
-                    entity: sensor.dan_s_echo_dot_next_timer
-                    state_not: unavailable
-                  - condition: state
-                    entity: sensor.dan_s_echo_dot_next_timer
-                    state_not: unknown
-                  - condition: state
-                    entity: sensor.dan_s_echo_dot_next_timer
-                    state_not: idle
-                  - condition: state
-                    entity: timer.assistant_timer
-                    state: active
-          - type: grid
-            columns: 3
-            square: true
-            cards:
-              - type: conditional
-                conditions:
-                  - condition: state
-                    entity: sensor.2e_echo_dot_dan_next_timer
-                    state_not: unavailable
-                  - condition: state
-                    entity: sensor.2e_echo_dot_dan_next_timer
-                    state_not: unknown
-                  - condition: state
-                    entity: sensor.2e_echo_dot_dan_next_timer
-                    state_not: idle
-                card:
-                  type: custom:button-card
-                  template: timer_circle_template
-                  entity: sensor.2e_echo_dot_dan_next_timer
-                  name: Living Timer
-              - type: conditional
-                conditions:
-                  - condition: state
-                    entity: sensor.dan_s_echo_dot_next_timer
-                    state_not: unavailable
-                  - condition: state
-                    entity: sensor.dan_s_echo_dot_next_timer
-                    state_not: unknown
-                  - condition: state
-                    entity: sensor.dan_s_echo_dot_next_timer
-                    state_not: idle
-                card:
-                  type: custom:button-card
-                  template: timer_circle_template
-                  entity: sensor.dan_s_echo_dot_next_timer
-                  name: Eva Timer
-              - type: conditional
-                conditions:
-                  - condition: state
-                    entity: timer.assistant_timer
-                    state: active
-                card:
-                  type: custom:button-card
-                  template: timer_circle_template
-                  entity: timer.assistant_timer
-                  name: Assist Timer
+          - type: custom:button-card
+            template: timer_dashboard_template
       - type: grid
         cards:
           - type: heading
