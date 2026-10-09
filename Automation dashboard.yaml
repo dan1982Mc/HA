@@ -6,7 +6,7 @@ button_card_templates:
     show_icon: true
     show_label: true
     show_name: true
-    update_timer: 60000
+    update_timer: 5000
     triggers_update: update_timer
     variables:
       room: ""
