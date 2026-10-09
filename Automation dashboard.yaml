@@ -194,7 +194,7 @@ button_card_templates:
     custom_fields:
       description: |
         [[[
-          return entity.attributes.description || "—";
+          return variables.short_description || entity.attributes.description || "No description";
         ]]]
       last_triggered: |
         [[[
@@ -412,6 +412,68 @@ views:
             show_empty: true
             filter:
               template: |
+                {% set description_map = {
+                  "calendar events announcments get": "calendar_events_announcments is in the file usto_set_calendar_events.yaml"
+                  "buienradar alarm": "Notify for rain alarms"
+                  "livingroom-button-lights": "Full mapping for Living Switch"
+                  "hallway button lights": "Full mapping for 0xf082c0fffe52f2fe"
+                  "dinning-button-lights": "Automation for Dinning Switch (WXKG11LM)"
+                  "xiaomi mi switch: all actions big bedroom - dublura": "Automation for Big Bedroom Switch"
+                  "kitchen clock-birthday holiday - notifications": "Reads out today's birthdays and holidays for today/tomorrow at 07:20"
+                  "garden watering: 3 daily sessions with rain skip": "Water for 7 mins at 7:20, 13:30, 19:00. Skips sessions based on rain."
+                  "system: weekend announcement manager - verificat/ modificat !!!": "Disables announcement automations on weekends to keep the house quiet"
+                  "reminders: repeatable announcement - not used, not sure what it does.": "Plays reminder based on chosen frequency and restores volume."
+                  "living room - notifications - reminders - improve !!!": "Announces any event on the Reminders calendar via Echo Dot 2."
+                  "kitchen-button-lights": "Full mapping for Kitchen Switch"
+                  "all rooms-schedule-lights": "Controls Eva, Kitchen, and Living lights on independent schedules"
+                  "garden watering: 3 daily sessions with rain skip - not used": "Water for 7 mins at 7:20, 14:10, 19:00. Skips sessions based on rain."
+                  "kitchen - dishwasher - notifications": "Announces finish and repeats at 1 and 3 hours if door stays closed. Only"
+                  "laundry - washing machine - notifications": "Handles spin cycle detection and adjusts tone based on user action."
+                  "laundry - dryer - notifications": "Announces dryer completion and reminds with increasing annoyance. Only"
+                  "ikea bilresa switch: all mqtt actions eva bedroom": "Handles single and double clicks for IKEA switch 0x1035970000167d0d"
+                  "entry-button-lights": "Handles single and double clicks for IKEA Bilresa Switch Entry"
+                  "big bedroom-button-1-lights": "Fixed MQTT structure and area logic"
+                  "siren test: gateway v3": "Tests the siren for 5 seconds then turns it off"
+                  "test: xiaomi hub siren": "Short test of the gateway speaker"
+                  "test: 30 second dual hub siren": "Forces a continuous siren for 30 seconds on both hubs"
+                  "vacation - lights front": "Starts at sunset along with the living room to simulate a full house."
+                  "vacation - lighting - onoff": "Starts with Calendar, Ends only when Calendar is over AND someone is"
+                  "vacation - lights rear": "Controls the main living area when sun goes down."
+                  "alarmo-night-armeddisarm": "Arms the perimeter at 21:00 if someone is home; disarms at 05:30."
+                  "alarmo - notification dan - disarm - check and improve": "Alerts Dan with a one-tap disarm button when the alarm is triggered."
+                  "dashboard - broadcast volume": "Automatically sets media player volumes when the dashboard slider moves"
+                  "dashboard: dynamic broadcast volume handler - old error": "Syncs the dashboard slider to the active speaker's actual volume state"
+                  "entry-button-doorbell": "Automation for Doorbell on Single Click"
+                  "assist - voice timer - check and improve !!!": "Catches voice timer requests and links them to the dashboard helper"
+                  "small bedroom-button-lights": "Automation for Small bedroom Switch"
+                  "bathroom-button-lights": "Aqara switch Bathroom"
+                  "entry-motion-lights": "Turns light ON when dark and doors open/motion detected. Turns light"
+                  "kitchen - dishwasher - mark clean - not working !!!": "Turns on helper when dishwasher finishes its cycle"
+                  "kitchen - dishwasher - announce clean or unstarted reminder - not working": "Announces if dishes are clean on the FIRST door open, or reminds if"
+                  "hallway-motion-lights": "Controls hal_light_2 and hal_light_3 independently based on motion"
+                  "doors/windows-contact-notification": "Announces reminders when bedroom windows are left open"
+                  "rear doors and window - notifications": "Announces left open garden doors/windows at 1h, 2h, and 3h only if"
+                  "watering - 1 time/day": "Water for 15 mins at 7:00. Skips sessions based on rain."
+                  "eva bedroom - motion - lights": "Turns Eva's bedroom light ON between 7:00 AM and 9:00 PM if it is dark"
+                  "kitchen - lights - onoff - must fix !!!": "Controls kitchen lights based on time of day, darkness, and multiple"
+                  "siemens oven: run 10 min hot air": "Powers on the oven, sets active program to Hot air, and sets duration"
+                  "eva morning routine": "Eva morning wake-up routine on school weekdays"
+                  "bathroom ventilator - humidity control": "Turn bathroom ventilator on above 80% humidity and off below 75%"
+                  "morning hallway lights - weekdays": "'Weekday morning hallway lighting from 06:45 to 07:40. Motion turns"
+                  "kitchen lights - morning": "Morning kitchen lighting, oven power, and coffee switch control"
+                  "kitchen lights - evening": "Kitchen lighting from 18:00 to 20:00 based on motion and daylight"
+                  "kitchen lights - night": "Low-level kitchen lighting from 20:00 to midnight"
+                  "eva light - night motion": "Turn Eva's light on with evening motion and fade it to off from 21:30"
+                  "speaker volume check - morning & evening": "Set HA speaker volumes twice a day"
+                  "calendar casa reminders": "Announce Casa bin collection the day before and on the morning of collection"
+                  "calendar eva vacante reminders": "Anunță începutul și sfârșitul perioadelor de vacanță ale Evei"
+                  "test - eva light fade off": "Test light on at 100%, fade to 0% over 2 minutes, then turn off"
+                  "pause alexa when no activity": "Pause Dan's Echo after 10 minutes with no activity at the front door"
+                  "toilet - count door cycles": "Counts completed toilet door cycles and resets after 35 minutes without"
+                  "toilet - light off after exit": "Turns off the toilet light 10 minutes after the second completed door"
+                  "eva alexa quiet lock": "Prevent 2e Echo from playing during Eva final school departure period"
+                  "unused room lights - master": "Turn off room lights when all assigned activity sensors have been inactive"
+                } %}
                 {% set ns = namespace(items=[]) %}
                 {% set recent = states.automation
                   | selectattr('attributes.last_triggered')
@@ -421,7 +483,7 @@ views:
                   | rejectattr('attributes.last_triggered')
                   | list %}
                 {% for a in recent + never %}
-                  {% set name = (state_attr(a.entity_id, 'friendly_name') or a.name) | lower %}
+                  {% set name = (state_attr(a.entity_id, 'friendly_name') or a.name) | lower | trim %}
                   {% set excluded =
                     'must fix' in name or
                     'not working' in name or
@@ -430,7 +492,8 @@ views:
                     {% set ns.items = ns.items + [{
                       'type': 'custom:button-card',
                       'entity': a.entity_id,
-                      'template': 'automation_row'
+                      'template': 'automation_row',
+                      'variables': {'short_description': description_map.get(name, '')}
                     }] %}
                   {% endif %}
                 {% endfor %}
