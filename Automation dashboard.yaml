@@ -1,10 +1,49 @@
 title: Automation Control
+
 button_card_templates:
-  motion_template:
+  room_activity:
     show_state: false
     show_icon: true
-    show_last_changed: true
     show_label: true
+    show_name: true
+    update_interval: 60
+    variables:
+      room: ""
+      room_keywords: []
+    label: |
+      [[[
+        const cutoff = Date.now() - 7 * 24 * 60 * 60 * 1000;
+        const keywords = (variables.room_keywords || []).map(k => k.toLowerCase());
+        const matches = Object.values(states)
+          .filter(s => s.entity_id && s.entity_id.startsWith("automation."))
+          .filter(s => {
+            const name = String(s.attributes.friendly_name || s.entity_id).toLowerCase();
+            return !/must fix|not working|\bold\b/.test(name) &&
+              keywords.some(keyword => name.includes(keyword));
+          })
+          .filter(s => {
+            const last = s.attributes.last_triggered;
+            return last && new Date(last).getTime() >= cutoff;
+          })
+          .sort((a, b) => new Date(b.attributes.last_triggered) - new Date(a.attributes.last_triggered));
+        if (!matches.length) return "No run in 7d";
+        const last = new Date(matches[0].attributes.last_triggered);
+        const minutes = Math.max(0, Math.floor((Date.now() - last.getTime()) / 60000));
+        if (minutes < 60) return "Last: " + minutes + "m";
+        const hours = Math.floor(minutes / 60);
+        if (hours < 24) return "Last: " + hours + "h";
+        return "Last: " + Math.floor(hours / 24) + "d";
+      ]]]
+    tap_action: |
+      [[[
+        const selected = states["input_select.automation_room_filter"]?.state;
+        return {
+          action: "call-service",
+          service: "input_select.select_option",
+          target: { entity_id: "input_select.automation_room_filter" },
+          data: { option: selected === variables.room ? "All rooms" : variables.room }
+        };
+      ]]]
     styles:
       card:
         - border-radius: 12px
@@ -13,17 +52,175 @@ button_card_templates:
         - position: relative
         - background-color: |
             [[[
-              if (['unavailable', 'unknown'].includes(entity.state)) return '#333333';
-              if (entity.state === 'on') return '#3498db';
-              return 'var(--card-background-color)';
+              const cutoff = Date.now() - 7 * 24 * 60 * 60 * 1000;
+              const keywords = (variables.room_keywords || []).map(k => k.toLowerCase());
+              const active = Object.values(states).some(s => {
+                if (!s.entity_id || !s.entity_id.startsWith("automation.")) return false;
+                const name = String(s.attributes.friendly_name || s.entity_id).toLowerCase();
+                if (/must fix|not working|\bold\b/.test(name)) return false;
+                if (!keywords.some(keyword => name.includes(keyword))) return false;
+                const last = s.attributes.last_triggered;
+                return last && new Date(last).getTime() >= cutoff;
+              });
+              return active ? "#2471A3" : "#333333";
             ]]]
       icon:
-        - width: 45%
+        - width: 42%
+        - color: white
       name:
         - font-weight: bold
         - font-size: 12px
+        - color: white
       label:
         - font-size: 10px
+        - color: "#E0E0E0"
+        - white-space: normal
+
+  automation_header:
+    show_icon: false
+    show_state: false
+    show_name: true
+    tap_action:
+      action: none
+    styles:
+      card:
+        - border-radius: 8px
+        - padding: 10px 8px
+        - background-color: "#252525"
+        - box-shadow: none
+      grid:
+        - grid-template-areas: '"n description last_triggered count actions"'
+        - grid-template-columns: minmax(150px, 2fr) minmax(150px, 2fr) minmax(125px, 1.5fr) minmax(90px, 0.8fr) minmax(90px, 0.8fr)
+        - column-gap: 8px
+      name:
+        - justify-self: start
+        - font-size: 12px
+        - font-weight: bold
+        - color: white
+      custom_fields:
+        description:
+          - justify-self: start
+          - font-size: 12px
+          - font-weight: bold
+          - color: white
+        last_triggered:
+          - justify-self: start
+          - font-size: 12px
+          - font-weight: bold
+          - color: white
+        count:
+          - justify-self: center
+          - font-size: 12px
+          - font-weight: bold
+          - color: white
+        actions:
+          - justify-self: center
+          - font-size: 12px
+          - font-weight: bold
+          - color: white
+    custom_fields:
+      description: Short description
+      last_triggered: Last Triggered
+      count: Count (last 7d)
+      actions: Actions
+
+  automation_row:
+    show_icon: false
+    show_state: false
+    show_label: false
+    show_name: true
+    tap_action:
+      action: more-info
+    hold_action:
+      action: more-info
+    styles:
+      card:
+        - border-radius: 0
+        - padding: 8px
+        - box-shadow: none
+        - border-bottom: 1px solid var(--divider-color)
+      grid:
+        - grid-template-areas: '"n description last_triggered count actions"'
+        - grid-template-columns: minmax(150px, 2fr) minmax(150px, 2fr) minmax(125px, 1.5fr) minmax(90px, 0.8fr) minmax(90px, 0.8fr)
+        - column-gap: 8px
+      name:
+        - justify-self: start
+        - text-align: left
+        - white-space: normal
+        - font-size: 12px
+        - font-weight: 500
+      custom_fields:
+        description:
+          - justify-self: start
+          - text-align: left
+          - white-space: normal
+          - font-size: 11px
+          - color: var(--secondary-text-color)
+        last_triggered:
+          - justify-self: start
+          - text-align: left
+          - white-space: normal
+          - font-size: 11px
+        count:
+          - justify-self: center
+          - text-align: center
+          - font-size: 12px
+        actions:
+          - justify-self: center
+          - align-self: center
+          - width: 100%
+    custom_fields:
+      description: |
+        [[[
+          return entity.attributes.description || "—";
+        ]]]
+      last_triggered: |
+        [[[
+          const value = entity.attributes.last_triggered;
+          if (!value) return "Never";
+          const dt = new Date(value);
+          return dt.toLocaleString([], {
+            day: "2-digit",
+            month: "2-digit",
+            hour: "2-digit",
+            minute: "2-digit"
+          });
+        ]]]
+      count: |
+        [[[
+          // Home Assistant exposes last_triggered, but not a rolling execution count.
+          // Keep this blank rather than inventing a count.
+          return "—";
+        ]]]
+      actions:
+        card:
+          type: custom:button-card
+          entity: '[[[[ return entity.entity_id ]]]]'
+          show_icon: true
+          show_name: true
+          show_state: false
+          icon: '[[[[ return entity.state === "on" ? "mdi:toggle-switch" : "mdi:toggle-switch-off-outline"; ]]]]'
+          name: '[[[[ return entity.state === "on" ? "Disable" : "Enable"; ]]]]'
+          tap_action: '[[[[ return { action: "call-service", service: entity.state === "on" ? "automation.turn_off" : "automation.turn_on", target: { entity_id: entity.entity_id } }; ]]]]'
+          styles:
+            card:
+              - background: transparent
+              - box-shadow: none
+              - padding: 2px
+              - width: 84px
+              - min-height: 42px
+            grid:
+              - grid-template-areas: '"i n"'
+              - grid-template-columns: 24px 1fr
+              - column-gap: 4px
+            icon:
+              - width: 20px
+              - color: '[[[[ return entity.state === "on" ? "#2ecc71" : "#888888"; ]]]]'
+            name:
+              - font-size: 10px
+              - white-space: normal
+              - justify-self: start
+
 views:
   - title: Automations
     path: automation-control
@@ -36,191 +233,121 @@ views:
           - type: heading
             heading: AUTOMATION CONTROL
             heading_style: title
-          - type: custom:button-card
-            entity: input_select.automation_room_filter
-            name: All rooms
-            icon: mdi:home
-            show_state: false
-            tap_action:
-              action: call-service
-              service: input_select.select_option
-              target:
-                entity_id: input_select.automation_room_filter
-              data:
-                option: All rooms
-            styles:
-              card:
-                - border-radius: 12px
-                - padding: 10px
-                - background: '#333333'
-              name:
-                - color: white
-                - font-weight: bold
           - type: grid
             columns: 5
             square: true
             cards:
               - type: custom:button-card
-                entity: binary_sensor.big_bedroom_motion_occupancy
+                entity: sun.sun
                 name: Big bed
-                template: motion_template
-                tap_action:
-                  action: call-service
-                  service: input_select.select_option
-                  target:
-                    entity_id: input_select.automation_room_filter
-                  data:
-                    option: Big bed
+                icon: mdi:bed-king
+                template: room_activity
+                variables:
+                  room: Big bed
+                  room_keywords: ["big bedroom", "big bed", "master bedroom"]
               - type: custom:button-card
-                entity: binary_sensor.contactsensor_rear_door
+                entity: sun.sun
                 name: Entry
-                template: motion_template
-                tap_action:
-                  action: call-service
-                  service: input_select.select_option
-                  target:
-                    entity_id: input_select.automation_room_filter
-                  data:
-                    option: Entry
+                icon: mdi:door
+                template: room_activity
+                variables:
+                  room: Entry
+                  room_keywords: ["entry", "front door", "rear door", "doorbell"]
               - type: custom:button-card
-                entity: binary_sensor.small_bedroom_motion_occupancy
+                entity: sun.sun
                 name: Small bed
-                template: motion_template
-                tap_action:
-                  action: call-service
-                  service: input_select.select_option
-                  target:
-                    entity_id: input_select.automation_room_filter
-                  data:
-                    option: Small bed
+                icon: mdi:bed-single
+                template: room_activity
+                variables:
+                  room: Small bed
+                  room_keywords: ["small bedroom", "small bed"]
               - type: custom:button-card
                 entity: sun.sun
                 name: Bath
-                template: motion_template
-                show_last_changed: false
-                label: ' '
-                state:
-                  - operator: default
-                    icon: mdi:motion-sensor-off
-                styles:
-                  card:
-                    - background-color: '#333333'
-                    - opacity: 0.5
-                  icon:
-                    - color: '#888888'
-                  name:
-                    - color: '#888888'
-                tap_action:
-                  action: call-service
-                  service: input_select.select_option
-                  target:
-                    entity_id: input_select.automation_room_filter
-                  data:
-                    option: Bath
+                icon: mdi:shower
+                template: room_activity
+                variables:
+                  room: Bath
+                  room_keywords: ["bathroom", "bath", "toilet"]
               - type: custom:button-card
-                entity: binary_sensor.hal_motion_all
+                entity: sun.sun
                 name: Hal
-                template: motion_template
-                tap_action:
-                  action: call-service
-                  service: input_select.select_option
-                  target:
-                    entity_id: input_select.automation_room_filter
-                  data:
-                    option: Hal
+                icon: mdi:coat-rack
+                template: room_activity
+                variables:
+                  room: Hal
+                  room_keywords: ["hallway", "hall"]
               - type: custom:button-card
                 entity: sun.sun
                 name: Storage
-                template: motion_template
-                show_last_changed: false
-                label: ' '
-                state:
-                  - operator: default
-                    icon: mdi:motion-sensor-off
-                styles:
-                  card:
-                    - background-color: '#333333'
-                    - opacity: 0.5
-                  icon:
-                    - color: '#888888'
-                  name:
-                    - color: '#888888'
-                tap_action:
-                  action: call-service
-                  service: input_select.select_option
-                  target:
-                    entity_id: input_select.automation_room_filter
-                  data:
-                    option: Storage
+                icon: mdi:archive
+                template: room_activity
+                variables:
+                  room: Storage
+                  room_keywords: ["storage"]
               - type: custom:button-card
-                entity: binary_sensor.living_room_motion_all
+                entity: sun.sun
                 name: Living room
-                template: motion_template
-                tap_action:
-                  action: call-service
-                  service: input_select.select_option
-                  target:
-                    entity_id: input_select.automation_room_filter
-                  data:
-                    option: Living room
+                icon: mdi:sofa
+                template: room_activity
+                variables:
+                  room: Living room
+                  room_keywords: ["living room", "livingroom", "living-room"]
               - type: custom:button-card
-                entity: binary_sensor.kitchen_motion_sensor
+                entity: sun.sun
                 name: Kitchen
-                template: motion_template
-                tap_action:
-                  action: call-service
-                  service: input_select.select_option
-                  target:
-                    entity_id: input_select.automation_room_filter
-                  data:
-                    option: Kitchen
+                icon: mdi:chef-hat
+                template: room_activity
+                variables:
+                  room: Kitchen
+                  room_keywords: ["kitchen"]
               - type: custom:button-card
-                entity: binary_sensor.eva_motion_occupancy
+                entity: sun.sun
                 name: Eva bed
-                template: motion_template
-                tap_action:
-                  action: call-service
-                  service: input_select.select_option
-                  target:
-                    entity_id: input_select.automation_room_filter
-                  data:
-                    option: Eva bed
+                icon: mdi:bed
+                template: room_activity
+                variables:
+                  room: Eva bed
+                  room_keywords: ["eva bedroom", "eva bed", "eva light"]
               - type: custom:button-card
-                entity: binary_sensor.contactsensor_front_door
+                entity: sun.sun
                 name: Dining
-                template: motion_template
-                tap_action:
-                  action: call-service
-                  service: input_select.select_option
-                  target:
-                    entity_id: input_select.automation_room_filter
-                  data:
-                    option: Dining
+                icon: mdi:table-chair
+                template: room_activity
+                variables:
+                  room: Dining
+                  room_keywords: ["dining", "dinning"]
       - type: grid
         cards:
           - type: heading
             heading: AUTOMATIONS
             heading_style: title
-          - type: entities
-            title: Current filter
-            entities:
-              - entity: input_select.automation_room_filter
-                name: Room filter
-            show_header_toggle: false
+          - type: custom:button-card
+            template: automation_header
+            name: Name
           - type: custom:auto-entities
             card:
-              type: entities
-              title: All eligible automations
-              show_header_toggle: false
-              state_color: true
+              type: grid
+              columns: 1
+              square: false
+            card_param: cards
+            show_empty: true
+            sort:
+              method: attribute
+              attribute: last_triggered
+              reverse: true
             filter:
-              template: >
-                {% set selected = states('input_select.automation_room_filter')
-                %}
-
+              template: |
+                {% set selected = states('input_select.automation_room_filter') %}
                 {% set ns = namespace(items=[]) %}
-
-                {% for a in states.automation %}
+                {% set recent = states.automation
+                  | selectattr('attributes.last_triggered')
+                  | sort(attribute='attributes.last_triggered', reverse=true)
+                  | list %}
+                {% set never = states.automation
+                  | rejectattr('attributes.last_triggered')
+                  | list %}
+                {% for a in recent + never %}
                   {% set name = (state_attr(a.entity_id, 'friendly_name') or a.name) | lower %}
                   {% set excluded =
                     'must fix' in name or
@@ -231,21 +358,19 @@ views:
                     (selected == 'Kitchen' and 'kitchen' in name) or
                     (selected == 'Small bed' and ('small bedroom' in name or 'small bed' in name)) or
                     (selected == 'Big bed' and ('big bedroom' in name or 'big bed' in name or 'master bedroom' in name)) or
-                    (selected == 'Bath' and ('bathroom' in name or 'bath' in name)) or
-                    (selected == 'Entry' and ('entry' in name or 'front door' in name or 'rear door' in name)) or
-                    (selected == 'Hal' and ('hall' in name or 'hal' in name or 'hallway' in name)) or
+                    (selected == 'Bath' and ('bathroom' in name or 'bath' in name or 'toilet' in name)) or
+                    (selected == 'Entry' and ('entry' in name or 'front door' in name or 'rear door' in name or 'doorbell' in name)) or
+                    (selected == 'Hal' and ('hallway' in name or 'hall' in name)) or
                     (selected == 'Storage' and 'storage' in name) or
-                    (selected == 'Living room' and ('living room' in name or 'living-room' in name)) or
-                    (selected == 'Eva bed' and 'eva' in name) or
-                    (selected == 'Dining' and 'dining' in name) %}
+                    (selected == 'Living room' and ('living room' in name or 'livingroom' in name or 'living-room' in name)) or
+                    (selected == 'Eva bed' and ('eva bedroom' in name or 'eva bed' in name or 'eva light' in name)) or
+                    (selected == 'Dining' and ('dining' in name or 'dinning' in name)) %}
                   {% if not excluded and room_match %}
-                    {% set ns.items = ns.items + [a.entity_id] %}
+                    {% set ns.items = ns.items + [{
+                      'type': 'custom:button-card',
+                      'entity': a.entity_id,
+                      'template': 'automation_row'
+                    }] %}
                   {% endif %}
                 {% endfor %}
-
                 {{ ns.items }}
-            sort:
-              method: attribute
-              attribute: last_triggered
-              reverse: true
-            show_empty: true
