@@ -35,17 +35,17 @@ button_card_templates:
         if (hours < 24) return "Last: " + hours + "h";
         return "Last: " + Math.floor(hours / 24) + "d";
       ]]]
-    tap_action: |
-      [[[
-        const filterEntity = states["input_select.automation_room_filter"];
-        const selected = filterEntity ? filterEntity.state : "All rooms";
-        return {
-          action: "call-service",
-          service: "input_select.select_option",
-          target: { entity_id: "input_select.automation_room_filter" },
-          data: { option: selected === variables.room ? "All rooms" : variables.room }
-        };
-      ]]]
+    tap_action:
+      action: call-service
+      service: input_select.select_option
+      target:
+        entity_id: input_select.automation_room_filter
+      data:
+        option: |
+          [[[
+            const selected = states["input_select.automation_room_filter"]?.state;
+            return selected === variables.room ? "All rooms" : variables.room;
+          ]]]
     styles:
       card:
         - border-radius: 12px
@@ -237,12 +237,11 @@ button_card_templates:
               name: '[[[[ return entity.state === "on" ? "Off" : "On"; ]]]]'
               show_name: true
               show_state: false
-              tap_action: |
-                [[[[ return {
-                  action: "call-service",
-                  service: entity.state === "on" ? "automation.turn_off" : "automation.turn_on",
-                  target: { entity_id: entity.entity_id }
-                }; ]]]]
+              tap_action:
+                action: call-service
+                service: '[[[[ return entity.state === "on" ? "automation.turn_off" : "automation.turn_on"; ]]]]'
+                target:
+                  entity_id: '[[[[ return entity.entity_id; ]]]]'
               styles:
                 card:
                   - background: transparent
@@ -267,13 +266,15 @@ button_card_templates:
               name: 1h
               show_name: true
               show_state: false
-              tap_action: |
-                [[[[ return {
-                  action: "call-service",
-                  service: "script.turn_on",
-                  target: { entity_id: "script.automation_disable_timed" },
-                  data: { variables: { automation_entity: entity.entity_id, duration_mode: "hour" } }
-                }; ]]]]
+              tap_action:
+                action: call-service
+                service: script.turn_on
+                target:
+                  entity_id: script.automation_disable_timed
+                data:
+                  variables:
+                    automation_entity: '[[[[ return entity.entity_id; ]]]]'
+                    duration_mode: hour
               styles:
                 card:
                   - background: transparent
@@ -297,13 +298,15 @@ button_card_templates:
               name: Tmrw
               show_name: true
               show_state: false
-              tap_action: |
-                [[[[ return {
-                  action: "call-service",
-                  service: "script.turn_on",
-                  target: { entity_id: "script.automation_disable_timed" },
-                  data: { variables: { automation_entity: entity.entity_id, duration_mode: "tomorrow" } }
-                }; ]]]]
+              tap_action:
+                action: call-service
+                service: script.turn_on
+                target:
+                  entity_id: script.automation_disable_timed
+                data:
+                  variables:
+                    automation_entity: '[[[[ return entity.entity_id; ]]]]'
+                    duration_mode: tomorrow
               styles:
                 card:
                   - background: transparent
