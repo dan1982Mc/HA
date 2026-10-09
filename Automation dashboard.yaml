@@ -227,103 +227,7 @@ button_card_templates:
           // A rolling 7-day run count needs a separate recorder-backed counter.
           return "—";
         ]]]
-      actions:
-        card:
-          type: horizontal-stack
-          cards:
-            - type: custom:button-card
-              entity: '[[[[ return entity.entity_id ]]]]'
-              icon: '[[[[ return entity.state === "on" ? "mdi:toggle-switch" : "mdi:toggle-switch-off-outline"; ]]]]'
-              name: '[[[[ return entity.state === "on" ? "Off" : "On"; ]]]]'
-              show_name: true
-              show_state: false
-              tap_action:
-                action: call-service
-                service: '[[[[ return entity.state === "on" ? "automation.turn_off" : "automation.turn_on"; ]]]]'
-                target:
-                  entity_id: '[[[[ return entity.entity_id; ]]]]'
-              styles:
-                card:
-                  - background: transparent
-                  - box-shadow: none
-                  - padding: 2px 0
-                  - width: 40px
-                  - min-height: 42px
-                grid:
-                  - grid-template-areas: '"i" "n"'
-                  - grid-template-columns: 1fr
-                  - grid-template-rows: 20px min-content
-                icon:
-                  - width: 19px
-                  - color: '[[[[ return entity.state === "on" ? "#2ecc71" : "#888888"; ]]]]'
-                name:
-                  - font-size: 9px
-                  - justify-self: center
-                  - white-space: nowrap
-            - type: custom:button-card
-              entity: '[[[[ return entity.entity_id ]]]]'
-              icon: mdi:timer-outline
-              name: 1h
-              show_name: true
-              show_state: false
-              tap_action:
-                action: call-service
-                service: script.turn_on
-                target:
-                  entity_id: script.automation_disable_timed
-                data:
-                  variables:
-                    automation_entity: '[[[[ return entity.entity_id; ]]]]'
-                    duration_mode: hour
-              styles:
-                card:
-                  - background: transparent
-                  - box-shadow: none
-                  - padding: 2px 0
-                  - width: 40px
-                  - min-height: 42px
-                grid:
-                  - grid-template-areas: '"i" "n"'
-                  - grid-template-columns: 1fr
-                  - grid-template-rows: 20px min-content
-                icon:
-                  - width: 18px
-                name:
-                  - font-size: 9px
-                  - justify-self: center
-                  - white-space: nowrap
-            - type: custom:button-card
-              entity: '[[[[ return entity.entity_id ]]]]'
-              icon: mdi:calendar-clock
-              name: Tmrw
-              show_name: true
-              show_state: false
-              tap_action:
-                action: call-service
-                service: script.turn_on
-                target:
-                  entity_id: script.automation_disable_timed
-                data:
-                  variables:
-                    automation_entity: '[[[[ return entity.entity_id; ]]]]'
-                    duration_mode: tomorrow
-              styles:
-                card:
-                  - background: transparent
-                  - box-shadow: none
-                  - padding: 2px 0
-                  - width: 44px
-                  - min-height: 42px
-                grid:
-                  - grid-template-areas: '"i" "n"'
-                  - grid-template-columns: 1fr
-                  - grid-template-rows: 20px min-content
-                icon:
-                  - width: 18px
-                name:
-                  - font-size: 9px
-                  - justify-self: center
-                  - white-space: nowrap
+      actions: " "
 
 
 views:
@@ -519,11 +423,82 @@ views:
                     (selected == 'Eva bed' and ('eva bedroom' in name or 'eva bed' in name or 'eva light' in name)) or
                     (selected == 'Dining' and ('dining' in name or 'dinning' in name)) %}
                   {% if not excluded and room_match %}
+                    {% set action_cards = [
+                      {
+                        'type': 'custom:button-card',
+                        'entity': a.entity_id,
+                        'name': 'Toggle',
+                        'icon': 'mdi:toggle-switch',
+                        'show_name': true,
+                        'show_state': false,
+                        'state': [
+                          {'value': 'on', 'name': 'Disable', 'icon': 'mdi:toggle-switch-off-outline'},
+                          {'value': 'off', 'name': 'Enable', 'icon': 'mdi:toggle-switch'}
+                        ],
+                        'tap_action': {
+                          'action': 'call-service',
+                          'service': 'automation.toggle',
+                          'target': {'entity_id': a.entity_id}
+                        },
+                        'styles': {
+                          'card': [{'background': 'transparent'}, {'box-shadow': 'none'}, {'padding': '2px 0'}, {'width': '40px'}, {'min-height': '42px'}],
+                          'grid': [{'grid-template-areas': '"i" "n"'}, {'grid-template-columns': '1fr'}, {'grid-template-rows': '20px min-content'}],
+                          'icon': [{'width': '19px'}],
+                          'name': [{'font-size': '9px'}, {'justify-self': 'center'}, {'white-space': 'nowrap'}]
+                        }
+                      },
+                      {
+                        'type': 'custom:button-card',
+                        'entity': a.entity_id,
+                        'name': '1h',
+                        'icon': 'mdi:timer-outline',
+                        'show_state': false,
+                        'tap_action': {
+                          'action': 'call-service',
+                          'service': 'script.turn_on',
+                          'target': {'entity_id': 'script.automation_disable_timed'},
+                          'data': {'variables': {'automation_entity': a.entity_id, 'duration_mode': 'hour'}}
+                        },
+                        'styles': {
+                          'card': [{'background': 'transparent'}, {'box-shadow': 'none'}, {'padding': '2px 0'}, {'width': '40px'}, {'min-height': '42px'}],
+                          'grid': [{'grid-template-areas': '"i" "n"'}, {'grid-template-columns': '1fr'}, {'grid-template-rows': '20px min-content'}],
+                          'icon': [{'width': '18px'}],
+                          'name': [{'font-size': '9px'}, {'justify-self': 'center'}, {'white-space': 'nowrap'}]
+                        }
+                      },
+                      {
+                        'type': 'custom:button-card',
+                        'entity': a.entity_id,
+                        'name': 'Tmrw',
+                        'icon': 'mdi:calendar-clock',
+                        'show_state': false,
+                        'tap_action': {
+                          'action': 'call-service',
+                          'service': 'script.turn_on',
+                          'target': {'entity_id': 'script.automation_disable_timed'},
+                          'data': {'variables': {'automation_entity': a.entity_id, 'duration_mode': 'tomorrow'}}
+                        },
+                        'styles': {
+                          'card': [{'background': 'transparent'}, {'box-shadow': 'none'}, {'padding': '2px 0'}, {'width': '44px'}, {'min-height': '42px'}],
+                          'grid': [{'grid-template-areas': '"i" "n"'}, {'grid-template-columns': '1fr'}, {'grid-template-rows': '20px min-content'}],
+                          'icon': [{'width': '18px'}],
+                          'name': [{'font-size': '9px'}, {'justify-self': 'center'}, {'white-space': 'nowrap'}]
+                        }
+                      }
+                    ] %}
                     {% set ns.items = ns.items + [{
                       'type': 'custom:button-card',
                       'entity': a.entity_id,
                       'template': 'automation_row',
-                      'variables': {'short_description': description_map.get(name, '')}
+                      'variables': {'short_description': description_map.get(name, '')},
+                      'custom_fields': {
+                        'actions': {
+                          'card': {
+                            'type': 'horizontal-stack',
+                            'cards': action_cards
+                          }
+                        }
+                      }
                     }] %}
                   {% endif %}
                 {% endfor %}
