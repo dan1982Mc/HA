@@ -12,7 +12,7 @@ button_card_templates:
       room_keywords: []
     label: |
       [[[
-        const cutoff = Date.now() - 7 * 24 * 60 * 60 * 1000;
+        const cutoff = Date.now() - 10 * 60 * 1000;
         const keywords = (variables.room_keywords || []).map(k => k.toLowerCase());
         const matches = Object.values(states)
           .filter(s => s.entity_id && s.entity_id.startsWith("automation."))
@@ -26,7 +26,7 @@ button_card_templates:
             return last && new Date(last).getTime() >= cutoff;
           })
           .sort((a, b) => new Date(b.attributes.last_triggered) - new Date(a.attributes.last_triggered));
-        if (!matches.length) return "No run in 7d";
+        if (!matches.length) return "Quiet";
         const last = new Date(matches[0].attributes.last_triggered);
         const minutes = Math.max(0, Math.floor((Date.now() - last.getTime()) / 60000));
         if (minutes < 60) return "Last: " + minutes + "m";
@@ -34,16 +34,8 @@ button_card_templates:
         if (hours < 24) return "Last: " + hours + "h";
         return "Last: " + Math.floor(hours / 24) + "d";
       ]]]
-    tap_action: |
-      [[[
-        const selected = states["input_select.automation_room_filter"]?.state;
-        return {
-          action: "call-service",
-          service: "input_select.select_option",
-          target: { entity_id: "input_select.automation_room_filter" },
-          data: { option: selected === variables.room ? "All rooms" : variables.room }
-        };
-      ]]]
+    tap_action:
+      action: none
     styles:
       card:
         - border-radius: 12px
@@ -52,7 +44,7 @@ button_card_templates:
         - position: relative
         - background-color: |
             [[[
-              const cutoff = Date.now() - 7 * 24 * 60 * 60 * 1000;
+              const cutoff = Date.now() - 10 * 60 * 1000;
               const keywords = (variables.room_keywords || []).map(k => k.toLowerCase());
               const active = Object.values(states).some(s => {
                 if (!s.entity_id || !s.entity_id.startsWith("automation.")) return false;
@@ -62,7 +54,7 @@ button_card_templates:
                 const last = s.attributes.last_triggered;
                 return last && new Date(last).getTime() >= cutoff;
               });
-              return active ? "#2471A3" : "#333333";
+              return active ? "#2471A3" : "var(--card-background-color, #1c1c1e)";
             ]]]
       icon:
         - width: 42%
@@ -84,38 +76,55 @@ button_card_templates:
       action: none
     styles:
       card:
+        - width: 100%
+        - min-width: 0
         - border-radius: 8px
-        - padding: 10px 8px
+        - padding: 8px 4px
         - background-color: "#252525"
         - box-shadow: none
+        - overflow: visible
       grid:
         - grid-template-areas: '"n description last_triggered count actions"'
-        - grid-template-columns: minmax(150px, 2fr) minmax(150px, 2fr) minmax(125px, 1.5fr) minmax(90px, 0.8fr) minmax(90px, 0.8fr)
-        - column-gap: 8px
+        - grid-template-columns: minmax(0, 1.35fr) minmax(0, 1.5fr) minmax(74px, 1fr) minmax(58px, 0.6fr) minmax(132px, 1.4fr)
+        - column-gap: 5px
       name:
+        - min-width: 0
         - justify-self: start
-        - font-size: 12px
+        - font-size: 11px
         - font-weight: bold
+        - white-space: normal
+        - overflow-wrap: anywhere
         - color: white
       custom_fields:
         description:
+          - min-width: 0
           - justify-self: start
-          - font-size: 12px
+          - font-size: 10px
           - font-weight: bold
+          - white-space: normal
+          - overflow-wrap: anywhere
           - color: white
         last_triggered:
+          - min-width: 0
           - justify-self: start
-          - font-size: 12px
+          - font-size: 10px
           - font-weight: bold
+          - white-space: normal
+          - overflow-wrap: anywhere
           - color: white
         count:
+          - min-width: 0
           - justify-self: center
-          - font-size: 12px
+          - text-align: center
+          - font-size: 10px
           - font-weight: bold
+          - white-space: normal
           - color: white
         actions:
+          - min-width: 0
           - justify-self: center
-          - font-size: 12px
+          - text-align: center
+          - font-size: 10px
           - font-weight: bold
           - color: white
     custom_fields:
@@ -135,40 +144,52 @@ button_card_templates:
       action: more-info
     styles:
       card:
+        - width: 100%
+        - min-width: 0
         - border-radius: 0
-        - padding: 8px
+        - padding: 6px 4px
         - box-shadow: none
         - border-bottom: 1px solid var(--divider-color)
+        - overflow: visible
       grid:
         - grid-template-areas: '"n description last_triggered count actions"'
-        - grid-template-columns: minmax(150px, 2fr) minmax(150px, 2fr) minmax(125px, 1.5fr) minmax(90px, 0.8fr) minmax(90px, 0.8fr)
-        - column-gap: 8px
+        - grid-template-columns: minmax(0, 1.35fr) minmax(0, 1.5fr) minmax(74px, 1fr) minmax(58px, 0.6fr) minmax(132px, 1.4fr)
+        - column-gap: 5px
       name:
+        - min-width: 0
         - justify-self: start
         - text-align: left
         - white-space: normal
-        - font-size: 12px
+        - overflow-wrap: anywhere
+        - font-size: 11px
         - font-weight: 500
       custom_fields:
         description:
+          - min-width: 0
           - justify-self: start
           - text-align: left
           - white-space: normal
-          - font-size: 11px
+          - overflow-wrap: anywhere
+          - font-size: 10px
           - color: var(--secondary-text-color)
         last_triggered:
+          - min-width: 0
           - justify-self: start
           - text-align: left
           - white-space: normal
-          - font-size: 11px
+          - overflow-wrap: anywhere
+          - font-size: 10px
         count:
+          - min-width: 0
           - justify-self: center
           - text-align: center
-          - font-size: 12px
+          - font-size: 11px
         actions:
+          - min-width: 0
+          - width: 100%
           - justify-self: center
           - align-self: center
-          - width: 100%
+          - overflow: visible
     custom_fields:
       description: |
         [[[
@@ -188,38 +209,104 @@ button_card_templates:
         ]]]
       count: |
         [[[
-          // Home Assistant exposes last_triggered, but not a rolling execution count.
-          // Keep this blank rather than inventing a count.
+          // A rolling 7-day run count needs a separate recorder-backed counter.
           return "—";
         ]]]
       actions:
         card:
-          type: custom:button-card
-          entity: '[[[[ return entity.entity_id ]]]]'
-          show_icon: true
-          show_name: true
-          show_state: false
-          icon: '[[[[ return entity.state === "on" ? "mdi:toggle-switch" : "mdi:toggle-switch-off-outline"; ]]]]'
-          name: '[[[[ return entity.state === "on" ? "Disable" : "Enable"; ]]]]'
-          tap_action: '[[[[ return { action: "call-service", service: entity.state === "on" ? "automation.turn_off" : "automation.turn_on", target: { entity_id: entity.entity_id } }; ]]]]'
-          styles:
-            card:
-              - background: transparent
-              - box-shadow: none
-              - padding: 2px
-              - width: 84px
-              - min-height: 42px
-            grid:
-              - grid-template-areas: '"i n"'
-              - grid-template-columns: 24px 1fr
-              - column-gap: 4px
-            icon:
-              - width: 20px
-              - color: '[[[[ return entity.state === "on" ? "#2ecc71" : "#888888"; ]]]]'
-            name:
-              - font-size: 10px
-              - white-space: normal
-              - justify-self: start
+          type: horizontal-stack
+          cards:
+            - type: custom:button-card
+              entity: '[[[[ return entity.entity_id ]]]]'
+              icon: '[[[[ return entity.state === "on" ? "mdi:toggle-switch" : "mdi:toggle-switch-off-outline"; ]]]]'
+              name: '[[[[ return entity.state === "on" ? "Off" : "On"; ]]]]'
+              show_name: true
+              show_state: false
+              tap_action: |
+                [[[[ return {
+                  action: "call-service",
+                  service: entity.state === "on" ? "automation.turn_off" : "automation.turn_on",
+                  target: { entity_id: entity.entity_id }
+                }; ]]]]
+              styles:
+                card:
+                  - background: transparent
+                  - box-shadow: none
+                  - padding: 2px 0
+                  - width: 40px
+                  - min-height: 42px
+                grid:
+                  - grid-template-areas: '"i" "n"'
+                  - grid-template-columns: 1fr
+                  - grid-template-rows: 20px min-content
+                icon:
+                  - width: 19px
+                  - color: '[[[[ return entity.state === "on" ? "#2ecc71" : "#888888"; ]]]]'
+                name:
+                  - font-size: 9px
+                  - justify-self: center
+                  - white-space: nowrap
+            - type: custom:button-card
+              entity: '[[[[ return entity.entity_id ]]]]'
+              icon: mdi:timer-outline
+              name: 1h
+              show_name: true
+              show_state: false
+              tap_action: |
+                [[[[ return {
+                  action: "call-service",
+                  service: "script.turn_on",
+                  target: { entity_id: "script.automation_disable_timed" },
+                  data: { variables: { automation_entity: entity.entity_id, duration_mode: "hour" } }
+                }; ]]]]
+              styles:
+                card:
+                  - background: transparent
+                  - box-shadow: none
+                  - padding: 2px 0
+                  - width: 40px
+                  - min-height: 42px
+                grid:
+                  - grid-template-areas: '"i" "n"'
+                  - grid-template-columns: 1fr
+                  - grid-template-rows: 20px min-content
+                icon:
+                  - width: 18px
+                name:
+                  - font-size: 9px
+                  - justify-self: center
+                  - white-space: nowrap
+            - type: custom:button-card
+              entity: '[[[[ return entity.entity_id ]]]]'
+              icon: mdi:calendar-clock
+              name: Tmrw
+              show_name: true
+              show_state: false
+              tap_action: |
+                [[[[ return {
+                  action: "call-service",
+                  service: "script.turn_on",
+                  target: { entity_id: "script.automation_disable_timed" },
+                  data: { variables: { automation_entity: entity.entity_id, duration_mode: "tomorrow" } }
+                }; ]]]]
+              styles:
+                card:
+                  - background: transparent
+                  - box-shadow: none
+                  - padding: 2px 0
+                  - width: 44px
+                  - min-height: 42px
+                grid:
+                  - grid-template-areas: '"i" "n"'
+                  - grid-template-columns: 1fr
+                  - grid-template-rows: 20px min-content
+                icon:
+                  - width: 18px
+                name:
+                  - font-size: 9px
+                  - justify-self: center
+                  - white-space: nowrap
+
 
 views:
   - title: Automations
@@ -320,7 +407,7 @@ views:
       - type: grid
         cards:
           - type: heading
-            heading: AUTOMATIONS
+            heading: Automations
             heading_style: title
           - type: custom:button-card
             template: automation_header
@@ -332,13 +419,8 @@ views:
               square: false
             card_param: cards
             show_empty: true
-            sort:
-              method: attribute
-              attribute: last_triggered
-              reverse: true
             filter:
               template: |
-                {% set selected = states('input_select.automation_room_filter') %}
                 {% set ns = namespace(items=[]) %}
                 {% set recent = states.automation
                   | selectattr('attributes.last_triggered')
@@ -353,19 +435,7 @@ views:
                     'must fix' in name or
                     'not working' in name or
                     'old' in name %}
-                  {% set room_match =
-                    selected == 'All rooms' or
-                    (selected == 'Kitchen' and 'kitchen' in name) or
-                    (selected == 'Small bed' and ('small bedroom' in name or 'small bed' in name)) or
-                    (selected == 'Big bed' and ('big bedroom' in name or 'big bed' in name or 'master bedroom' in name)) or
-                    (selected == 'Bath' and ('bathroom' in name or 'bath' in name or 'toilet' in name)) or
-                    (selected == 'Entry' and ('entry' in name or 'front door' in name or 'rear door' in name or 'doorbell' in name)) or
-                    (selected == 'Hal' and ('hallway' in name or 'hall' in name)) or
-                    (selected == 'Storage' and 'storage' in name) or
-                    (selected == 'Living room' and ('living room' in name or 'livingroom' in name or 'living-room' in name)) or
-                    (selected == 'Eva bed' and ('eva bedroom' in name or 'eva bed' in name or 'eva light' in name)) or
-                    (selected == 'Dining' and ('dining' in name or 'dinning' in name)) %}
-                  {% if not excluded and room_match %}
+                  {% if not excluded %}
                     {% set ns.items = ns.items + [{
                       'type': 'custom:button-card',
                       'entity': a.entity_id,
