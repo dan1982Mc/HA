@@ -816,6 +816,9 @@ views:
                   return (rain > 0) ? '#3498db' : '#f1c40f';
                 ]]]
           label:
+            - align-self: center
+            - justify-self: start
+            - line-height: 1.2
             - font-size: 14px
             - font-weight: '500'
             - color: var(--primary-text-color, white)
@@ -972,6 +975,9 @@ views:
                   return '#ffffff';
                 ]]]
           label:
+            - align-self: center
+            - justify-self: start
+            - line-height: 1.2
             - font-size: 14px
             - font-weight: '500'
             - color: var(--primary-text-color, white)
@@ -1009,6 +1015,9 @@ views:
             - height: 22px
             - color: '#f1c40f'
           label:
+            - align-self: center
+            - justify-self: start
+            - line-height: 1.2
             - font-size: 14px
             - font-weight: '600'
             - color: white
@@ -1061,6 +1070,9 @@ views:
             - height: 22px
             - color: '#ffffff'
           label:
+            - align-self: center
+            - justify-self: start
+            - line-height: 1.2
             - font-size: 14px
             - font-weight: '600'
             - color: white
@@ -1111,6 +1123,9 @@ views:
             - height: 22px
             - color: '#ffffff'
           label:
+            - align-self: center
+            - justify-self: start
+            - line-height: 1.2
             - font-size: 14px
             - font-weight: '600'
             - color: white
@@ -1161,6 +1176,9 @@ views:
             - height: 22px
             - color: '#ffffff'
           label:
+            - align-self: center
+            - justify-self: start
+            - line-height: 1.2
             - font-size: 14px
             - font-weight: '600'
             - color: white
