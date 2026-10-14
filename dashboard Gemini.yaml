@@ -820,7 +820,7 @@ views:
             - align-self: center
             - justify-self: start
             - position: relative
-            - top: 3px
+            - top: 1px
             - line-height: 1.2
             - font-size: 14px
             - font-weight: '500'
@@ -982,7 +982,7 @@ views:
             - align-self: center
             - justify-self: start
             - position: relative
-            - top: 3px
+            - top: 1px
             - line-height: 1.2
             - font-size: 14px
             - font-weight: '500'
@@ -1025,7 +1025,7 @@ views:
             - align-self: center
             - justify-self: start
             - position: relative
-            - top: 3px
+            - top: 1px
             - line-height: 1.2
             - font-size: 14px
             - font-weight: '600'
@@ -1083,7 +1083,7 @@ views:
             - align-self: center
             - justify-self: start
             - position: relative
-            - top: 3px
+            - top: 1px
             - line-height: 1.2
             - font-size: 14px
             - font-weight: '600'
@@ -1139,7 +1139,7 @@ views:
             - align-self: center
             - justify-self: start
             - position: relative
-            - top: 3px
+            - top: 1px
             - line-height: 1.2
             - font-size: 14px
             - font-weight: '600'
@@ -1195,7 +1195,7 @@ views:
             - align-self: center
             - justify-self: start
             - position: relative
-            - top: 3px
+            - top: 1px
             - line-height: 1.2
             - font-size: 14px
             - font-weight: '600'
