@@ -515,10 +515,14 @@ button_card_templates:
         - aspect-ratio: 1/1
         - animation: |
             [[[
-              if (!variables.binary_sensor || !states[variables.binary_sensor]) return 'none';
-              // Mimics your appliance_template's blinking behavior when running
-              if (states[variables.binary_sensor].state === 'on') 
-                return 'blink 3s ease-in-out infinite';
+              if (variables.binary_sensor && states[variables.binary_sensor]) {
+                if (states[variables.binary_sensor].state === 'on') return 'blink 3s ease-in-out infinite';
+                return 'none';
+              }
+              if (variables.power_sensor && states[variables.power_sensor]) {
+                const current = Number(states[variables.power_sensor].state);
+                return Number.isFinite(current) && current > 0.05 ? 'blink 3s ease-in-out infinite' : 'none';
+              }
               return 'none';
             ]]]
       grid:
@@ -542,31 +546,29 @@ button_card_templates:
         // Force UI updates via sensor.time clock synchronization
         const timeTrigger = states['sensor.time']?.state;
 
-        if (!variables.binary_sensor || !states[variables.binary_sensor]) return "No Sensor";
-        
-        const isRunning = states[variables.binary_sensor].state === 'on';
+        let runEntity = null;
+        if (variables.binary_sensor && states[variables.binary_sensor]) {
+          if (states[variables.binary_sensor].state === 'on') runEntity = states[variables.binary_sensor];
+        } else if (variables.power_sensor && states[variables.power_sensor]) {
+          const current = Number(states[variables.power_sensor].state);
+          if (Number.isFinite(current) && current > 0.05) runEntity = states[variables.power_sensor];
+        }
 
-        if (isRunning) {
-          // Calculate elapsed time using the binary sensor's continuous running timeframe
-          const startTime = new Date(states[variables.binary_sensor].last_changed);
+        if (runEntity) {
+          const startTime = new Date(runEntity.last_changed);
           const now = new Date();
           const diffMs = now - startTime;
-
-          // Convert milliseconds to Hours and Minutes
           const diffHrs = Math.floor(diffMs / 3600000);
           const diffMins = Math.floor((diffMs % 3600000) / 60000);
-
           let elapsedStr = "";
-          if (diffHrs > 0) {
-            elapsedStr += diffHrs + "h ";
-          }
+          if (diffHrs > 0) elapsedStr += diffHrs + "h ";
           elapsedStr += diffMins + "m";
-
           return "Running: " + elapsedStr;
         }
 
-        // Exact fallback string match from your appliance_template
-        return "Ready";
+        if (variables.binary_sensor && states[variables.binary_sensor]) return "Ready";
+        if (variables.power_sensor && states[variables.power_sensor]) return "Standby";
+        return "No Sensor";
       ]]]
   timer_dashboard_template:
     show_name: false
@@ -1122,6 +1124,79 @@ views:
       - type: grid
         cards:
           - type: heading
+            heading: SECURITY ALARM
+          - type: grid
+            columns: 3
+            square: false
+            cards:
+              - type: custom:button-card
+                entity: alarm_control_panel.alarmo
+                name: Arm Away
+                icon: mdi:shield-lock
+                show_state: true
+                tap_action:
+                  action: call-service
+                  service: alarmo.arm
+                  service_data:
+                    entity_id: alarm_control_panel.alarmo
+                    mode: away
+                  confirmation:
+                    text: Arm the alarm in Away mode?
+                styles:
+                  card:
+                    - border-radius: 12px
+                    - padding: 12px
+                  icon:
+                    - color: |
+                        [[[
+                          return entity && entity.state === 'armed_away' ? '#e74c3c' : 'var(--primary-text-color)';
+                        ]]]
+              - type: custom:button-card
+                entity: alarm_control_panel.alarmo
+                name: Arm Home
+                icon: mdi:shield-home
+                show_state: true
+                tap_action:
+                  action: call-service
+                  service: alarmo.arm
+                  service_data:
+                    entity_id: alarm_control_panel.alarmo
+                    mode: home
+                  confirmation:
+                    text: Arm the alarm in Home mode?
+                styles:
+                  card:
+                    - border-radius: 12px
+                    - padding: 12px
+                  icon:
+                    - color: |
+                        [[[
+                          return entity && entity.state === 'armed_home' ? '#e67e22' : 'var(--primary-text-color)';
+                        ]]]
+              - type: custom:button-card
+                entity: alarm_control_panel.alarmo
+                name: Disarm
+                icon: mdi:shield-off
+                show_state: true
+                tap_action:
+                  action: call-service
+                  service: alarmo.disarm
+                  service_data:
+                    entity_id: alarm_control_panel.alarmo
+                  confirmation:
+                    text: Disarm the alarm?
+                styles:
+                  card:
+                    - border-radius: 12px
+                    - padding: 12px
+                  icon:
+                    - color: |
+                        [[[
+                          return entity && entity.state === 'disarmed' ? '#2ecc71' : 'var(--primary-text-color)';
+                        ]]]
+      - type: grid
+        cards:
+          - type: heading
             heading: MEDIA & PLAYERS
           - type: grid
             columns: 2
@@ -1234,6 +1309,16 @@ views:
                     }
                     return "Idle";
                   ]]]
+              - type: custom:button-card
+                entity: switch.switch_kitchen_cabinet_lights
+                name: Bathroom Ventilator
+                icon: mdi:fan
+                template: appliance_template
+              - type: custom:button-card
+                entity: switch.kitchen_coffee_switch
+                name: Coffee Maker
+                icon: mdi:coffee-maker
+                template: appliance_template
           - type: grid
             columns: 3
             square: true
@@ -1254,6 +1339,13 @@ views:
                 variables:
                   binary_sensor: binary_sensor.dryer_running
                   power_sensor: sensor.fridge_2_current
+              - type: custom:button-card
+                entity: switch.garden_house
+                name: Laptop
+                icon: mdi:laptop
+                template: plug_appliance_template
+                variables:
+                  power_sensor: sensor.garden_house_current
               - type: custom:button-card
                 entity: vacuum.roborock_s5e_a709_robot_cleaner
                 name: Vacuum
@@ -1276,6 +1368,58 @@ views:
                     entity_id: vacuum.roborock_s5e_a709_robot_cleaner
                 hold_action:
                   action: more-info
+      - type: grid
+        cards:
+          - type: heading
+            heading: TOILET
+          - type: custom:button-card
+            entity: sensor.toilet_light_sensor_illuminance
+            name: Toilet Light
+            icon: mdi:lightbulb
+            show_state: true
+            show_label: true
+            triggers_update:
+              - sensor.toilet_light_sensor_illuminance
+              - switch.bot_3061_toilet_2
+            tap_action:
+              action: more-info
+            double_tap_action:
+              action: call-service
+              service: switch.toggle
+              service_data:
+                entity_id: switch.bot_3061_toilet_2
+            hold_action:
+              action: more-info
+            label: |
+              [[[
+                const lux = Number(entity && entity.state);
+                if (!Number.isFinite(lux)) return 'Light level unavailable';
+                return (lux > 10 ? 'Light likely ON' : 'Light likely OFF') + ' · ' + lux + ' lx';
+              ]]]
+            styles:
+              card:
+                - border-radius: 12px
+                - padding: 12px
+                - min-height: 100px
+              grid:
+                - grid-template-areas: '"i n" "i s" "i l"'
+                - grid-template-columns: 64px 1fr
+                - grid-template-rows: min-content min-content min-content
+              icon:
+                - width: 42px
+                - color: |
+                    [[[
+                      const lux = Number(entity && entity.state);
+                      return Number.isFinite(lux) && lux > 10 ? '#f1c40f' : 'var(--secondary-text-color)';
+                    ]]]
+              name:
+                - justify-self: start
+                - font-weight: bold
+              state:
+                - justify-self: start
+              label:
+                - justify-self: start
+                - font-size: 12px
       - type: grid
         columns: 1
         square: false
@@ -1341,22 +1485,9 @@ views:
                 name: Small bed
                 template: motion_template
               - type: custom:button-card
-                entity: sun.sun
-                name: Bath
+                entity: binary_sensor.bathroom_motion_occupancy
+                name: Bathroom
                 template: motion_template
-                show_last_changed: false
-                label: ' '
-                state:
-                  - operator: default
-                    icon: mdi:motion-sensor-off
-                styles:
-                  card:
-                    - background-color: '#333333'
-                    - opacity: 0.5
-                  icon:
-                    - color: '#888888'
-                  name:
-                    - color: '#888888'
               - type: custom:button-card
                 entity: binary_sensor.hal_motion_all
                 name: Hal
