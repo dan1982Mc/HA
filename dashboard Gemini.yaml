@@ -821,6 +821,104 @@ views:
             - color: var(--primary-text-color, white)
             - white-space: nowrap
       - type: custom:button-card
+        entity: alarm_control_panel.alarmo
+        name: false
+        show_name: false
+        show_icon: true
+        show_label: true
+        icon: mdi:shield
+        label: |
+          [[[
+            if (!entity) return 'Alarm unavailable';
+            const names = {
+              disarmed: 'Disarmed',
+              armed_home: 'Armed Home',
+              armed_away: 'Armed Away',
+              arming: 'Arming',
+              pending: 'Pending',
+              triggered: 'Triggered'
+            };
+            return names[entity.state] || entity.state;
+          ]]]
+        tap_action:
+          action: fire-dom-event
+          browser_mod:
+            service: browser_mod.popup
+            data:
+              title: Security Alarm
+              size: normal
+              content:
+                type: vertical-stack
+                cards:
+                  - type: custom:button-card
+                    entity: alarm_control_panel.alarmo
+                    name: Arm Away
+                    icon: mdi:shield-lock
+                    show_state: false
+                    tap_action:
+                      action: call-service
+                      service: alarmo.arm
+                      service_data:
+                        entity_id: alarm_control_panel.alarmo
+                        mode: away
+                      confirmation:
+                        text: Arm the alarm in Away mode?
+                  - type: custom:button-card
+                    entity: alarm_control_panel.alarmo
+                    name: Arm Home
+                    icon: mdi:shield-home
+                    show_state: false
+                    tap_action:
+                      action: call-service
+                      service: alarmo.arm
+                      service_data:
+                        entity_id: alarm_control_panel.alarmo
+                        mode: home
+                      confirmation:
+                        text: Arm the alarm in Home mode?
+                  - type: custom:button-card
+                    entity: alarm_control_panel.alarmo
+                    name: Disarm
+                    icon: mdi:shield-off
+                    show_state: false
+                    tap_action:
+                      action: call-service
+                      service: alarmo.disarm
+                      service_data:
+                        entity_id: alarm_control_panel.alarmo
+                      confirmation:
+                        text: Disarm the alarm?
+        styles:
+          card:
+            - height: 42px
+            - padding: 0px 14px
+            - border-radius: 20px
+            - background-color: 'var(--ha-card-background, #2c3e50)'
+            - border: '1px solid var(--divider-color, #404040)'
+            - width: auto !important
+          grid:
+            - grid-template-areas: '"i l"'
+            - grid-template-columns: min-content max-content
+            - gap: 8px
+            - align-items: center
+          icon:
+            - width: 22px
+            - height: 22px
+            - color: |
+                [[[
+                  if (!entity) return 'var(--secondary-text-color)';
+                  if (entity.state === 'disarmed') return '#2ecc71';
+                  if (entity.state === 'armed_home') return '#e67e22';
+                  if (entity.state === 'armed_away') return '#e74c3c';
+                  if (entity.state === 'triggered') return '#ff0000';
+                  return 'var(--primary-text-color)';
+                ]]]
+          label:
+            - font-size: 14px
+            - font-weight: '500'
+            - color: var(--primary-text-color, white)
+            - white-space: nowrap
+      - type: custom:button-card
         entity: calendar.zile_de_nastere
         show_name: false
         show_icon: true
