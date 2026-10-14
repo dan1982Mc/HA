@@ -1456,7 +1456,7 @@ views:
                   service_data:
                     entity_id: media_player.kitchen_clock
               - type: custom:button-card
-                entity: media_player.mibox_master_control
+                entity: media_player.mibox4
                 template: media_icon_only
                 name: TV
                 icon: mdi:television
@@ -1465,7 +1465,7 @@ views:
                   action: call-service
                   service: media_player.volume_mute
                   target:
-                    entity_id: media_player.mibox_master_control
+                    entity_id: media_player.mibox4
                   data:
                     is_volume_muted: toggle
                 double_tap_action:
@@ -1474,7 +1474,7 @@ views:
                   action: call-service
                   service: media_player.toggle
                   target:
-                    entity_id: media_player.mibox_master_control
+                    entity_id: media_player.mibox4
       - type: grid
         cards:
           - type: heading
