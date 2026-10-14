@@ -1470,6 +1470,28 @@ views:
                     return "Idle";
                   ]]]
               - type: custom:button-card
+                entity: vacuum.roborock_s5e_a709_robot_cleaner
+                name: Vacuum
+                icon: mdi:robot-vacuum
+                template: vacuum_template
+                tap_action:
+                  action: perform-action
+                  perform_action: |
+                    [[[ 
+                      return (entity.state === 'cleaning' || entity.state === 'on') 
+                        ? 'vacuum.pause' 
+                        : 'vacuum.start'; 
+                    ]]]
+                  target:
+                    entity_id: vacuum.roborock_s5e_a709_robot_cleaner
+                double_tap_action:
+                  action: perform-action
+                  perform_action: vacuum.return_to_base
+                  target:
+                    entity_id: vacuum.roborock_s5e_a709_robot_cleaner
+                hold_action:
+                  action: more-info
+              - type: custom:button-card
                 entity: switch.switch_kitchen_cabinet_lights
                 name: Bathroom Ventilator
                 icon: mdi:fan
@@ -1506,28 +1528,6 @@ views:
                 template: plug_appliance_template
                 variables:
                   power_sensor: sensor.garden_house_current
-              - type: custom:button-card
-                entity: vacuum.roborock_s5e_a709_robot_cleaner
-                name: Vacuum
-                icon: mdi:robot-vacuum
-                template: vacuum_template
-                tap_action:
-                  action: perform-action
-                  perform_action: |
-                    [[[ 
-                      return (entity.state === 'cleaning' || entity.state === 'on') 
-                        ? 'vacuum.pause' 
-                        : 'vacuum.start'; 
-                    ]]]
-                  target:
-                    entity_id: vacuum.roborock_s5e_a709_robot_cleaner
-                double_tap_action:
-                  action: perform-action
-                  perform_action: vacuum.return_to_base
-                  target:
-                    entity_id: vacuum.roborock_s5e_a709_robot_cleaner
-                hold_action:
-                  action: more-info
       - type: grid
         columns: 1
         square: false
@@ -1626,7 +1626,7 @@ views:
                 name: Kitchen
                 template: motion_template
               - type: custom:button-card
-                entity: binary_sensor.eva_motion_occupancy
+                entity: binary_sensor.motionsensor_hal_switchbot_front_door
                 name: Eva bed
                 template: motion_template
               - type: custom:button-card
