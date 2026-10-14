@@ -855,6 +855,25 @@ views:
                     name: Arm Away
                     icon: mdi:shield-lock
                     show_state: false
+                    styles:
+                      card:
+                        - min-height: 44px
+                        - padding: 4px 8px
+                        - border-radius: 8px
+                        - background-color: 'var(--ha-card-background, #2c3e50)'
+                      grid:
+                        - grid-template-areas: '"i n"'
+                        - grid-template-columns: 28px 1fr
+                        - align-items: center
+                      icon:
+                        - width: 20px
+                        - color: |
+                            [[[
+                              return entity && entity.state === 'armed_away' ? '#e74c3c' : '#ffffff';
+                            ]]]
+                      name:
+                        - font-size: 13px
+                        - justify-self: start
                     tap_action:
                       action: call-service
                       service: alarmo.arm
@@ -868,6 +887,25 @@ views:
                     name: Arm Home
                     icon: mdi:shield-home
                     show_state: false
+                    styles:
+                      card:
+                        - min-height: 44px
+                        - padding: 4px 8px
+                        - border-radius: 8px
+                        - background-color: 'var(--ha-card-background, #2c3e50)'
+                      grid:
+                        - grid-template-areas: '"i n"'
+                        - grid-template-columns: 28px 1fr
+                        - align-items: center
+                      icon:
+                        - width: 20px
+                        - color: |
+                            [[[
+                              return entity && entity.state === 'armed_home' ? '#e67e22' : '#ffffff';
+                            ]]]
+                      name:
+                        - font-size: 13px
+                        - justify-self: start
                     tap_action:
                       action: call-service
                       service: alarmo.arm
@@ -881,6 +919,25 @@ views:
                     name: Disarm
                     icon: mdi:shield-off
                     show_state: false
+                    styles:
+                      card:
+                        - min-height: 44px
+                        - padding: 4px 8px
+                        - border-radius: 8px
+                        - background-color: 'var(--ha-card-background, #2c3e50)'
+                      grid:
+                        - grid-template-areas: '"i n"'
+                        - grid-template-columns: 28px 1fr
+                        - align-items: center
+                      icon:
+                        - width: 20px
+                        - color: |
+                            [[[
+                              return entity && entity.state === 'disarmed' ? '#2ecc71' : '#ffffff';
+                            ]]]
+                      name:
+                        - font-size: 13px
+                        - justify-self: start
                     tap_action:
                       action: call-service
                       service: alarmo.disarm
@@ -893,7 +950,13 @@ views:
             - height: 42px
             - padding: 0px 14px
             - border-radius: 20px
-            - background-color: 'var(--ha-card-background, #2c3e50)'
+            - background-color: |
+                [[[
+                  if (!entity) return 'var(--ha-card-background, #2c3e50)';
+                  if (entity.state === 'disarmed') return '#217a43';
+                  if (['armed_home', 'armed_away', 'triggered'].includes(entity.state)) return '#a93226';
+                  return 'var(--ha-card-background, #2c3e50)';
+                ]]]
             - border: '1px solid var(--divider-color, #404040)'
             - width: auto !important
           grid:
@@ -906,12 +969,7 @@ views:
             - height: 22px
             - color: |
                 [[[
-                  if (!entity) return 'var(--secondary-text-color)';
-                  if (entity.state === 'disarmed') return '#2ecc71';
-                  if (entity.state === 'armed_home') return '#e67e22';
-                  if (entity.state === 'armed_away') return '#e74c3c';
-                  if (entity.state === 'triggered') return '#ff0000';
-                  return 'var(--primary-text-color)';
+                  return '#ffffff';
                 ]]]
           label:
             - font-size: 14px
