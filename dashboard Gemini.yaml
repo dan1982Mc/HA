@@ -658,9 +658,13 @@ button_card_templates:
           });
         };
         const assist = states['timer.assistant_timer'];
-        return !hasEchoTimers('sensor.2e_echo_dot_dan_next_timer')
+        const monitorIds = ['sensor.2e_echo_dot_dan_next_timer', 'sensor.dan_s_echo_dot_next_timer'];
+        const monitorProblem = monitorIds.some(id => !states[id] || ['unavailable','unknown'].includes(states[id].state));
+        return !monitorProblem
+          && !hasEchoTimers('sensor.2e_echo_dot_dan_next_timer')
           && !hasEchoTimers('sensor.dan_s_echo_dot_next_timer')
-          && assist?.state !== 'active';
+          && assist?.state !== 'active'
+          && (!assist || !['unavailable','unknown'].includes(assist.state));
       ]]]
     styles:
       card:
@@ -803,7 +807,16 @@ button_card_templates:
             }
           }
 
-          if (!panels.length) return '';
+          if (!panels.length) {
+            const monitorIds = ['sensor.2e_echo_dot_dan_next_timer', 'sensor.dan_s_echo_dot_next_timer'];
+            const unavailable = monitorIds.filter(id => !states[id] || ['unavailable','unknown'].includes(states[id].state));
+            if (unavailable.length || !assist || ['unavailable','unknown'].includes(assist.state)) {
+              const bad = unavailable.map(id => !states[id] ? id + ': ENTITY MISSING' : id + ': ' + states[id].state.toUpperCase());
+              if (!assist || ['unavailable','unknown'].includes(assist.state)) bad.push(!assist ? 'timer.assistant_timer: ENTITY MISSING' : 'timer.assistant_timer: ' + assist.state.toUpperCase());
+              return '<div style="width:100%;box-sizing:border-box;background:var(--ha-card-background,var(--card-background-color));border:1px solid #ff4444;border-radius:12px;padding:12px;color:#ff6666;font-weight:700;">TIMER STATUS UNAVAILABLE<div style="font-size:11px;font-weight:400;margin-top:6px;">' + esc(bad.join(' • ')) + '</div></div>';
+            }
+            return '';
+          }
           return ''
             + '<div style="width:100%;box-sizing:border-box;">'
             +   '<div style="font-size:16px;font-weight:700;color:var(--primary-text-color);margin:0 0 12px 0;">🔔 RUNNING TIMERS</div>'
