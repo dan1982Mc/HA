@@ -666,7 +666,9 @@ button_card_templates:
         };
         const assist = states['timer.assistant_timer'];
         const monitorIds = ['sensor.2e_echo_dot_dan_next_timer', 'sensor.dan_s_echo_dot_next_timer'];
-        const monitorProblem = monitorIds.some(id => !states[id] || ['unavailable','unknown','none','null',''].includes(states[id].state));
+        // Alexa next-timer sensors can be unavailable when no timer is active; treat that as an empty timer list.
+        // Missing entities or unknown states still indicate a monitoring problem.
+        const monitorProblem = monitorIds.some(id => !states[id] || ['unknown','none','null',''].includes(states[id].state));
         return !monitorProblem
           && !hasEchoTimers('sensor.2e_echo_dot_dan_next_timer')
           && !hasEchoTimers('sensor.dan_s_echo_dot_next_timer')
@@ -799,7 +801,9 @@ button_card_templates:
 
           const assist = states['timer.assistant_timer'];
           const monitorIds = ['sensor.2e_echo_dot_dan_next_timer', 'sensor.dan_s_echo_dot_next_timer'];
-          const monitorProblems = monitorIds.filter(id => !states[id] || ['unavailable','unknown','none','null',''].includes(states[id].state))
+          // Alexa next-timer sensors commonly report unavailable when no timer is active.
+          // Do not raise an offline warning for that expected idle condition.
+          const monitorProblems = monitorIds.filter(id => !states[id] || ['unknown','none','null',''].includes(states[id].state))
             .map(id => !states[id] ? id + ': ENTITY MISSING' : id + ': ' + states[id].state.toUpperCase());
           if (assist && assist.state === 'active') {
             const attrs = assist.attributes || {};
