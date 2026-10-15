@@ -11,7 +11,7 @@ button_card_templates:
     label: |
       [[[
         if (!entity) return 'ENTITY MISSING';
-        if (['unavailable','unknown'].includes(entity.state)) return entity.state.toUpperCase();
+        if (['unavailable','unknown','none','null',''].includes(entity.state)) return entity.state.toUpperCase();
         return '';
       ]]]
     tap_action:
@@ -38,12 +38,12 @@ button_card_templates:
         - background-color: |
             [[[
               if (!entity) return '#333333';
-              if (['unavailable','unknown'].includes(entity.state)) return '#333333';
+              if (['unavailable','unknown','none','null',''].includes(entity.state)) return '#333333';
               return entity.state === 'on' ? 'orange' : 'var(--card-background-color, #1c1c1e)';
             ]]]
         - opacity: |
             [[[
-              return (!entity || ['unavailable','unknown'].includes(entity.state)) ? '0.65' : '1';
+              return (!entity || ['unavailable','unknown','none','null',''].includes(entity.state)) ? '0.65' : '1';
             ]]]
       grid:
         - grid-template-areas: '"i" "n" "l"'
@@ -53,12 +53,12 @@ button_card_templates:
         - justify-self: center
         - color: |
             [[[
-              return (!entity || ['unavailable','unknown'].includes(entity.state)) ? '#ff6666' : 'var(--primary-text-color)';
+              return (!entity || ['unavailable','unknown','none','null',''].includes(entity.state)) ? '#ff6666' : 'var(--primary-text-color)';
             ]]]
       icon:
         - color: |
             [[[
-              if (!entity || ['unavailable','unknown'].includes(entity.state)) return '#ff6666';
+              if (!entity || ['unavailable','unknown','none','null',''].includes(entity.state)) return '#ff6666';
               return entity.state === 'on' ? 'white' : 'var(--state-icon-color)';
             ]]]
       label:
@@ -83,7 +83,7 @@ button_card_templates:
     label: |
       [[[
         if (!entity) return 'ENTITY MISSING';
-        if (['unavailable','unknown'].includes(entity.state)) return entity.state.toUpperCase();
+        if (['unavailable','unknown','none','null',''].includes(entity.state)) return entity.state.toUpperCase();
         return entity.state === 'on' ? 'OPEN' : 'CLOSED';
       ]]]
     styles:
@@ -94,7 +94,7 @@ button_card_templates:
         - position: relative
         - background-color: |
             [[[
-              if (!entity || ['unavailable','unknown'].includes(entity.state)) return '#333333';
+              if (!entity || ['unavailable','unknown','none','null',''].includes(entity.state)) return '#333333';
               if (entity.state === 'on') {
                 const mins = (Date.now() - new Date(entity.last_changed).getTime()) / 60000;
                 if (mins <= 5) return '#f1c40f';
@@ -105,7 +105,7 @@ button_card_templates:
             ]]]
         - opacity: |
             [[[
-              return (!entity || ['unavailable','unknown'].includes(entity.state)) ? '0.65' : '1';
+              return (!entity || ['unavailable','unknown','none','null',''].includes(entity.state)) ? '0.65' : '1';
             ]]]
       icon:
         - width: 45%
@@ -115,7 +115,7 @@ button_card_templates:
         - transform: translate(-50%, -50%)
         - color: |
             [[[
-              if (!entity || ['unavailable','unknown'].includes(entity.state)) return '#ff6666';
+              if (!entity || ['unavailable','unknown','none','null',''].includes(entity.state)) return '#ff6666';
               return entity.state === 'on' ? '#FFFFFF' : 'var(--primary-text-color)';
             ]]]
       name:
@@ -126,7 +126,7 @@ button_card_templates:
         - right: 10px
         - color: |
             [[[
-              return (!entity || ['unavailable','unknown'].includes(entity.state)) ? '#ff6666' : 'var(--primary-text-color)';
+              return (!entity || ['unavailable','unknown','none','null',''].includes(entity.state)) ? '#ff6666' : 'var(--primary-text-color)';
             ]]]
       label:
         - font-size: 10px
@@ -137,7 +137,7 @@ button_card_templates:
         - font-weight: bold
         - color: |
             [[[
-              return (!entity || ['unavailable','unknown'].includes(entity.state)) ? '#ff6666' : 'var(--secondary-text-color)';
+              return (!entity || ['unavailable','unknown','none','null',''].includes(entity.state)) ? '#ff6666' : 'var(--secondary-text-color)';
             ]]]
     state:
       - value: unavailable
@@ -152,7 +152,7 @@ button_card_templates:
     label: |
       [[[
         if (!entity) return 'ENTITY MISSING';
-        if (['unavailable','unknown'].includes(entity.state)) return entity.state.toUpperCase();
+        if (['unavailable','unknown','none','null',''].includes(entity.state)) return entity.state.toUpperCase();
         return entity.state === 'on' ? 'MOTION' : 'CLEAR';
       ]]]
     styles:
@@ -163,7 +163,7 @@ button_card_templates:
         - position: relative
         - background-color: |
             [[[
-              if (!entity || ['unavailable','unknown'].includes(entity.state)) return '#333333';
+              if (!entity || ['unavailable','unknown','none','null',''].includes(entity.state)) return '#333333';
               if (entity.state === 'on') {
                 const mins = (Date.now() - new Date(entity.last_changed).getTime()) / 60000;
                 if (mins < 5) return '#3498db';
@@ -174,7 +174,7 @@ button_card_templates:
             ]]]
         - opacity: |
             [[[
-              return (!entity || ['unavailable','unknown'].includes(entity.state)) ? '0.65' : '1';
+              return (!entity || ['unavailable','unknown','none','null',''].includes(entity.state)) ? '0.65' : '1';
             ]]]
       icon:
         - width: 45%
@@ -184,7 +184,7 @@ button_card_templates:
         - transform: translate(-50%, -50%)
         - color: |
             [[[
-              if (!entity || ['unavailable','unknown'].includes(entity.state)) return '#ff6666';
+              if (!entity || ['unavailable','unknown','none','null',''].includes(entity.state)) return '#ff6666';
               return entity.state === 'on' ? '#FFFFFF' : 'var(--primary-text-color)';
             ]]]
       name:
@@ -195,7 +195,7 @@ button_card_templates:
         - right: 10px
         - color: |
             [[[
-              return (!entity || ['unavailable','unknown'].includes(entity.state)) ? '#ff6666' : 'var(--primary-text-color)';
+              return (!entity || ['unavailable','unknown','none','null',''].includes(entity.state)) ? '#ff6666' : 'var(--primary-text-color)';
             ]]]
       label:
         - font-size: 10px
@@ -206,7 +206,7 @@ button_card_templates:
         - font-weight: bold
         - color: |
             [[[
-              return (!entity || ['unavailable','unknown'].includes(entity.state)) ? '#ff6666' : 'var(--secondary-text-color)';
+              return (!entity || ['unavailable','unknown','none','null',''].includes(entity.state)) ? '#ff6666' : 'var(--secondary-text-color)';
             ]]]
     state:
       - value: 'on'
@@ -223,7 +223,7 @@ button_card_templates:
     state_display: |
       [[[
         if (!entity) return 'ENTITY MISSING';
-        if (['unavailable','unknown'].includes(entity.state)) return entity.state.toUpperCase();
+        if (['unavailable','unknown','none','null',''].includes(entity.state)) return entity.state.toUpperCase();
         return entity.state.replace(/_/g, ' ');
       ]]]
     styles:
@@ -297,7 +297,7 @@ button_card_templates:
     label: |
       [[[
         if (!entity) return 'ENTITY MISSING';
-        if (['unavailable','unknown'].includes(entity.state)) return entity.state.toUpperCase();
+        if (['unavailable','unknown','none','null',''].includes(entity.state)) return entity.state.toUpperCase();
         const v = entity.attributes && entity.attributes.volume_level;
         if (v === undefined || v === null || !Number.isFinite(Number(v))) return 'VOLUME DATA MISSING';
         return Math.round(Number(v) * 100) + '%';
@@ -306,7 +306,7 @@ button_card_templates:
       icon:
         - color: |
             [[[
-              if (!entity || ['unavailable','unknown'].includes(entity.state)) return '#ff4444';
+              if (!entity || ['unavailable','unknown','none','null',''].includes(entity.state)) return '#ff4444';
               const v = entity.attributes && entity.attributes.volume_level;
               if (v === undefined || v === null || !Number.isFinite(Number(v))) return '#ff4444';
               if (Number(v) <= 0.3) return '#2ecc71';
@@ -317,7 +317,7 @@ button_card_templates:
         - font-size: 11px
         - color: |
             [[[
-              return (!entity || ['unavailable','unknown'].includes(entity.state) || !entity.attributes || entity.attributes.volume_level === undefined || entity.attributes.volume_level === null) ? '#ff4444' : '#888888';
+              return (!entity || ['unavailable','unknown','none','null',''].includes(entity.state) || !entity.attributes || entity.attributes.volume_level === undefined || entity.attributes.volume_level === null) ? '#ff4444' : '#888888';
             ]]]
   media_icon_only:
     show_state: true
@@ -325,7 +325,7 @@ button_card_templates:
     state_display: |
       [[[
         if (!entity) return 'ENTITY MISSING';
-        if (['unavailable','unknown'].includes(entity.state)) return entity.state.toUpperCase();
+        if (['unavailable','unknown','none','null',''].includes(entity.state)) return entity.state.toUpperCase();
         return entity.state.replace(/_/g, ' ');
       ]]]
     styles:
@@ -421,7 +421,7 @@ button_card_templates:
     label: |
       [[[
         if (!entity) return 'ENTITY MISSING';
-        if (['unavailable','unknown'].includes(entity.state)) return entity.state.toUpperCase();
+        if (['unavailable','unknown','none','null',''].includes(entity.state)) return entity.state.toUpperCase();
         if (['run','cleaning','on'].includes(entity.state)) {
           const mins = Math.max(0, Math.floor((Date.now() - new Date(entity.last_changed).getTime()) / 60000));
           const hrs = Math.floor(mins / 60);
@@ -436,12 +436,12 @@ button_card_templates:
         - aspect-ratio: 1/1
         - animation: |
             [[[
-              if (!entity || ['unavailable','unknown'].includes(entity.state)) return 'none';
+              if (!entity || ['unavailable','unknown','none','null',''].includes(entity.state)) return 'none';
               return ['run','cleaning','on'].includes(entity.state) ? 'blink 3s ease-in-out infinite' : 'none';
             ]]]
         - background-color: |
             [[[
-              return (!entity || ['unavailable','unknown'].includes(entity.state)) ? '#333333' : 'var(--card-background-color, #1c1c1e)';
+              return (!entity || ['unavailable','unknown','none','null',''].includes(entity.state)) ? '#333333' : 'var(--card-background-color, #1c1c1e)';
             ]]]
       grid:
         - grid-template-areas: '"n" "i" "l"'
@@ -452,7 +452,7 @@ button_card_templates:
         - justify-self: end
         - color: |
             [[[
-              return (!entity || ['unavailable','unknown'].includes(entity.state)) ? '#ff4444' : 'var(--primary-text-color)';
+              return (!entity || ['unavailable','unknown','none','null',''].includes(entity.state)) ? '#ff4444' : 'var(--primary-text-color)';
             ]]]
       icon:
         - width: 40%
@@ -460,7 +460,7 @@ button_card_templates:
         - justify-self: center
         - color: |
             [[[
-              return (!entity || ['unavailable','unknown'].includes(entity.state)) ? '#ff4444' : 'var(--state-icon-color)';
+              return (!entity || ['unavailable','unknown','none','null',''].includes(entity.state)) ? '#ff4444' : 'var(--state-icon-color)';
             ]]]
       label:
         - justify-self: center
@@ -468,7 +468,7 @@ button_card_templates:
         - font-size: 11px
         - color: |
             [[[
-              return (!entity || ['unavailable','unknown'].includes(entity.state)) ? '#ff4444' : 'var(--secondary-text-color)';
+              return (!entity || ['unavailable','unknown','none','null',''].includes(entity.state)) ? '#ff4444' : 'var(--secondary-text-color)';
             ]]]
   vacuum_template:
     show_state: false
@@ -477,7 +477,7 @@ button_card_templates:
     label: |
       [[[
         if (!entity) return 'ENTITY MISSING';
-        if (['unavailable','unknown'].includes(entity.state)) return entity.state.toUpperCase();
+        if (['unavailable','unknown','none','null',''].includes(entity.state)) return entity.state.toUpperCase();
         const remain = entity.attributes && (entity.attributes.remaining_time || entity.attributes.time_remaining);
         return remain ? remain + ' left' : (entity.state === 'docked' ? 'Docked' : entity.state.replace(/_/g, ' '));
       ]]]
@@ -485,7 +485,7 @@ button_card_templates:
       status: |
         [[[
           if (!entity) return 'ENTITY MISSING';
-          if (['unavailable','unknown'].includes(entity.state)) return entity.state.toUpperCase();
+          if (['unavailable','unknown','none','null',''].includes(entity.state)) return entity.state.toUpperCase();
           return entity.state.replace(/_/g, ' ');
         ]]]
     styles:
@@ -495,12 +495,12 @@ button_card_templates:
         - aspect-ratio: 1/1
         - animation: |
             [[[
-              if (!entity || ['unavailable','unknown'].includes(entity.state)) return 'none';
+              if (!entity || ['unavailable','unknown','none','null',''].includes(entity.state)) return 'none';
               return ['run','cleaning','on'].includes(entity.state) ? 'blink 3s ease-in-out infinite' : 'none';
             ]]]
         - background-color: |
             [[[
-              return (!entity || ['unavailable','unknown'].includes(entity.state)) ? '#333333' : 'var(--card-background-color, #1c1c1e)';
+              return (!entity || ['unavailable','unknown','none','null',''].includes(entity.state)) ? '#333333' : 'var(--card-background-color, #1c1c1e)';
             ]]]
       grid:
         - grid-template-areas: '"n" "i" "l" "status"'
@@ -511,7 +511,7 @@ button_card_templates:
         - justify-self: end
         - color: |
             [[[
-              return (!entity || ['unavailable','unknown'].includes(entity.state)) ? '#ff4444' : 'var(--primary-text-color)';
+              return (!entity || ['unavailable','unknown','none','null',''].includes(entity.state)) ? '#ff4444' : 'var(--primary-text-color)';
             ]]]
       icon:
         - width: 40%
@@ -519,7 +519,7 @@ button_card_templates:
         - justify-self: center
         - color: |
             [[[
-              return (!entity || ['unavailable','unknown'].includes(entity.state)) ? '#ff4444' : 'var(--state-icon-color)';
+              return (!entity || ['unavailable','unknown','none','null',''].includes(entity.state)) ? '#ff4444' : 'var(--state-icon-color)';
             ]]]
       label:
         - justify-self: center
@@ -527,7 +527,7 @@ button_card_templates:
         - font-size: 11px
         - color: |
             [[[
-              return (!entity || ['unavailable','unknown'].includes(entity.state)) ? '#ff4444' : 'var(--secondary-text-color)';
+              return (!entity || ['unavailable','unknown','none','null',''].includes(entity.state)) ? '#ff4444' : 'var(--secondary-text-color)';
             ]]]
       custom_fields:
         status:
@@ -550,9 +550,9 @@ button_card_templates:
     lock:
       enabled: |
         [[[
-          if (!entity || ['unavailable','unknown'].includes(entity.state)) return true;
+          if (!entity || ['unavailable','unknown','none','null',''].includes(entity.state)) return true;
           const ids = [variables.binary_sensor, variables.power_sensor].filter(Boolean);
-          return ids.some(id => !states[id] || ['unavailable','unknown'].includes(states[id].state));
+          return ids.some(id => !states[id] || ['unavailable','unknown','none','null',''].includes(states[id].state));
         ]]]
       duration: 3
     variables:
@@ -561,11 +561,11 @@ button_card_templates:
     label: |
       [[[
         if (!entity) return 'ENTITY MISSING';
-        if (['unavailable','unknown'].includes(entity.state)) return entity.state.toUpperCase();
+        if (['unavailable','unknown','none','null',''].includes(entity.state)) return entity.state.toUpperCase();
         const sensorState = id => id ? states[id] : null;
         if (variables.binary_sensor) {
           const s = sensorState(variables.binary_sensor);
-          if (!s || ['unavailable','unknown'].includes(s.state)) return 'RUN SENSOR ' + (!s ? 'MISSING' : s.state.toUpperCase());
+          if (!s || ['unavailable','unknown','none','null',''].includes(s.state)) return 'RUN SENSOR ' + (!s ? 'MISSING' : s.state.toUpperCase());
           if (s.state === 'on') {
             const mins = Math.max(0, Math.floor((Date.now() - new Date(s.last_changed).getTime()) / 60000));
             return 'Running: ' + (Math.floor(mins/60) ? Math.floor(mins/60) + 'h ' : '') + (mins%60) + 'm';
@@ -574,7 +574,7 @@ button_card_templates:
         }
         if (variables.power_sensor) {
           const p = sensorState(variables.power_sensor);
-          if (!p || ['unavailable','unknown'].includes(p.state)) return 'POWER SENSOR ' + (!p ? 'MISSING' : p.state.toUpperCase());
+          if (!p || ['unavailable','unknown','none','null',''].includes(p.state)) return 'POWER SENSOR ' + (!p ? 'MISSING' : p.state.toUpperCase());
           const current = Number(p.state);
           if (!Number.isFinite(current)) return 'POWER SENSOR INVALID';
           if (current > 0.05) {
@@ -592,7 +592,7 @@ button_card_templates:
         - aspect-ratio: 1/1
         - animation: |
             [[[
-              if (!entity || ['unavailable','unknown'].includes(entity.state)) return 'none';
+              if (!entity || ['unavailable','unknown','none','null',''].includes(entity.state)) return 'none';
               const ids = [variables.binary_sensor, variables.power_sensor].filter(Boolean);
               if (variables.binary_sensor && states[variables.binary_sensor] && states[variables.binary_sensor].state === 'on') return 'blink 3s ease-in-out infinite';
               if (variables.power_sensor && states[variables.power_sensor]) {
@@ -603,7 +603,7 @@ button_card_templates:
             ]]]
         - background-color: |
             [[[
-              return (!entity || ['unavailable','unknown'].includes(entity.state)) ? '#333333' : 'var(--card-background-color, #1c1c1e)';
+              return (!entity || ['unavailable','unknown','none','null',''].includes(entity.state)) ? '#333333' : 'var(--card-background-color, #1c1c1e)';
             ]]]
       grid:
         - grid-template-areas: '"n" "i" "l"'
@@ -615,7 +615,7 @@ button_card_templates:
         - align-self: start
         - color: |
             [[[
-              return (!entity || ['unavailable','unknown'].includes(entity.state)) ? '#ff4444' : 'var(--primary-text-color)';
+              return (!entity || ['unavailable','unknown','none','null',''].includes(entity.state)) ? '#ff4444' : 'var(--primary-text-color)';
             ]]]
       icon:
         - width: 40%
@@ -623,7 +623,7 @@ button_card_templates:
         - justify-self: center
         - color: |
             [[[
-              return (!entity || ['unavailable','unknown'].includes(entity.state)) ? '#ff4444' : 'var(--state-icon-color)';
+              return (!entity || ['unavailable','unknown','none','null',''].includes(entity.state)) ? '#ff4444' : 'var(--state-icon-color)';
             ]]]
       label:
         - justify-self: center
@@ -631,9 +631,9 @@ button_card_templates:
         - font-size: 11px
         - color: |
             [[[
-              if (!entity || ['unavailable','unknown'].includes(entity.state)) return '#ff4444';
+              if (!entity || ['unavailable','unknown','none','null',''].includes(entity.state)) return '#ff4444';
               const ids = [variables.binary_sensor, variables.power_sensor].filter(Boolean);
-              return ids.some(id => !states[id] || ['unavailable','unknown'].includes(states[id].state)) ? '#ff4444' : 'var(--secondary-text-color)';
+              return ids.some(id => !states[id] || ['unavailable','unknown','none','null',''].includes(states[id].state)) ? '#ff4444' : 'var(--secondary-text-color)';
             ]]]
   timer_dashboard_template:
     show_name: false
@@ -666,12 +666,12 @@ button_card_templates:
         };
         const assist = states['timer.assistant_timer'];
         const monitorIds = ['sensor.2e_echo_dot_dan_next_timer', 'sensor.dan_s_echo_dot_next_timer'];
-        const monitorProblem = monitorIds.some(id => !states[id] || ['unavailable','unknown'].includes(states[id].state));
+        const monitorProblem = monitorIds.some(id => !states[id] || ['unavailable','unknown','none','null',''].includes(states[id].state));
         return !monitorProblem
           && !hasEchoTimers('sensor.2e_echo_dot_dan_next_timer')
           && !hasEchoTimers('sensor.dan_s_echo_dot_next_timer')
           && assist?.state !== 'active'
-          && (!assist || !['unavailable','unknown'].includes(assist.state));
+          && (!assist || !['unavailable','unknown','none','null',''].includes(assist.state));
       ]]]
     styles:
       card:
@@ -799,7 +799,7 @@ button_card_templates:
 
           const assist = states['timer.assistant_timer'];
           const monitorIds = ['sensor.2e_echo_dot_dan_next_timer', 'sensor.dan_s_echo_dot_next_timer'];
-          const monitorProblems = monitorIds.filter(id => !states[id] || ['unavailable','unknown'].includes(states[id].state))
+          const monitorProblems = monitorIds.filter(id => !states[id] || ['unavailable','unknown','none','null',''].includes(states[id].state))
             .map(id => !states[id] ? id + ': ENTITY MISSING' : id + ': ' + states[id].state.toUpperCase());
           if (assist && assist.state === 'active') {
             const attrs = assist.attributes || {};
@@ -818,9 +818,9 @@ button_card_templates:
           }
 
           if (!panels.length) {
-            if (monitorProblems.length || !assist || ['unavailable','unknown'].includes(assist.state)) {
+            if (monitorProblems.length || !assist || ['unavailable','unknown','none','null',''].includes(assist.state)) {
               const bad = monitorProblems.slice();
-              if (!assist || ['unavailable','unknown'].includes(assist.state)) bad.push(!assist ? 'timer.assistant_timer: ENTITY MISSING' : 'timer.assistant_timer: ' + assist.state.toUpperCase());
+              if (!assist || ['unavailable','unknown','none','null',''].includes(assist.state)) bad.push(!assist ? 'timer.assistant_timer: ENTITY MISSING' : 'timer.assistant_timer: ' + assist.state.toUpperCase());
               return '<div style="width:100%;box-sizing:border-box;background:var(--ha-card-background,var(--card-background-color));border:1px solid #ff4444;border-radius:12px;padding:12px;color:#ff6666;font-weight:700;">TIMER STATUS UNAVAILABLE<div style="font-size:11px;font-weight:400;margin-top:6px;">' + esc(bad.join(' • ')) + '</div></div>';
             }
             return '';
@@ -850,7 +850,7 @@ views:
         label: |
           [[[
             if (!entity) return 'ENTITY MISSING';
-            if (['unavailable','unknown'].includes(entity.state)) return entity.state.toUpperCase();
+            if (['unavailable','unknown','none','null',''].includes(entity.state)) return entity.state.toUpperCase();
             const attrs = entity.attributes || {};
             const temp = attrs.temperature;
             const forecast = attrs.forecast;
@@ -864,7 +864,7 @@ views:
           ]]]
         icon: |
           [[[
-            if (!entity || ['unavailable','unknown'].includes(entity.state)) return 'mdi:alert-circle-outline';
+            if (!entity || ['unavailable','unknown','none','null',''].includes(entity.state)) return 'mdi:alert-circle-outline';
             const forecast = entity.attributes && entity.attributes.forecast;
             if (!Array.isArray(forecast) || !forecast.length || forecast[0].precipitation === undefined || forecast[0].precipitation === null) return 'mdi:alert-circle-outline';
             return Number(forecast[0].precipitation) > 0 ? 'mdi:weather-pouring' : 'mdi:weather-partly-cloudy';
@@ -878,7 +878,7 @@ views:
             - border-radius: 20px
             - background-color: |
                 [[[
-                  return (!entity || ['unavailable','unknown'].includes(entity.state) || !(entity.attributes && entity.attributes.temperature !== undefined && entity.attributes.forecast && entity.attributes.forecast.length && entity.attributes.forecast[0].precipitation !== undefined && entity.attributes.forecast[0].precipitation !== null)) ? '#333333' : 'var(--ha-card-background, #2c3e50)';
+                  return (!entity || ['unavailable','unknown','none','null',''].includes(entity.state) || !(entity.attributes && entity.attributes.temperature !== undefined && entity.attributes.forecast && entity.attributes.forecast.length && entity.attributes.forecast[0].precipitation !== undefined && entity.attributes.forecast[0].precipitation !== null)) ? '#333333' : 'var(--ha-card-background, #2c3e50)';
                 ]]]
             - border: '1px solid var(--divider-color, #404040)'
             - width: auto !important
@@ -919,7 +919,7 @@ views:
         label: |
           [[[
             if (!entity) return 'ENTITY MISSING';
-            if (['unavailable','unknown'].includes(entity.state)) return entity.state.toUpperCase();
+            if (['unavailable','unknown','none','null',''].includes(entity.state)) return entity.state.toUpperCase();
             const names = {
               disarmed: 'Disarmed',
               armed_home: 'Armed Home',
@@ -1446,7 +1446,7 @@ views:
                   [[[
                     const lux = Number(entity && entity.state);
                     if (!entity) return 'ENTITY MISSING';
-                    if (['unavailable','unknown'].includes(entity.state)) return entity.state.toUpperCase();
+                    if (['unavailable','unknown','none','null',''].includes(entity.state)) return entity.state.toUpperCase();
                     if (!Number.isFinite(lux)) return 'INVALID LIGHT LEVEL';
                     return (lux > 10 ? 'Likely ON' : 'Likely OFF') + ' · ' + lux + ' lx';
                   ]]]
