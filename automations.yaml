@@ -4152,3 +4152,48 @@
           entity_id: light.eva_bedroom_light
   mode: parallel
   max: 10
+
+- id: '1792070400000'
+  alias: Weather Forecast Summary Helper
+  description: Refresh the next 24-hour rain summary for the dashboard weather pill every 30 minutes and after Home Assistant starts.
+  triggers:
+  - trigger: homeassistant
+    event: start
+  - trigger: time_pattern
+    minutes: "/30"
+  conditions: []
+  actions:
+  - action: weather.get_forecasts
+    target:
+      entity_id: weather.forecast_home
+    data:
+      type: hourly
+    response_variable: weather_response
+  - variables:
+      forecast_list: "{{ weather_response.get('weather.forecast_home', {}).get('forecast', []) }}"
+      summary: >-
+        {% set ns = namespace(entry=none) %}
+        {% for item in forecast_list %}
+          {% if ns.entry is none and as_timestamp(item.datetime, 0) > as_timestamp(now()) and as_timestamp(item.datetime, 0) <= as_timestamp(now()) + 86400 and (item.precipitation | default(0) | float(0)) > 0 %}
+            {% set ns.entry = item %}
+          {% endif %}
+        {% endfor %}
+        {% if not forecast_list %}
+          Forecast unavailable
+        {% elif ns.entry is none %}
+          Dry for 24h
+        {% else %}
+          {% set minutes = ((as_timestamp(ns.entry.datetime) - as_timestamp(now())) / 60) | round(0) | int %}
+          {% set rain = ns.entry.precipitation | float(0) %}
+          {% if minutes < 60 %}
+            Rain in {{ minutes }}m · {{ rain }} mm
+          {% else %}
+            Rain in {{ (minutes / 60) | round(0) | int }}h · {{ rain }} mm
+          {% endif %}
+        {% endif %}
+  - action: input_text.set_value
+    target:
+      entity_id: input_text.weather_forecast_summary
+    data:
+      value: "{{ summary | trim }}"
+  mode: single
