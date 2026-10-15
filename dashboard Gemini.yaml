@@ -540,6 +540,19 @@ button_card_templates:
     show_state: false
     show_icon: true
     show_label: true
+    show_name: true
+    custom_fields:
+      energy: |
+        [[[
+          const id = variables.monthly_energy;
+          const s = id ? states[id] : null;
+          if (!s || ['unavailable','unknown','none','null',''].includes(s.state)) return '— kWh';
+          const value = Number(s.state);
+          if (!Number.isFinite(value)) return '— kWh';
+          return value.toFixed(2) + ' kWh';
+        ]]]
+    triggers_update:
+      - '[[[ return variables.monthly_energy ]]]'
     tap_action:
       action: more-info
     double_tap_action:
@@ -558,6 +571,7 @@ button_card_templates:
     variables:
       power_sensor: ''
       binary_sensor: ''
+      monthly_energy: ''
     label: |
       [[[
         if (!entity) return 'ENTITY MISSING';
@@ -590,10 +604,10 @@ button_card_templates:
         - border-radius: 12px
         - padding: 12px
         - aspect-ratio: 1/1
+        - position: relative
         - animation: |
             [[[
               if (!entity || ['unavailable','unknown','none','null',''].includes(entity.state)) return 'none';
-              const ids = [variables.binary_sensor, variables.power_sensor].filter(Boolean);
               if (variables.binary_sensor && states[variables.binary_sensor] && states[variables.binary_sensor].state === 'on') return 'blink 3s ease-in-out infinite';
               if (variables.power_sensor && states[variables.power_sensor]) {
                 const p = Number(states[variables.power_sensor].state);
@@ -606,7 +620,8 @@ button_card_templates:
               return (!entity || ['unavailable','unknown','none','null',''].includes(entity.state)) ? '#333333' : 'var(--card-background-color, #1c1c1e)';
             ]]]
       grid:
-        - grid-template-areas: '"n" "i" "l"'
+        - grid-template-areas: '"n n" "i i" "l l"'
+        - grid-template-columns: 1fr 1fr
         - grid-template-rows: min-content 1fr min-content
       name:
         - font-weight: bold
@@ -635,6 +650,33 @@ button_card_templates:
               const ids = [variables.binary_sensor, variables.power_sensor].filter(Boolean);
               return ids.some(id => !states[id] || ['unavailable','unknown','none','null',''].includes(states[id].state)) ? '#ff4444' : 'var(--secondary-text-color)';
             ]]]
+      custom_fields:
+        energy:
+          - position: absolute
+          - top: 10px
+          - left: 10px
+          - justify-self: start
+          - align-self: start
+          - font-size: 10px
+          - font-weight: bold
+          - color: |
+              [[[
+                const id = variables.monthly_energy;
+                const s = id ? states[id] : null;
+                if (!s || ['unavailable','unknown','none','null',''].includes(s.state)) return '#b0b0b0';
+                const current = Number(s.state);
+                const previous = Number(s.attributes && s.attributes.last_period);
+                if (!Number.isFinite(current) || !Number.isFinite(previous) || previous <= 0) return '#b0b0b0';
+                const now = new Date();
+                const daysElapsed = now.getDate() - 1 + (now.getHours() * 3600 + now.getMinutes() * 60 + now.getSeconds()) / 86400;
+                const prevMonthDays = new Date(now.getFullYear(), now.getMonth(), 0).getDate();
+                if (daysElapsed < 1) return '#b0b0b0';
+                const currentDailyRate = current / daysElapsed;
+                const previousDailyRate = previous / prevMonthDays;
+                if (currentDailyRate > previousDailyRate * 1.2) return '#e74c3c';
+                if (currentDailyRate < previousDailyRate * 0.5) return '#2ecc71';
+                return '#b0b0b0';
+              ]]]
   timer_dashboard_template:
     show_name: false
     show_icon: false
@@ -1698,6 +1740,7 @@ views:
                 variables:
                   binary_sensor: binary_sensor.washing_machine_running
                   power_sensor: sensor.smart_plug_3_current
+                  monthly_energy: sensor.laundry_whashing_machine_plug_washer_monthly_energy
               - type: custom:button-card
                 entity: switch.fridge_2
                 name: Dryer
@@ -1706,6 +1749,7 @@ views:
                 variables:
                   binary_sensor: binary_sensor.dryer_running
                   power_sensor: sensor.fridge_2_current
+                  monthly_energy: sensor.laundry_dryer_plug_dryer_monthly_energy
               - type: custom:button-card
                 entity: switch.garden_house
                 name: Laptop
@@ -1713,6 +1757,7 @@ views:
                 template: plug_appliance_template
                 variables:
                   power_sensor: sensor.garden_house_current
+                  monthly_energy: sensor.small_bedroom_small_bedroom_laptop_monthly_energy
       - type: grid
         columns: 1
         square: false
