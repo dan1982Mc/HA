@@ -295,23 +295,30 @@ button_card_templates:
     template: light_template
     show_label: true
     label: |
-      [[[ 
-        let v = entity.attributes.volume_level;
-        if (v === undefined) return '0%';
-        return Math.round(v * 100) + '%';
+      [[[
+        if (!entity) return 'ENTITY MISSING';
+        if (['unavailable','unknown'].includes(entity.state)) return entity.state.toUpperCase();
+        const v = entity.attributes && entity.attributes.volume_level;
+        if (v === undefined || v === null || !Number.isFinite(Number(v))) return 'VOLUME DATA MISSING';
+        return Math.round(Number(v) * 100) + '%';
       ]]]
     styles:
       icon:
         - color: |
             [[[
-              let v = entity.attributes.volume_level;
-              if (v <= 0.3) return '#2ecc71';
-              if (v <= 0.6) return '#f1c40f';
+              if (!entity || ['unavailable','unknown'].includes(entity.state)) return '#ff4444';
+              const v = entity.attributes && entity.attributes.volume_level;
+              if (v === undefined || v === null || !Number.isFinite(Number(v))) return '#ff4444';
+              if (Number(v) <= 0.3) return '#2ecc71';
+              if (Number(v) <= 0.6) return '#f1c40f';
               return '#e74c3c';
             ]]]
       label:
         - font-size: 11px
-        - color: '#888888'
+        - color: |
+            [[[
+              return (!entity || ['unavailable','unknown'].includes(entity.state) || !entity.attributes || entity.attributes.volume_level === undefined || entity.attributes.volume_level === null) ? '#ff4444' : '#888888';
+            ]]]
   media_icon_only:
     show_state: true
     show_name: true
@@ -791,6 +798,9 @@ button_card_templates:
           if (evaPanel) panels.push(evaPanel);
 
           const assist = states['timer.assistant_timer'];
+          const monitorIds = ['sensor.2e_echo_dot_dan_next_timer', 'sensor.dan_s_echo_dot_next_timer'];
+          const monitorProblems = monitorIds.filter(id => !states[id] || ['unavailable','unknown'].includes(states[id].state))
+            .map(id => !states[id] ? id + ': ENTITY MISSING' : id + ': ' + states[id].state.toUpperCase());
           if (assist && assist.state === 'active') {
             const attrs = assist.attributes || {};
             const finish = Date.parse(attrs.finishes_at || '');
@@ -808,17 +818,19 @@ button_card_templates:
           }
 
           if (!panels.length) {
-            const monitorIds = ['sensor.2e_echo_dot_dan_next_timer', 'sensor.dan_s_echo_dot_next_timer'];
-            const unavailable = monitorIds.filter(id => !states[id] || ['unavailable','unknown'].includes(states[id].state));
-            if (unavailable.length || !assist || ['unavailable','unknown'].includes(assist.state)) {
-              const bad = unavailable.map(id => !states[id] ? id + ': ENTITY MISSING' : id + ': ' + states[id].state.toUpperCase());
+            if (monitorProblems.length || !assist || ['unavailable','unknown'].includes(assist.state)) {
+              const bad = monitorProblems.slice();
               if (!assist || ['unavailable','unknown'].includes(assist.state)) bad.push(!assist ? 'timer.assistant_timer: ENTITY MISSING' : 'timer.assistant_timer: ' + assist.state.toUpperCase());
               return '<div style="width:100%;box-sizing:border-box;background:var(--ha-card-background,var(--card-background-color));border:1px solid #ff4444;border-radius:12px;padding:12px;color:#ff6666;font-weight:700;">TIMER STATUS UNAVAILABLE<div style="font-size:11px;font-weight:400;margin-top:6px;">' + esc(bad.join(' • ')) + '</div></div>';
             }
             return '';
           }
+          const monitorWarning = monitorProblems.length
+            ? '<div style="width:100%;box-sizing:border-box;border:1px solid #ff4444;border-radius:8px;padding:8px 10px;margin-bottom:10px;color:#ff6666;font-size:11px;font-weight:700;">TIMER MONITOR OFFLINE • ' + esc(monitorProblems.join(' • ')) + '</div>'
+            : '';
           return ''
             + '<div style="width:100%;box-sizing:border-box;">'
+            + monitorWarning
             +   '<div style="font-size:16px;font-weight:700;color:var(--primary-text-color);margin:0 0 12px 0;">🔔 RUNNING TIMERS</div>'
             +   '<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:12px;width:100%;">'
             +     panels.join('')
