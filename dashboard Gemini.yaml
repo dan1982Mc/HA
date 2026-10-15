@@ -848,6 +848,9 @@ views:
     badges:
       - type: custom:button-card
         entity: weather.forecast_home
+        triggers_update:
+          - weather.forecast_home
+          - input_text.weather_forecast_summary
         show_name: false
         show_icon: true
         show_state: false
@@ -858,21 +861,18 @@ views:
             if (['unavailable','unknown','none','null',''].includes(entity.state)) return entity.state.toUpperCase();
             const attrs = entity.attributes || {};
             const temp = attrs.temperature;
-            const forecast = attrs.forecast;
-            if (temp === undefined || temp === null) return 'WEATHER DATA MISSING';
-            if (!Array.isArray(forecast) || !forecast.length || forecast[0].precipitation === undefined || forecast[0].precipitation === null) {
-              return Math.round(Number(temp)) + '°C • RAIN DATA MISSING';
-            }
-            const rain = Number(forecast[0].precipitation);
-            if (!Number.isFinite(rain)) return Math.round(Number(temp)) + '°C • RAIN DATA INVALID';
-            return Math.round(Number(temp)) + '°C • ' + (rain > 0 ? rain + 'mm rain' : 'Dry');
+            if (temp === undefined || temp === null || !Number.isFinite(Number(temp))) return 'WEATHER DATA MISSING';
+            const summary = states['input_text.weather_forecast_summary'];
+            if (!summary) return Math.round(Number(temp)) + '°C · HELPER MISSING';
+            if (['unavailable','unknown','none','null',''].includes(summary.state)) return Math.round(Number(temp)) + '°C · FORECAST ' + summary.state.toUpperCase();
+            return Math.round(Number(temp)) + '°C · ' + summary.state;
           ]]]
         icon: |
           [[[
             if (!entity || ['unavailable','unknown','none','null',''].includes(entity.state)) return 'mdi:alert-circle-outline';
-            const forecast = entity.attributes && entity.attributes.forecast;
-            if (!Array.isArray(forecast) || !forecast.length || forecast[0].precipitation === undefined || forecast[0].precipitation === null) return 'mdi:alert-circle-outline';
-            return Number(forecast[0].precipitation) > 0 ? 'mdi:weather-pouring' : 'mdi:weather-partly-cloudy';
+            const summary = states['input_text.weather_forecast_summary'];
+            if (!summary || ['unavailable','unknown','none','null',''].includes(summary.state) || summary.state === 'Forecast unavailable') return 'mdi:alert-circle-outline';
+            return /rain/i.test(summary.state) ? 'mdi:weather-pouring' : 'mdi:weather-partly-cloudy';
           ]]]
         tap_action:
           action: more-info
@@ -883,7 +883,9 @@ views:
             - border-radius: 20px
             - background-color: |
                 [[[
-                  return (!entity || ['unavailable','unknown','none','null',''].includes(entity.state) || !(entity.attributes && entity.attributes.temperature !== undefined && entity.attributes.forecast && entity.attributes.forecast.length && entity.attributes.forecast[0].precipitation !== undefined && entity.attributes.forecast[0].precipitation !== null)) ? '#333333' : 'var(--ha-card-background, #2c3e50)';
+                  const summary = states['input_text.weather_forecast_summary'];
+                  const temp = entity && entity.attributes && entity.attributes.temperature;
+                  return (!entity || ['unavailable','unknown','none','null',''].includes(entity.state) || temp === undefined || temp === null || !summary || ['unavailable','unknown','none','null',''].includes(summary.state) || summary.state === 'Forecast unavailable') ? '#333333' : 'var(--ha-card-background, #2c3e50)';
                 ]]]
             - border: '1px solid var(--divider-color, #404040)'
             - width: auto !important
@@ -894,26 +896,16 @@ views:
             - gap: 8px
             - align-items: center
           icon:
-            - width: 22px
-            - height: 22px
             - color: |
                 [[[
-                  var rain = 0;
-                  if (entity.attributes.forecast && entity.attributes.forecast[0]) {
-                    rain = entity.attributes.forecast[0].precipitation;
-                  }
-                  return (rain > 0) ? '#3498db' : '#f1c40f';
+                  const summary = states['input_text.weather_forecast_summary'];
+                  if (!summary || ['unavailable','unknown','none','null',''].includes(summary.state) || summary.state === 'Forecast unavailable') return '#ff6666';
+                  return /rain/i.test(summary.state) ? '#5dade2' : '#f1c40f';
                 ]]]
           label:
-            - align-self: center
-            - justify-self: start
-            - position: relative
-            - top: 1px
-            - line-height: 1.2
-            - font-size: 14px
-            - font-weight: '500'
-            - color: var(--primary-text-color, white)
-            - white-space: nowrap
+            - font-size: 12px
+            - font-weight: bold
+            - color: var(--primary-text-color)
       - type: custom:button-card
         entity: alarm_control_panel.alarmo
         name: false
