@@ -1578,11 +1578,97 @@ views:
                 name: Dishwasher
                 icon: mdi:dishwasher
                 template: appliance_template
+                tap_action:
+                  action: fire-dom-event
+                  browser_mod:
+                    service: browser_mod.popup
+                    data:
+                      title: Dishwasher Controls
+                      size: normal
+                      content:
+                        type: vertical-stack
+                        cards:
+                          - type: heading
+                            heading: Dishwasher
+                            icon: mdi:dishwasher
+                          - type: tile
+                            entity: switch.dishwasher_power
+                            name: Power
+                            features:
+                              - type: toggle
+                          - type: entities
+                            show_header_toggle: false
+                            entities:
+                              - entity: select.dishwasher_active_program
+                                name: Washing program
+                          - type: heading
+                            heading: Wash Options
+                            icon: mdi:tune-variant
+                          - type: grid
+                            columns: 2
+                            square: false
+                            cards:
+                              - type: tile
+                                entity: switch.dishwasher_half_load
+                                name: Half Load
+                                features:
+                                  - type: toggle
+                              - type: tile
+                                entity: switch.dishwasher_intensive_zone
+                                name: Intensive Zone
+                                features:
+                                  - type: toggle
               - type: custom:button-card
                 entity: switch.oven_power
                 name: Oven
                 icon: mdi:stove
                 template: appliance_template
+                tap_action:
+                  action: fire-dom-event
+                  browser_mod:
+                    service: browser_mod.popup
+                    data:
+                      title: Oven Controls
+                      size: normal
+                      content:
+                        type: vertical-stack
+                        cards:
+                          - type: heading
+                            heading: Oven
+                            icon: mdi:stove
+                          - type: tile
+                            entity: switch.oven_power
+                            name: Power
+                            features:
+                              - type: toggle
+                          - type: entities
+                            show_header_toggle: false
+                            entities:
+                              - entity: select.oven_active_program
+                                name: Cooking program
+                          - type: custom:button-card
+                            entity: button.oven_pause_program
+                            name: Pause Program
+                            icon: mdi:pause-circle
+                            show_state: false
+                            tap_action:
+                              action: perform-action
+                              perform_action: button.press
+                              target:
+                                entity_id: button.oven_pause_program
+                            styles:
+                              card:
+                                - border-radius: 12px
+                                - padding: 12px
+                              grid:
+                                - grid-template-areas: '"i n"'
+                                - grid-template-columns: 48px 1fr
+                              icon:
+                                - width: 28px
+                                - color: var(--primary-color)
+                              name:
+                                - justify-self: start
+                                - font-weight: bold
               - type: custom:button-card
                 entity: switch.water_valve
                 name: Watering
@@ -1601,18 +1687,10 @@ views:
                 icon: mdi:robot-vacuum
                 template: vacuum_template
                 tap_action:
-                  action: perform-action
-                  perform_action: |
-                    [[[ 
-                      return (entity.state === 'cleaning' || entity.state === 'on') 
-                        ? 'vacuum.pause' 
-                        : 'vacuum.start'; 
-                    ]]]
-                  target:
-                    entity_id: vacuum.roborock_s5e_a709_robot_cleaner
+                  action: more-info
                 double_tap_action:
                   action: perform-action
-                  perform_action: vacuum.return_to_base
+                  perform_action: vacuum.pause
                   target:
                     entity_id: vacuum.roborock_s5e_a709_robot_cleaner
                 hold_action:
