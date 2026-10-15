@@ -7,6 +7,13 @@ button_card_templates:
   light_template:
     show_state: false
     show_icon: true
+    show_label: true
+    label: |
+      [[[
+        if (!entity) return 'ENTITY MISSING';
+        if (['unavailable','unknown'].includes(entity.state)) return entity.state.toUpperCase();
+        return '';
+      ]]]
     tap_action:
       action: fire-dom-event
       browser_mod:
@@ -28,12 +35,37 @@ button_card_templates:
         - border-radius: 12px
         - padding: 12px
         - aspect-ratio: 1/1
+        - background-color: |
+            [[[
+              if (!entity) return '#333333';
+              if (['unavailable','unknown'].includes(entity.state)) return '#333333';
+              return entity.state === 'on' ? 'orange' : 'var(--card-background-color, #1c1c1e)';
+            ]]]
+        - opacity: |
+            [[[
+              return (!entity || ['unavailable','unknown'].includes(entity.state)) ? '0.65' : '1';
+            ]]]
       grid:
-        - grid-template-areas: '"i" "n"'
+        - grid-template-areas: '"i" "n" "l"'
       name:
         - font-weight: bold
         - font-size: 14px
-        - justify-self: middle
+        - justify-self: center
+        - color: |
+            [[[
+              return (!entity || ['unavailable','unknown'].includes(entity.state)) ? '#ff6666' : 'var(--primary-text-color)';
+            ]]]
+      icon:
+        - color: |
+            [[[
+              if (!entity || ['unavailable','unknown'].includes(entity.state)) return '#ff6666';
+              return entity.state === 'on' ? 'white' : 'var(--state-icon-color)';
+            ]]]
+      label:
+        - font-size: 10px
+        - font-weight: bold
+        - justify-self: center
+        - color: '#ff6666'
     state:
       - value: 'on'
         styles:
@@ -43,26 +75,17 @@ button_card_templates:
             - color: white
           icon:
             - color: white
-      - value:
-          - unavailable
-          - unknown
-          - none
-          - 'null'
-        operator: in
-        styles:
-          card:
-            - background-color: '#333333'
-            - opacity: 0.5
-          name:
-            - color: '#ff4444'
-          icon:
-            - color: '#ff4444'
-        icon: mdi:lightbulb-alert
   contact_template:
     show_state: false
     show_icon: true
     show_last_changed: true
     show_label: true
+    label: |
+      [[[
+        if (!entity) return 'ENTITY MISSING';
+        if (['unavailable','unknown'].includes(entity.state)) return entity.state.toUpperCase();
+        return entity.state === 'on' ? 'OPEN' : 'CLOSED';
+      ]]]
     styles:
       card:
         - border-radius: 12px
@@ -71,21 +94,18 @@ button_card_templates:
         - position: relative
         - background-color: |
             [[[
-              const offline = ['unavailable', 'unknown', 'none', 'null'];
-              if (offline.includes(entity.state) || !entity.state) return '#333333';
-              
+              if (!entity || ['unavailable','unknown'].includes(entity.state)) return '#333333';
               if (entity.state === 'on') {
-                const diffMinutes = (new Date() - new Date(entity.last_changed)) / 1000 / 60;
-                if (diffMinutes <= 5) return '#f1c40f';  // Yellow
-                if (diffMinutes <= 30) return '#e67e22'; // Orange
-                return '#e74c3c';                        // Red
+                const mins = (Date.now() - new Date(entity.last_changed).getTime()) / 60000;
+                if (mins <= 5) return '#f1c40f';
+                if (mins <= 30) return '#e67e22';
+                return '#e74c3c';
               }
               return 'var(--card-background-color, #1c1c1e)';
             ]]]
         - opacity: |
             [[[
-              const offline = ['unavailable', 'unknown', 'none', 'null'];
-              return (offline.includes(entity.state) || !entity.state) ? 0.5 : 1.0;
+              return (!entity || ['unavailable','unknown'].includes(entity.state)) ? '0.65' : '1';
             ]]]
       icon:
         - width: 45%
@@ -95,10 +115,8 @@ button_card_templates:
         - transform: translate(-50%, -50%)
         - color: |
             [[[
-              const offline = ['unavailable', 'unknown', 'none', 'null'];
-              if (offline.includes(entity.state) || !entity.state) return '#888888';
-              if (entity.state === 'on') return '#FFFFFF';
-              return 'var(--primary-text-color)';
+              if (!entity || ['unavailable','unknown'].includes(entity.state)) return '#ff6666';
+              return entity.state === 'on' ? '#FFFFFF' : 'var(--primary-text-color)';
             ]]]
       name:
         - font-weight: bold
@@ -108,10 +126,7 @@ button_card_templates:
         - right: 10px
         - color: |
             [[[
-              const offline = ['unavailable', 'unknown', 'none', 'null'];
-              if (offline.includes(entity.state) || !entity.state) return '#888888';
-              if (entity.state === 'on') return '#FFFFFF';
-              return 'var(--primary-text-color)';
+              return (!entity || ['unavailable','unknown'].includes(entity.state)) ? '#ff6666' : 'var(--primary-text-color)';
             ]]]
       label:
         - font-size: 10px
@@ -119,27 +134,27 @@ button_card_templates:
         - bottom: 10px
         - left: 50%
         - transform: translateX(-50%)
+        - font-weight: bold
         - color: |
             [[[
-              const offline = ['unavailable', 'unknown', 'none', 'null'];
-              if (offline.includes(entity.state) || !entity.state) return '#888888';
-              if (entity.state === 'on') return '#E0E0E0';
-              return 'var(--secondary-text-color)';
+              return (!entity || ['unavailable','unknown'].includes(entity.state)) ? '#ff6666' : 'var(--secondary-text-color)';
             ]]]
     state:
       - value: unavailable
-        icon: mdi:help-circle-outline
+        icon: mdi:alert-circle-outline
       - value: unknown
-        icon: mdi:help-circle-outline
-      - value: none
-        icon: mdi:help-circle-outline
-      - value: 'null'
         icon: mdi:help-circle-outline
   motion_template:
     show_state: false
     show_icon: true
     show_last_changed: true
     show_label: true
+    label: |
+      [[[
+        if (!entity) return 'ENTITY MISSING';
+        if (['unavailable','unknown'].includes(entity.state)) return entity.state.toUpperCase();
+        return entity.state === 'on' ? 'MOTION' : 'CLEAR';
+      ]]]
     styles:
       card:
         - border-radius: 12px
@@ -148,26 +163,18 @@ button_card_templates:
         - position: relative
         - background-color: |
             [[[
-              const offline = ['unavailable', 'unknown', 'none', 'null'];
-              if (offline.includes(entity.state) || !entity.state) return '#333333';
-              
+              if (!entity || ['unavailable','unknown'].includes(entity.state)) return '#333333';
               if (entity.state === 'on') {
-                const now = new Date();
-                const lastChanged = new Date(entity.last_changed);
-                const diffMinutes = Math.floor((now - lastChanged) / 1000 / 60);
-
-                if (diffMinutes < 5) return '#3498db';   // 0-5 mins: Light Blue
-                if (diffMinutes < 30) return '#1f3a60';  // 5-30 mins: Dark Blue
-                return '#9b59b6';                        // 30+ mins: Light Purple
+                const mins = (Date.now() - new Date(entity.last_changed).getTime()) / 60000;
+                if (mins < 5) return '#3498db';
+                if (mins < 30) return '#1f3a60';
+                return '#9b59b6';
               }
-              
               return 'var(--card-background-color, #1c1c1e)';
             ]]]
         - opacity: |
             [[[
-              const offline = ['unavailable', 'unknown', 'none', 'null'];
-              // If state is any of the offline strings, dim the card to 50%
-              return (offline.includes(entity.state) || !entity.state) ? 0.5 : 1.0;
+              return (!entity || ['unavailable','unknown'].includes(entity.state)) ? '0.65' : '1';
             ]]]
       icon:
         - width: 45%
@@ -177,11 +184,8 @@ button_card_templates:
         - transform: translate(-50%, -50%)
         - color: |
             [[[
-              const offline = ['unavailable', 'unknown', 'none', 'null'];
-              if (offline.includes(entity.state) || !entity.state) return '#888888';
-              
-              if (entity.state === 'on') return '#FFFFFF';
-              return 'var(--primary-text-color)';
+              if (!entity || ['unavailable','unknown'].includes(entity.state)) return '#ff6666';
+              return entity.state === 'on' ? '#FFFFFF' : 'var(--primary-text-color)';
             ]]]
       name:
         - font-weight: bold
@@ -191,10 +195,7 @@ button_card_templates:
         - right: 10px
         - color: |
             [[[
-              const offline = ['unavailable', 'unknown', 'none', 'null'];
-              if (offline.includes(entity.state) || !entity.state) return '#888888';
-              if (entity.state === 'on') return '#FFFFFF';
-              return 'var(--primary-text-color)';
+              return (!entity || ['unavailable','unknown'].includes(entity.state)) ? '#ff6666' : 'var(--primary-text-color)';
             ]]]
       label:
         - font-size: 10px
@@ -202,12 +203,10 @@ button_card_templates:
         - bottom: 10px
         - left: 50%
         - transform: translateX(-50%)
+        - font-weight: bold
         - color: |
             [[[
-              const offline = ['unavailable', 'unknown', 'none', 'null'];
-              if (offline.includes(entity.state) || !entity.state) return '#888888';
-              if (entity.state === 'on') return '#E0E0E0';
-              return 'var(--secondary-text-color)';
+              return (!entity || ['unavailable','unknown'].includes(entity.state)) ? '#ff6666' : 'var(--secondary-text-color)';
             ]]]
     state:
       - value: 'on'
@@ -215,16 +214,18 @@ button_card_templates:
       - value: 'off'
         icon: mdi:motion-sensor-off
       - value: unavailable
-        icon: mdi:help-circle-outline
+        icon: mdi:alert-circle-outline
       - value: unknown
-        icon: mdi:help-circle-outline
-      - value: none
-        icon: mdi:help-circle-outline
-      - value: 'null'
         icon: mdi:help-circle-outline
   media_player_template:
     show_state: true
     show_icon: true
+    state_display: |
+      [[[
+        if (!entity) return 'ENTITY MISSING';
+        if (['unavailable','unknown'].includes(entity.state)) return entity.state.toUpperCase();
+        return entity.state.replace(/_/g, ' ');
+      ]]]
     styles:
       card:
         - border-radius: 12px
@@ -272,10 +273,23 @@ button_card_templates:
         styles:
           card:
             - background-color: '#333333'
-            - opacity: 0.5
+            - opacity: 0.65
           name:
             - color: '#ff4444'
           icon:
+            - color: '#ff4444'
+          state:
+            - color: '#ff4444'
+      - value: unknown
+        styles:
+          card:
+            - background-color: '#333333'
+            - opacity: 0.65
+          name:
+            - color: '#ff4444'
+          icon:
+            - color: '#ff4444'
+          state:
             - color: '#ff4444'
   volume_cycle_template:
     template: light_template
@@ -301,6 +315,12 @@ button_card_templates:
   media_icon_only:
     show_state: true
     show_name: true
+    state_display: |
+      [[[
+        if (!entity) return 'ENTITY MISSING';
+        if (['unavailable','unknown'].includes(entity.state)) return entity.state.toUpperCase();
+        return entity.state.replace(/_/g, ' ');
+      ]]]
     styles:
       card:
         - border-radius: 12px
@@ -365,7 +385,18 @@ button_card_templates:
         styles:
           card:
             - background-color: '#333333'
-            - opacity: 0.5
+            - opacity: 0.65
+          name:
+            - color: '#ff4444'
+          icon:
+            - color: '#ff4444'
+          state:
+            - color: '#ff4444'
+      - value: unknown
+        styles:
+          card:
+            - background-color: '#333333'
+            - opacity: 0.65
           name:
             - color: '#ff4444'
           icon:
@@ -380,6 +411,17 @@ button_card_templates:
       action: more-info
     double_tap_action:
       action: toggle
+    label: |
+      [[[
+        if (!entity) return 'ENTITY MISSING';
+        if (['unavailable','unknown'].includes(entity.state)) return entity.state.toUpperCase();
+        if (['run','cleaning','on'].includes(entity.state)) {
+          const mins = Math.max(0, Math.floor((Date.now() - new Date(entity.last_changed).getTime()) / 60000));
+          const hrs = Math.floor(mins / 60);
+          return 'Running: ' + (hrs ? hrs + 'h ' : '') + (mins % 60) + 'm';
+        }
+        return 'Ready';
+      ]]]
     styles:
       card:
         - border-radius: 12px
@@ -387,9 +429,12 @@ button_card_templates:
         - aspect-ratio: 1/1
         - animation: |
             [[[
-              if (entity.state === 'run' || entity.state === 'cleaning' || entity.state === 'on') 
-                return 'blink 3s ease-in-out infinite';
-              return 'none';
+              if (!entity || ['unavailable','unknown'].includes(entity.state)) return 'none';
+              return ['run','cleaning','on'].includes(entity.state) ? 'blink 3s ease-in-out infinite' : 'none';
+            ]]]
+        - background-color: |
+            [[[
+              return (!entity || ['unavailable','unknown'].includes(entity.state)) ? '#333333' : 'var(--card-background-color, #1c1c1e)';
             ]]]
       grid:
         - grid-template-areas: '"n" "i" "l"'
@@ -398,48 +443,44 @@ button_card_templates:
         - font-weight: bold
         - font-size: 12px
         - justify-self: end
+        - color: |
+            [[[
+              return (!entity || ['unavailable','unknown'].includes(entity.state)) ? '#ff4444' : 'var(--primary-text-color)';
+            ]]]
       icon:
         - width: 40%
         - align-self: center
         - justify-self: center
+        - color: |
+            [[[
+              return (!entity || ['unavailable','unknown'].includes(entity.state)) ? '#ff4444' : 'var(--state-icon-color)';
+            ]]]
       label:
         - justify-self: center
         - font-weight: bold
         - font-size: 11px
-    label: |
-      [[[
-        if (!entity) return "";
-
-        // 1. Check if the appliance is currently running
-        const isRunning = ['run', 'cleaning', 'on'].includes(entity.state);
-
-        if (isRunning) {
-          // 2. Calculate elapsed time using last_changed
-          const startTime = new Date(entity.last_changed);
-          const now = new Date();
-          const diffMs = now - startTime;
-
-          // 3. Convert milliseconds to Hours and Minutes
-          const diffHrs = Math.floor(diffMs / 3600000);
-          const diffMins = Math.floor((diffMs % 3600000) / 60000);
-
-          // 4. Format the output string (e.g., "1h 15m" or "45m")
-          let elapsedStr = "";
-          if (diffHrs > 0) {
-            elapsedStr += diffHrs + "h ";
-          }
-          elapsedStr += diffMins + "m";
-
-          return "Running: " + elapsedStr;
-        }
-
-        // Fallback for when the machine is idle/off
-        return "Ready";
-      ]]]
+        - color: |
+            [[[
+              return (!entity || ['unavailable','unknown'].includes(entity.state)) ? '#ff4444' : 'var(--secondary-text-color)';
+            ]]]
   vacuum_template:
     show_state: false
     show_icon: true
     show_label: true
+    label: |
+      [[[
+        if (!entity) return 'ENTITY MISSING';
+        if (['unavailable','unknown'].includes(entity.state)) return entity.state.toUpperCase();
+        const remain = entity.attributes && (entity.attributes.remaining_time || entity.attributes.time_remaining);
+        return remain ? remain + ' left' : (entity.state === 'docked' ? 'Docked' : entity.state.replace(/_/g, ' '));
+      ]]]
+    custom_fields:
+      status: |
+        [[[
+          if (!entity) return 'ENTITY MISSING';
+          if (['unavailable','unknown'].includes(entity.state)) return entity.state.toUpperCase();
+          return entity.state.replace(/_/g, ' ');
+        ]]]
     styles:
       card:
         - border-radius: 12px
@@ -447,9 +488,12 @@ button_card_templates:
         - aspect-ratio: 1/1
         - animation: |
             [[[
-              if (entity.state === 'run' || entity.state === 'cleaning' || entity.state === 'on') 
-                return 'blink 3s ease-in-out infinite';
-              return 'none';
+              if (!entity || ['unavailable','unknown'].includes(entity.state)) return 'none';
+              return ['run','cleaning','on'].includes(entity.state) ? 'blink 3s ease-in-out infinite' : 'none';
+            ]]]
+        - background-color: |
+            [[[
+              return (!entity || ['unavailable','unknown'].includes(entity.state)) ? '#333333' : 'var(--card-background-color, #1c1c1e)';
             ]]]
       grid:
         - grid-template-areas: '"n" "i" "l" "status"'
@@ -458,34 +502,32 @@ button_card_templates:
         - font-weight: bold
         - font-size: 12px
         - justify-self: end
+        - color: |
+            [[[
+              return (!entity || ['unavailable','unknown'].includes(entity.state)) ? '#ff4444' : 'var(--primary-text-color)';
+            ]]]
       icon:
         - width: 40%
         - align-self: center
         - justify-self: center
+        - color: |
+            [[[
+              return (!entity || ['unavailable','unknown'].includes(entity.state)) ? '#ff4444' : 'var(--state-icon-color)';
+            ]]]
       label:
         - justify-self: center
         - font-weight: bold
         - font-size: 11px
-        - margin-bottom: 2px
+        - color: |
+            [[[
+              return (!entity || ['unavailable','unknown'].includes(entity.state)) ? '#ff4444' : 'var(--secondary-text-color)';
+            ]]]
       custom_fields:
         status:
           - justify-self: center
           - font-size: 10px
           - opacity: 0.6
           - text-transform: capitalize
-    label: |
-      [[[
-        if (!entity || !entity.attributes) return "";
-        const remain = entity.attributes.remaining_time || entity.attributes.time_remaining;
-        return remain ? remain + " left" : "Ready";
-      ]]]
-    custom_fields:
-      status: |
-        [[[
-          if (!entity) return "";
-          let stateText = entity.state.replace(/_/g, ' ');
-          return stateText;
-        ]]]
   plug_appliance_template:
     update_interval: 1m
     show_state: false
@@ -500,14 +542,42 @@ button_card_templates:
         entity_id: '[[[ return entity.entity_id ]]]'
     lock:
       enabled: |
-        [[[ 
-          if (!variables.binary_sensor || !states[variables.binary_sensor]) return false;
-          return states[variables.binary_sensor].state === 'on';
+        [[[
+          if (!entity || ['unavailable','unknown'].includes(entity.state)) return true;
+          const ids = [variables.binary_sensor, variables.power_sensor].filter(Boolean);
+          return ids.some(id => !states[id] || ['unavailable','unknown'].includes(states[id].state));
         ]]]
       duration: 3
     variables:
       power_sensor: ''
       binary_sensor: ''
+    label: |
+      [[[
+        if (!entity) return 'ENTITY MISSING';
+        if (['unavailable','unknown'].includes(entity.state)) return entity.state.toUpperCase();
+        const sensorState = id => id ? states[id] : null;
+        if (variables.binary_sensor) {
+          const s = sensorState(variables.binary_sensor);
+          if (!s || ['unavailable','unknown'].includes(s.state)) return 'RUN SENSOR ' + (!s ? 'MISSING' : s.state.toUpperCase());
+          if (s.state === 'on') {
+            const mins = Math.max(0, Math.floor((Date.now() - new Date(s.last_changed).getTime()) / 60000));
+            return 'Running: ' + (Math.floor(mins/60) ? Math.floor(mins/60) + 'h ' : '') + (mins%60) + 'm';
+          }
+          return 'Ready';
+        }
+        if (variables.power_sensor) {
+          const p = sensorState(variables.power_sensor);
+          if (!p || ['unavailable','unknown'].includes(p.state)) return 'POWER SENSOR ' + (!p ? 'MISSING' : p.state.toUpperCase());
+          const current = Number(p.state);
+          if (!Number.isFinite(current)) return 'POWER SENSOR INVALID';
+          if (current > 0.05) {
+            const mins = Math.max(0, Math.floor((Date.now() - new Date(p.last_changed).getTime()) / 60000));
+            return 'Running: ' + (Math.floor(mins/60) ? Math.floor(mins/60) + 'h ' : '') + (mins%60) + 'm';
+          }
+          return 'Standby';
+        }
+        return 'NO SENSOR';
+      ]]]
     styles:
       card:
         - border-radius: 12px
@@ -515,15 +585,18 @@ button_card_templates:
         - aspect-ratio: 1/1
         - animation: |
             [[[
-              if (variables.binary_sensor && states[variables.binary_sensor]) {
-                if (states[variables.binary_sensor].state === 'on') return 'blink 3s ease-in-out infinite';
-                return 'none';
-              }
+              if (!entity || ['unavailable','unknown'].includes(entity.state)) return 'none';
+              const ids = [variables.binary_sensor, variables.power_sensor].filter(Boolean);
+              if (variables.binary_sensor && states[variables.binary_sensor] && states[variables.binary_sensor].state === 'on') return 'blink 3s ease-in-out infinite';
               if (variables.power_sensor && states[variables.power_sensor]) {
-                const current = Number(states[variables.power_sensor].state);
-                return Number.isFinite(current) && current > 0.05 ? 'blink 3s ease-in-out infinite' : 'none';
+                const p = Number(states[variables.power_sensor].state);
+                return Number.isFinite(p) && p > 0.05 ? 'blink 3s ease-in-out infinite' : 'none';
               }
               return 'none';
+            ]]]
+        - background-color: |
+            [[[
+              return (!entity || ['unavailable','unknown'].includes(entity.state)) ? '#333333' : 'var(--card-background-color, #1c1c1e)';
             ]]]
       grid:
         - grid-template-areas: '"n" "i" "l"'
@@ -533,43 +606,28 @@ button_card_templates:
         - font-size: 12px
         - justify-self: end
         - align-self: start
+        - color: |
+            [[[
+              return (!entity || ['unavailable','unknown'].includes(entity.state)) ? '#ff4444' : 'var(--primary-text-color)';
+            ]]]
       icon:
         - width: 40%
         - align-self: center
         - justify-self: center
+        - color: |
+            [[[
+              return (!entity || ['unavailable','unknown'].includes(entity.state)) ? '#ff4444' : 'var(--state-icon-color)';
+            ]]]
       label:
         - justify-self: center
         - font-weight: bold
         - font-size: 11px
-    label: |
-      [[[
-        // Force UI updates via sensor.time clock synchronization
-        const timeTrigger = states['sensor.time']?.state;
-
-        let runEntity = null;
-        if (variables.binary_sensor && states[variables.binary_sensor]) {
-          if (states[variables.binary_sensor].state === 'on') runEntity = states[variables.binary_sensor];
-        } else if (variables.power_sensor && states[variables.power_sensor]) {
-          const current = Number(states[variables.power_sensor].state);
-          if (Number.isFinite(current) && current > 0.05) runEntity = states[variables.power_sensor];
-        }
-
-        if (runEntity) {
-          const startTime = new Date(runEntity.last_changed);
-          const now = new Date();
-          const diffMs = now - startTime;
-          const diffHrs = Math.floor(diffMs / 3600000);
-          const diffMins = Math.floor((diffMs % 3600000) / 60000);
-          let elapsedStr = "";
-          if (diffHrs > 0) elapsedStr += diffHrs + "h ";
-          elapsedStr += diffMins + "m";
-          return "Running: " + elapsedStr;
-        }
-
-        if (variables.binary_sensor && states[variables.binary_sensor]) return "Ready";
-        if (variables.power_sensor && states[variables.power_sensor]) return "Standby";
-        return "No Sensor";
-      ]]]
+        - color: |
+            [[[
+              if (!entity || ['unavailable','unknown'].includes(entity.state)) return '#ff4444';
+              const ids = [variables.binary_sensor, variables.power_sensor].filter(Boolean);
+              return ids.some(id => !states[id] || ['unavailable','unknown'].includes(states[id].state)) ? '#ff4444' : 'var(--secondary-text-color)';
+            ]]]
   timer_dashboard_template:
     show_name: false
     show_icon: false
@@ -1361,7 +1419,9 @@ views:
                 label: |
                   [[[
                     const lux = Number(entity && entity.state);
-                    if (!Number.isFinite(lux)) return 'Light level unavailable';
+                    if (!entity) return 'ENTITY MISSING';
+                    if (['unavailable','unknown'].includes(entity.state)) return entity.state.toUpperCase();
+                    if (!Number.isFinite(lux)) return 'INVALID LIGHT LEVEL';
                     return (lux > 10 ? 'Likely ON' : 'Likely OFF') + ' · ' + lux + ' lx';
                   ]]]
                 styles:
