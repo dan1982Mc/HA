@@ -673,7 +673,7 @@ button_card_templates:
           && !hasEchoTimers('sensor.2e_echo_dot_dan_next_timer')
           && !hasEchoTimers('sensor.dan_s_echo_dot_next_timer')
           && assist?.state !== 'active'
-          && (!assist || !['unavailable','unknown','none','null',''].includes(assist.state));
+          && (!assist || !['unknown','none','null',''].includes(assist.state));
       ]]]
     styles:
       card:
@@ -822,9 +822,10 @@ button_card_templates:
           }
 
           if (!panels.length) {
-            if (monitorProblems.length || !assist || ['unavailable','unknown','none','null',''].includes(assist.state)) {
+            const assistProblem = !assist || ['unknown','none','null',''].includes(assist.state);
+            if (monitorProblems.length || assistProblem) {
               const bad = monitorProblems.slice();
-              if (!assist || ['unavailable','unknown','none','null',''].includes(assist.state)) bad.push(!assist ? 'timer.assistant_timer: ENTITY MISSING' : 'timer.assistant_timer: ' + assist.state.toUpperCase());
+              if (assistProblem) bad.push(!assist ? 'timer.assistant_timer: ENTITY MISSING' : 'timer.assistant_timer: ' + assist.state.toUpperCase());
               return '<div style="width:100%;box-sizing:border-box;background:var(--ha-card-background,var(--card-background-color));border:1px solid #ff4444;border-radius:12px;padding:12px;color:#ff6666;font-weight:700;">TIMER STATUS UNAVAILABLE<div style="font-size:11px;font-weight:400;margin-top:6px;">' + esc(bad.join(' • ')) + '</div></div>';
             }
             return '';
