@@ -1592,33 +1592,23 @@ views:
                           - type: heading
                             heading: Dishwasher
                             icon: mdi:dishwasher
-                          - type: tile
-                            entity: switch.dishwasher_power
-                            name: Power
-                            features:
-                              - type: toggle
                           - type: entities
                             show_header_toggle: false
                             entities:
+                              - entity: switch.dishwasher_power
+                                name: Power
                               - entity: select.dishwasher_active_program
                                 name: Washing program
                           - type: heading
                             heading: Wash Options
                             icon: mdi:tune-variant
-                          - type: grid
-                            columns: 2
-                            square: false
-                            cards:
-                              - type: tile
-                                entity: switch.dishwasher_half_load
+                          - type: entities
+                            show_header_toggle: false
+                            entities:
+                              - entity: switch.dishwasher_half_load
                                 name: Half Load
-                                features:
-                                  - type: toggle
-                              - type: tile
-                                entity: switch.dishwasher_intensive_zone
+                              - entity: switch.dishwasher_intensive_zone
                                 name: Intensive Zone
-                                features:
-                                  - type: toggle
               - type: custom:button-card
                 entity: switch.oven_power
                 name: Oven
@@ -1637,39 +1627,59 @@ views:
                           - type: heading
                             heading: Oven
                             icon: mdi:stove
-                          - type: tile
-                            entity: switch.oven_power
-                            name: Power
-                            features:
-                              - type: toggle
+                          - type: horizontal-stack
+                            cards:
+                              - type: custom:button-card
+                                entity: switch.oven_power
+                                name: Power
+                                icon: mdi:power
+                                show_state: false
+                                tap_action:
+                                  action: toggle
+                                styles:
+                                  card:
+                                    - box-shadow: none
+                                    - background: none
+                                    - padding: 4px 8px
+                                    - height: 48px
+                                  grid:
+                                    - grid-template-areas: '"i n"'
+                                    - grid-template-columns: 32px 1fr
+                                  icon:
+                                    - width: 22px
+                                  name:
+                                    - justify-self: start
+                                    - font-weight: bold
+                              - type: custom:button-card
+                                entity: button.oven_pause_program
+                                name: Pause
+                                icon: mdi:pause-circle
+                                show_state: false
+                                tap_action:
+                                  action: perform-action
+                                  perform_action: button.press
+                                  target:
+                                    entity_id: button.oven_pause_program
+                                styles:
+                                  card:
+                                    - box-shadow: none
+                                    - background: none
+                                    - padding: 4px 8px
+                                    - height: 48px
+                                  grid:
+                                    - grid-template-areas: '"n i"'
+                                    - grid-template-columns: 1fr 32px
+                                  icon:
+                                    - width: 24px
+                                    - color: var(--primary-color)
+                                  name:
+                                    - justify-self: end
+                                    - font-weight: bold
                           - type: entities
                             show_header_toggle: false
                             entities:
                               - entity: select.oven_active_program
                                 name: Cooking program
-                          - type: custom:button-card
-                            entity: button.oven_pause_program
-                            name: Pause Program
-                            icon: mdi:pause-circle
-                            show_state: false
-                            tap_action:
-                              action: perform-action
-                              perform_action: button.press
-                              target:
-                                entity_id: button.oven_pause_program
-                            styles:
-                              card:
-                                - border-radius: 12px
-                                - padding: 12px
-                              grid:
-                                - grid-template-areas: '"i n"'
-                                - grid-template-columns: 48px 1fr
-                              icon:
-                                - width: 28px
-                                - color: var(--primary-color)
-                              name:
-                                - justify-self: start
-                                - font-weight: bold
               - type: custom:button-card
                 entity: switch.water_valve
                 name: Watering
