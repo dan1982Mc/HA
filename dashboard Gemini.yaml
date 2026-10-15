@@ -1138,7 +1138,7 @@ views:
             - display: |
                 [[[
                   if (!entity || ['unavailable','unknown','none','null',''].includes(entity.state)) return 'grid';
-                  return entity.state === 'No household events in 24h' || entity.state === 'Calendar unavailable' ? 'none' : 'grid';
+                  return entity.state === 'No household events in 24h' ? 'none' : 'grid';
                 ]]]
             - height: 42px
             - padding: 0px 14px
@@ -1185,7 +1185,7 @@ views:
             - display: |
                 [[[
                   if (!entity || ['unavailable','unknown','none','null',''].includes(entity.state)) return 'grid';
-                  return entity.state === 'No rubbish collection in 24h' || entity.state === 'Calendar unavailable' ? 'none' : 'grid';
+                  return entity.state === 'No rubbish collection in 24h' ? 'none' : 'grid';
                 ]]]
             - height: 42px
             - padding: 0px 14px
@@ -1232,7 +1232,7 @@ views:
             - display: |
                 [[[
                   if (!entity || ['unavailable','unknown','none','null',''].includes(entity.state)) return 'grid';
-                  return entity.state === 'No school vacation in 7 days' || entity.state === 'Calendar unavailable' ? 'none' : 'grid';
+                  return entity.state === 'No school vacation in 7 days' ? 'none' : 'grid';
                 ]]]
             - height: 42px
             - padding: 0px 14px
