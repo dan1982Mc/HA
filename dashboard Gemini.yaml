@@ -1423,7 +1423,7 @@ views:
                     if (!entity) return 'ENTITY MISSING';
                     if (['unavailable','unknown','none','null',''].includes(entity.state)) return entity.state.toUpperCase();
                     if (!Number.isFinite(lux)) return 'INVALID LIGHT LEVEL';
-                    return (lux > 10 ? 'Likely ON' : 'Likely OFF') + ' · ' + lux + ' lx';
+                    return (lux > 55 ? 'Likely ON' : 'Likely OFF') + ' · ' + lux + ' lx';
                   ]]]
                 styles:
                   card:
@@ -1441,7 +1441,7 @@ views:
                         [[[
                           const lux = Number(entity && entity.state);
                           if (!Number.isFinite(lux)) return '#888888';
-                          return lux > 10 ? '#f1c40f' : 'var(--primary-text-color)';
+                          return lux > 55 ? '#f1c40f' : 'var(--primary-text-color)';
                         ]]]
                   name:
                     - font-weight: bold
