@@ -1071,25 +1071,32 @@ views:
             - white-space: nowrap
       - type: custom:button-card
         entity: calendar.zile_de_nastere
+        triggers_update:
+          - calendar.zile_de_nastere
         show_name: false
         show_icon: true
         show_label: true
         icon: mdi:cake-variant
         label: |
-          [[[ 
-            if (!entity || !entity.attributes.message) return "";
-            return entity.attributes.message; 
+          [[[
+            if (!entity) return 'BIRTHDAY CALENDAR MISSING';
+            if (['unavailable','unknown','none','null',''].includes(entity.state)) return 'BIRTHDAY CALENDAR ' + entity.state.toUpperCase();
+            return entity.attributes?.message || 'Birthday today';
           ]]]
         styles:
           card:
             - display: |
                 [[[
-                  return states['calendar.zile_de_nastere'].state === 'on' ? 'grid' : 'none';
+                  if (!entity || ['unavailable','unknown','none','null',''].includes(entity.state)) return 'grid';
+                  return entity.state === 'on' ? 'grid' : 'none';
                 ]]]
             - height: 42px
             - padding: 0px 14px
             - border-radius: 20px
-            - background-color: '#d35400'
+            - background-color: |
+                [[[
+                  return (!entity || ['unavailable','unknown','none','null',''].includes(entity.state)) ? '#333333' : '#d35400';
+                ]]]
             - border: '1px solid #e67e22'
             - width: auto !important
           grid:
@@ -1113,36 +1120,25 @@ views:
             - color: white
             - white-space: nowrap
       - type: custom:button-card
-        entity: calendar.familie_macarie
+        entity: input_text.casa_event_summary
+        triggers_update:
+          - input_text.casa_event_summary
         show_name: false
         show_icon: true
         show_label: true
         icon: mdi:calendar-star
         label: |
-          [[[ 
-            if (!entity || !entity.attributes.message) return "";
-            return entity.attributes.message; 
+          [[[
+            if (!entity) return 'HOUSEHOLD HELPER MISSING';
+            if (['unavailable','unknown','none','null',''].includes(entity.state)) return 'HOUSEHOLD EVENTS ' + entity.state.toUpperCase();
+            return entity.state;
           ]]]
         styles:
           card:
             - display: |
                 [[[
-                  // 1. Safety check
-                  if (!entity || !entity.state || !entity.attributes.message) return 'none';
-                  
-                  var msg = entity.attributes.message.toLowerCase();
-
-                  // 2. EXCLUSION RULES: If the next event is Trash or Vacation, HIDE this badge
-                  if (msg.startsWith('gunoi') || msg === 'eva - vacanta') {
-                    return 'none';
-                  }
-
-                  // 3. SHOW RULE: Only show this badge if a regular event is currently active ('on')
-                  if (entity.state === 'on') {
-                    return 'grid';
-                  }
-
-                  return 'none';
+                  if (!entity || ['unavailable','unknown','none','null',''].includes(entity.state)) return 'grid';
+                  return entity.state === 'No household events in 24h' || entity.state === 'Calendar unavailable' ? 'none' : 'grid';
                 ]]]
             - height: 42px
             - padding: 0px 14px
@@ -1171,34 +1167,25 @@ views:
             - color: white
             - white-space: nowrap
       - type: custom:button-card
-        entity: calendar.familie_macarie
+        entity: input_text.casa_rubbish_summary
+        triggers_update:
+          - input_text.casa_rubbish_summary
         show_name: false
         show_icon: true
         show_label: true
         icon: mdi:delete-empty
         label: |
-          [[[ 
-            if (!entity || !entity.attributes.message) return "";
-            return entity.attributes.message; 
+          [[[
+            if (!entity) return 'RUBBISH HELPER MISSING';
+            if (['unavailable','unknown','none','null',''].includes(entity.state)) return 'RUBBISH ' + entity.state.toUpperCase();
+            return entity.state;
           ]]]
         styles:
           card:
             - display: |
                 [[[
-                  if (!entity || !entity.attributes.start_time || !entity.attributes.message) return 'none';
-                  
-                  var msg = entity.attributes.message.toLowerCase();
-                  var startTime = new Date(entity.attributes.start_time).getTime();
-                  var now = new Date().getTime();
-                  var hoursUntilEvent = (startTime - now) / (1000 * 60 * 60);
-
-                  // Show if the trash event is currently happening OR is happening in the next 24 hours
-                  if (msg.startsWith('gunoi')) {
-                    if (entity.state === 'on' || (hoursUntilEvent > 0 && hoursUntilEvent <= 24)) {
-                      return 'grid';
-                    }
-                  }
-                  return 'none';
+                  if (!entity || ['unavailable','unknown','none','null',''].includes(entity.state)) return 'grid';
+                  return entity.state === 'No rubbish collection in 24h' || entity.state === 'Calendar unavailable' ? 'none' : 'grid';
                 ]]]
             - height: 42px
             - padding: 0px 14px
@@ -1227,34 +1214,25 @@ views:
             - color: white
             - white-space: nowrap
       - type: custom:button-card
-        entity: calendar.familie_macarie
+        entity: input_text.school_vacation_summary
+        triggers_update:
+          - input_text.school_vacation_summary
         show_name: false
         show_icon: true
         show_label: true
         icon: mdi:island
         label: |
-          [[[ 
-            if (!entity || !entity.attributes.message) return "";
-            return entity.attributes.message; 
+          [[[
+            if (!entity) return 'SCHOOL VACATION HELPER MISSING';
+            if (['unavailable','unknown','none','null',''].includes(entity.state)) return 'SCHOOL VACATION ' + entity.state.toUpperCase();
+            return entity.state;
           ]]]
         styles:
           card:
             - display: |
                 [[[
-                  if (!entity || !entity.attributes.start_time || !entity.attributes.message) return 'none';
-                  
-                  var msg = entity.attributes.message.toLowerCase();
-                  var startTime = new Date(entity.attributes.start_time).getTime();
-                  var now = new Date().getTime();
-                  var hoursUntilEvent = (startTime - now) / (1000 * 60 * 60);
-
-                  // Show if the vacation is currently happening OR starts within the next 7 days (168 hours)
-                  if (msg === 'eva - vacanta') {
-                    if (entity.state === 'on' || (hoursUntilEvent > 0 && hoursUntilEvent <= 168)) {
-                      return 'grid';
-                    }
-                  }
-                  return 'none';
+                  if (!entity || ['unavailable','unknown','none','null',''].includes(entity.state)) return 'grid';
+                  return entity.state === 'No school vacation in 7 days' || entity.state === 'Calendar unavailable' ? 'none' : 'grid';
                 ]]]
             - height: 42px
             - padding: 0px 14px
