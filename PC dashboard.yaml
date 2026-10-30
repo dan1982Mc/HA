@@ -447,8 +447,7 @@ button_card_templates:
         - grid-template-areas: '"n" "i" "l"'
         - grid-template-rows: min-content 1fr min-content
       name:
-        - font-weight: bold
-        - font-size: 12px
+        - font-weight: bold        - font-size: 12px
         - justify-self: end
         - color: |
             [[[
@@ -897,8 +896,7 @@ views:
         show_icon: true
         show_state: false
         show_label: true
-        label: |
-          [[[
+        label: |          [[[
             if (!entity) return 'ENTITY MISSING';
             if (['unavailable','unknown','none','null',''].includes(entity.state)) return entity.state.toUpperCase();
             const attrs = entity.attributes || {};
@@ -1347,8 +1345,7 @@ views:
             square: true
             cards:
               - type: custom:button-card
-                entity: light.hal_lights_all_incl_eva
-                name: Hallway
+                entity: light.hal_lights_all_incl_eva                name: Hallway
                 template: light_template
                 variables:
                   var_name: Hallway
@@ -1740,7 +1737,7 @@ views:
                 variables:
                   binary_sensor: binary_sensor.washing_machine_running
                   power_sensor: sensor.smart_plug_3_current
-                  monthly_energy: sensor.laundry_whashing_machine_plug_washer_monthly_energy
+                  monthly_energy: sensor.smart_plug_3_this_month_s_consumption
               - type: custom:button-card
                 entity: switch.fridge_2
                 name: Dryer
@@ -1749,7 +1746,7 @@ views:
                 variables:
                   binary_sensor: binary_sensor.dryer_running
                   power_sensor: sensor.fridge_2_current
-                  monthly_energy: sensor.laundry_dryer_plug_dryer_monthly_energy
+                  monthly_energy: sensor.fridge_2_this_month_s_consumption
               - type: custom:button-card
                 entity: switch.garden_house
                 name: Laptop
@@ -1757,7 +1754,7 @@ views:
                 template: plug_appliance_template
                 variables:
                   power_sensor: sensor.garden_house_current
-                  monthly_energy: sensor.small_bedroom_small_bedroom_laptop_monthly_energy
+                  monthly_energy: sensor.garden_house_this_month_s_consumption
       - type: grid
         columns: 1
         square: false
@@ -1797,8 +1794,7 @@ views:
                 name: Kitchen
                 template: contact_template
               - type: custom:button-card
-                entity: binary_sensor.eva_door_contact
-                name: Eva Bed
+                entity: binary_sensor.eva_door_contact                name: Eva Bed
                 template: contact_template
       - type: grid
         square: false
