@@ -410,6 +410,126 @@ button_card_templates:
             - color: '#ff4444'
           state:
             - color: '#ff4444'
+  thermostat_template:
+    show_state: false
+    show_icon: true
+    show_label: true
+    label: |
+      [[[
+        if (!entity) return 'ENTITY MISSING';
+        if (['unavailable','unknown','none','null',''].includes(entity.state)) return entity.state.toUpperCase();
+        const attrs = entity.attributes || {};
+        const current = Number(attrs.current_temperature);
+        const target = Number(attrs.temperature);
+        const action = String(attrs.hvac_action || entity.state).replace(/_/g, ' ').toUpperCase();
+        const parts = [];
+        if (Number.isFinite(current)) parts.push(current.toFixed(1) + '°C');
+        if (Number.isFinite(target)) parts.push('SET ' + target.toFixed(1) + '°C');
+        parts.push(action);
+        return parts.join(' · ');
+      ]]]
+    styles:
+      card:
+        - border-radius: 12px
+        - padding: 12px
+        - aspect-ratio: 1/1
+        - background-color: |
+            [[[
+              return (!entity || ['unavailable','unknown','none','null',''].includes(entity.state)) ? '#333333' : 'var(--card-background-color, #1c1c1e)';
+            ]]]
+        - opacity: |
+            [[[
+              return (!entity || ['unavailable','unknown','none','null',''].includes(entity.state)) ? '0.65' : '1';
+            ]]]
+      grid:
+        - grid-template-areas: '"n" "i" "l"'
+        - grid-template-rows: min-content 1fr min-content
+      name:
+        - font-weight: bold
+        - font-size: 12px
+        - justify-self: end
+        - color: |
+            [[[
+              return (!entity || ['unavailable','unknown','none','null',''].includes(entity.state)) ? '#ff4444' : 'var(--primary-text-color)';
+            ]]]
+      icon:
+        - width: 40%
+        - align-self: center
+        - justify-self: center
+        - color: |
+            [[[
+              if (!entity || ['unavailable','unknown','none','null',''].includes(entity.state)) return '#ff4444';
+              const action = entity.attributes && entity.attributes.hvac_action;
+              return action === 'heating' ? '#e67e22' : 'var(--state-icon-color)';
+            ]]]
+      label:
+        - justify-self: center
+        - font-weight: bold
+        - font-size: 10px
+        - color: |
+            [[[
+              return (!entity || ['unavailable','unknown','none','null',''].includes(entity.state)) ? '#ff4444' : 'var(--secondary-text-color)';
+            ]]]
+  temperature_template:
+    show_state: false
+    show_icon: true
+    show_label: true
+    tap_action:
+      action: more-info
+    label: |
+      [[[
+        if (!entity) return 'ENTITY MISSING';
+        if (['unavailable','unknown','none','null',''].includes(entity.state)) return entity.state.toUpperCase();
+        const value = Number(entity.state);
+        if (!Number.isFinite(value)) return 'INVALID TEMPERATURE';
+        const unit = entity.attributes && entity.attributes.unit_of_measurement ? entity.attributes.unit_of_measurement : '°C';
+        return value.toFixed(1) + ' ' + unit;
+      ]]]
+    styles:
+      card:
+        - border-radius: 12px
+        - padding: 12px
+        - aspect-ratio: 1/1
+        - background-color: |
+            [[[
+              return (!entity || ['unavailable','unknown','none','null',''].includes(entity.state)) ? '#333333' : 'var(--card-background-color, #1c1c1e)';
+            ]]]
+        - opacity: |
+            [[[
+              return (!entity || ['unavailable','unknown','none','null',''].includes(entity.state)) ? '0.65' : '1';
+            ]]]
+      grid:
+        - grid-template-areas: '"n" "i" "l"'
+        - grid-template-rows: min-content 1fr min-content
+      name:
+        - font-weight: bold
+        - font-size: 12px
+        - justify-self: end
+        - color: |
+            [[[
+              return (!entity || ['unavailable','unknown','none','null',''].includes(entity.state)) ? '#ff4444' : 'var(--primary-text-color)';
+            ]]]
+      icon:
+        - width: 40%
+        - align-self: center
+        - justify-self: center
+        - color: |
+            [[[
+              if (!entity || ['unavailable','unknown','none','null',''].includes(entity.state)) return '#ff4444';
+              const value = Number(entity.state);
+              if (!Number.isFinite(value)) return '#ff4444';
+              if (value < 17) return '#5dade2';
+              if (value >= 24) return '#e67e22';
+              return 'var(--state-icon-color)';
+            ]]]
+      label:
+        - justify-self: center
+        - font-weight: bold
+        - font-size: 12px
+        - color: |
+            [[[
+              return (!entity || ['unavailable','unknown','none','null',''].includes(entity.state)) ? '#ff4444' : 'var(--secondary-text-color)';
+            ]]]
   appliance_template:
     show_state: false
     show_icon: true
@@ -1493,6 +1613,52 @@ views:
                     - font-size: 10px
                     - justify-self: center
                     - color: var(--secondary-text-color)
+      - type: grid
+        cards:
+          - type: heading
+            heading: THERMOSTAT & ROOM TEMPERATURES
+          - type: grid
+            columns: 3
+            square: true
+            cards:
+              - type: custom:button-card
+                entity: climate.tstat_838e9c_lyric_t6_thermostat
+                name: Thermostat
+                icon: mdi:thermostat
+                template: thermostat_template
+                tap_action:
+                  action: fire-dom-event
+                  browser_mod:
+                    service: browser_mod.popup
+                    data:
+                      title: Thermostat Control
+                      size: normal
+                      content:
+                        type: thermostat
+                        entity: climate.tstat_838e9c_lyric_t6_thermostat
+                        name: Living Room Heating
+                hold_action:
+                  action: more-info
+              - type: custom:button-card
+                entity: sensor.tstat_838e9c_current_temperature
+                name: Living / Kitchen
+                icon: mdi:home-thermometer
+                template: temperature_template
+              - type: custom:button-card
+                entity: sensor.meter_53c4
+                name: Dining (radiator side)
+                icon: mdi:thermometer
+                template: temperature_template
+              - type: custom:button-card
+                entity: sensor.miaomiaoce_t2_8089_temperature
+                name: Eva Bedroom
+                icon: mdi:bed
+                template: temperature_template
+              - type: custom:button-card
+                entity: sensor.miaomiaoce_t2_da88_temperature
+                name: Big Bedroom
+                icon: mdi:bed-king
+                template: temperature_template
       - type: grid
         cards:
           - type: heading
