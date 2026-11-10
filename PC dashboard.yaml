@@ -536,12 +536,10 @@ button_card_templates:
               if (!Number.isFinite(thermostatTemp)) return 'var(--state-icon-color)';
               const difference = roomTemp - thermostatTemp;
               if (difference < -2) return '#00008B';
-              if (difference < -1) return 'var(--state-icon-color)';
-              if (difference < 0) return '#ADD8E6';
-              if (difference > 2) return '#FF0000';
-              if (difference > 1) return 'var(--state-icon-color)';
-              if (difference > 0) return '#FFF176';
-              return 'var(--state-icon-color)';
+              if (difference <= -1) return '#ADD8E6';
+              if (difference < 1) return 'var(--state-icon-color)';
+              if (difference <= 2) return '#FFF176';
+              return '#FF0000';
             ]]]
       label:
         - justify-self: center
