@@ -1637,7 +1637,7 @@ views:
           - type: heading
             heading: THERMOSTAT & ROOM TEMPERATURES
           - type: grid
-            columns: 4
+            columns: 2
             square: true
             cards:
               - type: custom:button-card
