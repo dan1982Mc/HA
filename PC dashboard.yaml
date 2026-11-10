@@ -414,19 +414,21 @@ button_card_templates:
     show_state: false
     show_icon: true
     show_label: true
+    custom_fields:
+      setpoint: |
+        [[[
+          if (!entity || !entity.attributes) return 'SET —';
+          const target = Number(entity.attributes.temperature);
+          return Number.isFinite(target) ? target.toFixed(1) + '°C' : 'SET —';
+        ]]]
     label: |
       [[[
         if (!entity) return 'ENTITY MISSING';
         if (['unavailable','unknown','none','null',''].includes(entity.state)) return entity.state.toUpperCase();
         const attrs = entity.attributes || {};
         const current = Number(attrs.current_temperature);
-        const target = Number(attrs.temperature);
         const action = String(attrs.hvac_action || entity.state).replace(/_/g, ' ').toUpperCase();
-        const parts = [];
-        if (Number.isFinite(current)) parts.push(current.toFixed(1) + '°C');
-        if (Number.isFinite(target)) parts.push('SET ' + target.toFixed(1) + '°C');
-        parts.push(action);
-        return parts.join(' · ');
+        return (Number.isFinite(current) ? current.toFixed(1) + '°C' : 'TEMP —') + ' · ' + action;
       ]]]
     styles:
       card:
@@ -442,7 +444,8 @@ button_card_templates:
               return (!entity || ['unavailable','unknown','none','null',''].includes(entity.state)) ? '0.65' : '1';
             ]]]
       grid:
-        - grid-template-areas: '"n" "i" "l"'
+        - grid-template-areas: '"setpoint n" "i i" "l l"'
+        - grid-template-columns: 1fr 1fr
         - grid-template-rows: min-content 1fr min-content
       name:
         - font-weight: bold
@@ -470,10 +473,19 @@ button_card_templates:
             [[[
               return (!entity || ['unavailable','unknown','none','null',''].includes(entity.state)) ? '#ff4444' : 'var(--secondary-text-color)';
             ]]]
+      custom_fields:
+        setpoint:
+          - justify-self: start
+          - align-self: start
+          - font-size: 12px
+          - font-weight: bold
+          - color: var(--primary-text-color)
   temperature_template:
     show_state: false
     show_icon: true
     show_label: true
+    triggers_update:
+      - sensor.tstat_838e9c_current_temperature
     tap_action:
       action: more-info
     label: |
@@ -516,10 +528,17 @@ button_card_templates:
         - color: |
             [[[
               if (!entity || ['unavailable','unknown','none','null',''].includes(entity.state)) return '#ff4444';
-              const value = Number(entity.state);
-              if (!Number.isFinite(value)) return '#ff4444';
-              if (value < 17) return '#5dade2';
-              if (value >= 24) return '#e67e22';
+              const roomTemp = Number(entity.state);
+              if (!Number.isFinite(roomTemp)) return '#ff4444';
+              const reference = states['sensor.tstat_838e9c_current_temperature'];
+              if (!reference || ['unavailable','unknown','none','null',''].includes(reference.state)) return 'var(--state-icon-color)';
+              const thermostatTemp = Number(reference.state);
+              if (!Number.isFinite(thermostatTemp)) return 'var(--state-icon-color)';
+              const difference = roomTemp - thermostatTemp;
+              if (difference < -2) return '#00008B';
+              if (difference <= -1) return '#ADD8E6';
+              if (difference > 2) return '#FF0000';
+              if (difference >= 1) return '#FFF176';
               return 'var(--state-icon-color)';
             ]]]
       label:
@@ -1618,7 +1637,7 @@ views:
           - type: heading
             heading: THERMOSTAT & ROOM TEMPERATURES
           - type: grid
-            columns: 3
+            columns: 4
             square: true
             cards:
               - type: custom:button-card
@@ -1640,23 +1659,18 @@ views:
                 hold_action:
                   action: more-info
               - type: custom:button-card
-                entity: sensor.tstat_838e9c_current_temperature
-                name: Living / Kitchen
-                icon: mdi:home-thermometer
-                template: temperature_template
-              - type: custom:button-card
                 entity: sensor.meter_53c4
                 name: Dining (radiator side)
                 icon: mdi:thermometer
                 template: temperature_template
               - type: custom:button-card
                 entity: sensor.miaomiaoce_t2_8089_temperature
-                name: Eva Bedroom
+                name: Eva Bed
                 icon: mdi:bed
                 template: temperature_template
               - type: custom:button-card
                 entity: sensor.miaomiaoce_t2_da88_temperature
-                name: Big Bedroom
+                name: Big Bed
                 icon: mdi:bed-king
                 template: temperature_template
       - type: grid
