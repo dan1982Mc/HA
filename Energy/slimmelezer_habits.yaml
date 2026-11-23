@@ -38,6 +38,12 @@ input_boolean:
   energy_gas_attribution_initialized:
     name: Time-weighted gas attribution initialized
     icon: mdi:timer-check-outline
+  energy_shower_auto_active:
+    name: Automatic shower detection active
+    icon: mdi:shower
+  energy_gas_previous_shower_active:
+    name: Previous shower state in gas interval
+    icon: mdi:shower
 
 input_select:
   energy_manual_activity_type:
@@ -378,6 +384,13 @@ input_number:
     step: 1
     mode: box
     unit_of_measurement: s
+  energy_gas_interval_shower_seconds:
+    name: Gas interval shower-active seconds
+    min: 0
+    max: 31536000
+    step: 1
+    mode: box
+    unit_of_measurement: s
   energy_gas_time_weighted_heating_total_m3:
     name: Time-weighted heating gas total
     min: 0
@@ -398,6 +411,13 @@ input_number:
     max: 1000000
     step: 0.000001
     mode: box
+  energy_gas_time_weighted_shower_total_m3:
+    name: Time-weighted shower gas total
+    min: 0
+    max: 1000000
+    step: 0.000001
+    mode: box
+    unit_of_measurement: m³
 # ------------------------------------------------------------
 # STATE-BASED TEMPLATE SENSORS
 # ------------------------------------------------------------
@@ -728,6 +748,13 @@ template:
         unit_of_measurement: m³
         icon: mdi:help-circle-outline
         state: "{{ states('input_number.energy_gas_time_weighted_unknown_total_m3') | float(0) | round(6) }}"
+      - name: Slimmelezer Gas Shower Time Weighted
+        unique_id: slimmelezer_gas_shower_time_weighted
+        device_class: gas
+        state_class: total_increasing
+        unit_of_measurement: m³
+        icon: mdi:shower
+        state: "{{ states('input_number.energy_gas_time_weighted_shower_total_m3') | float(0) | round(6) }}"
 
   - sensor:
       - name: Slimmelezer Gas Heating Time Weighted Cost Total
@@ -748,6 +775,12 @@ template:
         state_class: total_increasing
         unit_of_measurement: EUR
         state: "{{ (states('sensor.slimmelezer_gas_unclassified_time_weighted') | float(0) * 1.43817) | round(5) }}"
+      - name: Slimmelezer Gas Shower Time Weighted Cost Total
+        unique_id: slimmelezer_gas_shower_time_weighted_cost_total
+        device_class: monetary
+        state_class: total_increasing
+        unit_of_measurement: EUR
+        state: "{{ (states('sensor.slimmelezer_gas_shower_time_weighted') | float(0) * 1.43817) | round(5) }}"
 
   - sensor:
       - name: Slimmelezer Gas Heating Cost Total
@@ -777,6 +810,20 @@ template:
         state: >
           {{ (states('sensor.slimmelezer_gas_unclassified') | float(0) * 1.43817) | round(5) }}
 
+
+  - sensor:
+      - name: Energy Gas Shower Cost This Month
+        unique_id: energy_gas_shower_cost_this_month
+        device_class: monetary
+        state_class: measurement
+        unit_of_measurement: EUR
+        state: "{{ (states('sensor.energy_gas_shower_month') | float(0) * 1.43817) | round(4) }}"
+      - name: Energy Gas Shower Cost This Week
+        unique_id: energy_gas_shower_cost_this_week
+        device_class: monetary
+        state_class: measurement
+        unit_of_measurement: EUR
+        state: "{{ (states('sensor.energy_gas_shower_week') | float(0) * 1.43817) | round(4) }}"
 
   - sensor:
       - name: Energy Activity Baseline Status
@@ -1456,6 +1503,99 @@ script:
       - action: script.energy_manual_activity_start
 
 automation:
+  - id: energy_shower_auto_detection_start
+    alias: Energy - Auto-detect shower start
+    description: >-
+      Starts when bathroom humidity is above 85%, bathroom lights are on,
+      and the bathroom door contact reports closed (off).
+    mode: single
+    triggers:
+      - trigger: numeric_state
+        entity_id: sensor.thermometer_living_humidity
+        above: 85
+        id: humidity_high
+      - trigger: state
+        entity_id: light.bathroom_lights_all
+        to: "on"
+        id: bathroom_lights_on
+      - trigger: state
+        entity_id: binary_sensor.bathroom_door_contact
+        to: "off"
+        id: bathroom_door_closed
+      - trigger: time_pattern
+        minutes: "/1"
+        id: condition_check
+    conditions:
+      - condition: state
+        entity_id: input_boolean.energy_shower_auto_active
+        state: "off"
+      - condition: numeric_state
+        entity_id: sensor.thermometer_living_humidity
+        above: 85
+      - condition: state
+        entity_id: light.bathroom_lights_all
+        state: "on"
+      - condition: state
+        entity_id: binary_sensor.bathroom_door_contact
+        state: "off"
+    actions:
+      - service: input_boolean.turn_on
+        target:
+          entity_id: input_boolean.energy_shower_auto_active
+      - service: logbook.log
+        data:
+          name: Shower detection
+          message: >-
+            Automatic shower detection started · humidity
+            {{ states('sensor.thermometer_living_humidity') }}% ·
+            lights on · door closed
+          entity_id: input_boolean.energy_shower_auto_active
+
+  - id: energy_shower_auto_detection_stop
+    alias: Energy - Auto-detect shower end
+    description: >-
+      Ends after bathroom lights are off for one minute. An open door is an
+      optional fallback only after humidity drops below 85%.
+    mode: single
+    triggers:
+      - trigger: state
+        entity_id: light.bathroom_lights_all
+        to: "off"
+        for: "00:01:00"
+        id: bathroom_lights_off
+      - trigger: state
+        entity_id: binary_sensor.bathroom_door_contact
+        to: "on"
+        for: "00:02:00"
+        id: bathroom_door_open
+      - trigger: numeric_state
+        entity_id: sensor.thermometer_living_humidity
+        below: 85
+        for: "00:02:00"
+        id: humidity_fallen
+    conditions:
+      - condition: state
+        entity_id: input_boolean.energy_shower_auto_active
+        state: "on"
+      - condition: template
+        value_template: >-
+          {{ is_state('light.bathroom_lights_all', 'off')
+             or (is_state('binary_sensor.bathroom_door_contact', 'on')
+                 and is_number(states('sensor.thermometer_living_humidity'))
+                 and states('sensor.thermometer_living_humidity') | float(100) < 85) }}
+    actions:
+      - service: input_boolean.turn_off
+        target:
+          entity_id: input_boolean.energy_shower_auto_active
+      - service: logbook.log
+        data:
+          name: Shower detection
+          message: >-
+            Automatic shower detection ended ·
+            {{ 'lights off' if is_state('light.bathroom_lights_all', 'off')
+               else 'door open and humidity below 85%' }}
+          entity_id: input_boolean.energy_shower_auto_active
+
   - id: energy_baseline_sample_every_five_minutes
     alias: Energy - Learn quiet baseline every 5 minutes
     description: >-
@@ -1539,6 +1679,9 @@ automation:
                   - condition: state
                     entity_id: input_boolean.energy_manual_activity_running
                     state: "off"
+                  - condition: state
+                    entity_id: input_boolean.energy_shower_auto_active
+                    state: "off"
                   - condition: template
                     value_template: "{{ (electricity_valid | bool) and (quiet_power | bool) }}"
                 sequence:
@@ -1560,6 +1703,9 @@ automation:
                   - condition: state
                     entity_id: input_boolean.energy_manual_activity_running
                     state: "off"
+                  - condition: state
+                    entity_id: input_boolean.energy_shower_auto_active
+                    state: "off"
                   - condition: template
                     value_template: "{{ (gas_valid | bool) and hvac_action == 'heating' }}"
                 sequence:
@@ -1577,6 +1723,9 @@ automation:
               - conditions:
                   - condition: state
                     entity_id: input_boolean.energy_manual_activity_running
+                    state: "off"
+                  - condition: state
+                    entity_id: input_boolean.energy_shower_auto_active
                     state: "off"
                   - condition: template
                     value_template: "{{ (gas_valid | bool) and hvac_action in ['idle', 'off'] }}"
@@ -1621,9 +1770,10 @@ automation:
   - id: energy_gas_time_weighted_attribution
     alias: Energy - Attribute gas by thermostat time share
     description: >-
-      Tracks the T6 hvac_action duration between gas meter updates. Each gas
-      meter delta is split by the proportion of the interval spent heating,
-      idle/off, or unknown. Assumes gas flow is uniform across that interval.
+      Tracks T6 heating/idle/unknown time and automatic shower-active time
+      between gas-meter updates. Shower gas is an overlapping time-share
+      estimate, not an exclusive additional gas category. Assumes gas flow is
+      uniform across the interval.
     mode: queued
     max: 50
     triggers:
@@ -1637,6 +1787,9 @@ automation:
         entity_id: climate.tstat_838e9c_lyric_t6_thermostat
         attribute: hvac_action
         id: thermostat
+      - trigger: state
+        entity_id: input_boolean.energy_shower_auto_active
+        id: shower_state
       - trigger: state
         entity_id: sensor.slimmelezer_mini_gas_consumed
         id: gas_meter
@@ -1660,6 +1813,7 @@ automation:
             {{ 'heating' if state_attr('climate.tstat_838e9c_lyric_t6_thermostat', 'hvac_action') == 'heating'
                else 'idle' if state_attr('climate.tstat_838e9c_lyric_t6_thermostat', 'hvac_action') in ['idle', 'off']
                else 'unknown' }}
+          previous_shower_active: "{{ states('input_boolean.energy_gas_previous_shower_active') }}"
           gas_now: "{{ states('sensor.slimmelezer_mini_gas_consumed') | float(0) }}"
           gas_previous: "{{ states('input_number.energy_gas_last_meter_m3') | float(0) }}"
           gas_delta: >-
@@ -1673,6 +1827,9 @@ automation:
           unknown_seconds: >-
             {{ states('input_number.energy_gas_interval_unknown_seconds') | float(0)
                + (elapsed_seconds | float(0) if previous_hvac_state not in ['heating', 'idle'] else 0) }}
+          shower_seconds: >-
+            {{ states('input_number.energy_gas_interval_shower_seconds') | float(0)
+               + (elapsed_seconds | float(0) if previous_shower_active == 'on' else 0) }}
           total_interval_seconds: >-
             {{ heating_seconds | float(0) + idle_seconds | float(0) + unknown_seconds | float(0) }}
           heating_gas_delta: >-
@@ -1684,6 +1841,9 @@ automation:
           unknown_gas_delta: >-
             {{ [(gas_delta | float(0)) - (heating_gas_delta | float(0))
                 - (idle_gas_delta | float(0)), 0] | max }}
+          shower_gas_delta: >-
+            {{ ((gas_delta | float(0)) * ([shower_seconds | float(0), total_interval_seconds | float(0)] | min)
+                / (total_interval_seconds | float(1))) if total_interval_seconds | float(0) > 0 else 0 }}
       - choose:
           # First run: take a gas-meter baseline; do not backfill prior use.
           - conditions:
@@ -1702,9 +1862,11 @@ automation:
                     - input_number.energy_gas_interval_heating_seconds
                     - input_number.energy_gas_interval_idle_seconds
                     - input_number.energy_gas_interval_unknown_seconds
+                    - input_number.energy_gas_interval_shower_seconds
                     - input_number.energy_gas_time_weighted_heating_total_m3
                     - input_number.energy_gas_time_weighted_other_total_m3
                     - input_number.energy_gas_time_weighted_unknown_total_m3
+                    - input_number.energy_gas_time_weighted_shower_total_m3
                 data:
                   value: 0
               - service: input_boolean.turn_on
@@ -1746,10 +1908,16 @@ automation:
                       value: "{{ (states('input_number.energy_gas_time_weighted_unknown_total_m3') | float(0) + unknown_gas_delta | float(0)) | round(6) }}"
                   - service: input_number.set_value
                     target:
+                      entity_id: input_number.energy_gas_time_weighted_shower_total_m3
+                    data:
+                      value: "{{ (states('input_number.energy_gas_time_weighted_shower_total_m3') | float(0) + shower_gas_delta | float(0)) | round(6) }}"
+                  - service: input_number.set_value
+                    target:
                       entity_id:
                         - input_number.energy_gas_interval_heating_seconds
                         - input_number.energy_gas_interval_idle_seconds
                         - input_number.energy_gas_interval_unknown_seconds
+                        - input_number.energy_gas_interval_shower_seconds
                     data:
                       value: 0
                   - service: input_number.set_value
@@ -1774,6 +1942,11 @@ automation:
                   entity_id: input_number.energy_gas_interval_unknown_seconds
                 data:
                   value: "{{ unknown_seconds | round(0) }}"
+              - service: input_number.set_value
+                target:
+                  entity_id: input_number.energy_gas_interval_shower_seconds
+                data:
+                  value: "{{ shower_seconds | round(0) }}"
               - if:
                   - condition: template
                     value_template: "{{ trigger.id == 'gas_meter' and gas_now | float(0) < gas_previous | float(0) }}"
@@ -1793,6 +1966,19 @@ automation:
           entity_id: input_select.energy_gas_previous_hvac_state
         data:
           option: "{{ current_hvac_state }}"
+      - choose:
+          - conditions:
+              - condition: state
+                entity_id: input_boolean.energy_shower_auto_active
+                state: "on"
+            sequence:
+              - service: input_boolean.turn_on
+                target:
+                  entity_id: input_boolean.energy_gas_previous_shower_active
+        default:
+          - service: input_boolean.turn_off
+            target:
+              entity_id: input_boolean.energy_gas_previous_shower_active
 
 sensor:
   - platform: history_stats
@@ -2086,6 +2272,52 @@ sensor:
     state_class: total_increasing
 
 # ------------------------------------------------------------
+# AUTO-DETECTED SHOWER SESSION HISTORY
+# Rolling calculations require seven days of Recorder history.
+# ------------------------------------------------------------
+  - platform: history_stats
+    name: Energy Shower Runtime This Month
+    unique_id: energy_shower_runtime_this_month
+    entity_id: input_boolean.energy_shower_auto_active
+    state: "on"
+    type: time
+    start: "{{ now().replace(day=1, hour=0, minute=0, second=0, microsecond=0) }}"
+    end: "{{ now() }}"
+    state_class: total_increasing
+
+  - platform: history_stats
+    name: Energy Shower Sessions This Month
+    unique_id: energy_shower_sessions_this_month
+    entity_id: input_boolean.energy_shower_auto_active
+    state: "on"
+    type: count
+    start: "{{ now().replace(day=1, hour=0, minute=0, second=0, microsecond=0) }}"
+    end: "{{ now() }}"
+    min_state_duration: "00:02:00"
+    state_class: total_increasing
+
+  - platform: history_stats
+    name: Energy Shower Runtime Last 7 Days
+    unique_id: energy_shower_runtime_last_7_days
+    entity_id: input_boolean.energy_shower_auto_active
+    state: "on"
+    type: time
+    start: "{{ now() - timedelta(days=7) }}"
+    end: "{{ now() }}"
+    state_class: measurement
+
+  - platform: history_stats
+    name: Energy Shower Sessions Last 7 Days
+    unique_id: energy_shower_sessions_last_7_days
+    entity_id: input_boolean.energy_shower_auto_active
+    state: "on"
+    type: count
+    start: "{{ now() - timedelta(days=7) }}"
+    end: "{{ now() }}"
+    min_state_duration: "00:02:00"
+    state_class: measurement
+
+# ------------------------------------------------------------
 # MONTHLY GAS SPLIT
 # Heating is tracked from the thermostat-based gas attribution counter.
 # Other gas is calculated in the dashboard as total monthly gas minus
@@ -2113,5 +2345,19 @@ utility_meter:
     unique_id: energy_gas_heating_time_weighted_month
     source: sensor.slimmelezer_gas_heating_time_weighted
     cycle: monthly
+    periodically_resetting: true
+    always_available: true
+  energy_gas_shower_month:
+    name: Energy Gas Shower Month
+    unique_id: energy_gas_shower_month
+    source: sensor.slimmelezer_gas_shower_time_weighted
+    cycle: monthly
+    periodically_resetting: true
+    always_available: true
+  energy_gas_shower_week:
+    name: Energy Gas Shower Week
+    unique_id: energy_gas_shower_week
+    source: sensor.slimmelezer_gas_shower_time_weighted
+    cycle: weekly
     periodically_resetting: true
     always_available: true
