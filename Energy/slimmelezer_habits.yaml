@@ -629,6 +629,102 @@ input_number:
     mode: box
     unit_of_measurement: EUR/m³
     initial: 1.8115
+  energy_archive_cost_jan:
+    name: YoY archive cost JAN · previous year
+    min: 0
+    max: 100000
+    step: 0.01
+    mode: box
+    unit_of_measurement: EUR
+    initial: 296.45
+  energy_archive_cost_feb:
+    name: YoY archive cost FEB · previous year
+    min: 0
+    max: 100000
+    step: 0.01
+    mode: box
+    unit_of_measurement: EUR
+    initial: 206
+  energy_archive_cost_mar:
+    name: YoY archive cost MAR · previous year
+    min: 0
+    max: 100000
+    step: 0.01
+    mode: box
+    unit_of_measurement: EUR
+    initial: 194.99
+  energy_archive_cost_apr:
+    name: YoY archive cost APR · previous year
+    min: 0
+    max: 100000
+    step: 0.01
+    mode: box
+    unit_of_measurement: EUR
+    initial: 111.76
+  energy_archive_cost_may:
+    name: YoY archive cost MAY · previous year
+    min: 0
+    max: 100000
+    step: 0.01
+    mode: box
+    unit_of_measurement: EUR
+    initial: 132.89
+  energy_archive_cost_jun:
+    name: YoY archive cost JUN · previous year
+    min: 0
+    max: 100000
+    step: 0.01
+    mode: box
+    unit_of_measurement: EUR
+    initial: 120.98
+  energy_archive_cost_jul:
+    name: YoY archive cost JUL · previous year
+    min: 0
+    max: 100000
+    step: 0.01
+    mode: box
+    unit_of_measurement: EUR
+    initial: 0
+  energy_archive_cost_aug:
+    name: YoY archive cost AUG · previous year
+    min: 0
+    max: 100000
+    step: 0.01
+    mode: box
+    unit_of_measurement: EUR
+    initial: 0
+  energy_archive_cost_sep:
+    name: YoY archive cost SEP · previous year
+    min: 0
+    max: 100000
+    step: 0.01
+    mode: box
+    unit_of_measurement: EUR
+    initial: 0
+  energy_archive_cost_oct:
+    name: YoY archive cost OCT · previous year
+    min: 0
+    max: 100000
+    step: 0.01
+    mode: box
+    unit_of_measurement: EUR
+    initial: 0
+  energy_archive_cost_nov:
+    name: YoY archive cost NOV · previous year
+    min: 0
+    max: 100000
+    step: 0.01
+    mode: box
+    unit_of_measurement: EUR
+    initial: 0
+  energy_archive_cost_dec:
+    name: YoY archive cost DEC · previous year
+    min: 0
+    max: 100000
+    step: 0.01
+    mode: box
+    unit_of_measurement: EUR
+    initial: 0
 # ------------------------------------------------------------
 # STATE-BASED TEMPLATE SENSORS
 # ------------------------------------------------------------
@@ -1329,17 +1425,16 @@ template:
               } %}
               {% set gas = gas_values.get(month) %}
               {% set electricity = electricity_values.get(month) %}
+              {% if gas is not none and electricity is not none %}
+                {{ (gas * (states('input_number.energy_yoy_baseline_gas_unit_rate') | float(0))
+                    + electricity * (states('input_number.energy_yoy_baseline_electricity_unit_rate') | float(0))) | round(2) }}
+              {% else %}
+                {{ none }}
+              {% endif %}
             {% else %}
               {% set names = ['jan','feb','mar','apr','may','jun','jul','aug','sep','oct','nov','dec'] %}
-              {% set name = names[month - 1] %}
-              {% set gas = states('input_number.energy_archive_gas_' ~ name) | float(0) %}
-              {% set electricity = states('input_number.energy_archive_electricity_' ~ name) | float(0) %}
-            {% endif %}
-            {% if gas is not none and electricity is not none and gas > 0 and electricity > 0 %}
-              {{ (gas * states('input_number.energy_yoy_baseline_gas_unit_rate') | float(0)
-                  + electricity * states('input_number.energy_yoy_baseline_electricity_unit_rate') | float(0)) | round(2) }}
-            {% else %}
-              {{ none }}
+              {% set value = states('input_number.energy_archive_cost_' ~ names[month - 1]) | float(0) %}
+              {{ value if value > 0 else none }}
             {% endif %}
 
       - name: Energy Gas YoY Difference
@@ -1871,6 +1966,11 @@ automation:
           entity_id: "{{ 'input_number.energy_archive_electricity_' ~ now().strftime('%b') | lower }}"
         data:
           value: "{{ states('sensor.energy_electricity_total_month') | float(0) }}"
+      - action: input_number.set_value
+        target:
+          entity_id: "{{ 'input_number.energy_archive_cost_' ~ now().strftime('%b') | lower }}"
+        data:
+          value: "{{ states('sensor.energy_cost_total_month') | float(0) }}"
   - id: energy_period_meters_seed_from_statistics
     alias: Energy - Initialize month and energy-year meters
     description: >-
