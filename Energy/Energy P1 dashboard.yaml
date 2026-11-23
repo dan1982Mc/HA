@@ -68,11 +68,11 @@ views:
             show_label: true
             triggers_update:
               - sensor.energy_gas_total_month
-              - sensor.energy_gas_heating_month
+              - sensor.energy_gas_heating_time_weighted_month
             label: |
               [[[
                 const total = Number(states['sensor.energy_gas_total_month']?.state);
-                const heating = Number(states['sensor.energy_gas_heating_month']?.state);
+                const heating = Number(states['sensor.energy_gas_heating_time_weighted_month']?.state);
                 if (!Number.isFinite(total) || !Number.isFinite(heating)) {
                   return 'Waiting for monthly gas readings';
                 }
@@ -81,13 +81,13 @@ views:
                 const other = Math.max(safeTotal - safeHeating, 0);
                 const heatingPct = safeTotal > 0 ? safeHeating / safeTotal * 100 : 0;
                 const otherPct = safeTotal > 0 ? other / safeTotal * 100 : 0;
-                return `<span style="color:var(--warning-color);font-weight:600">Heating ${heatingPct.toFixed(0)}% · ${safeHeating.toFixed(2)} m³</span> &nbsp; <span style="color:var(--info-color);font-weight:600">Other ${otherPct.toFixed(0)}% · ${other.toFixed(2)} m³</span>`;
+                return `<span style="color:var(--warning-color);font-weight:600">Heating ${heatingPct.toFixed(0)}% · ${safeHeating.toFixed(2)} m³</span> &nbsp; <span style="color:var(--info-color);font-weight:600">Other / unknown ${otherPct.toFixed(0)}% · ${other.toFixed(2)} m³</span>`;
               ]]]
             custom_fields:
               gas_bar: |
                 [[[
                   const total = Number(states['sensor.energy_gas_total_month']?.state);
-                  const heating = Number(states['sensor.energy_gas_heating_month']?.state);
+                  const heating = Number(states['sensor.energy_gas_heating_time_weighted_month']?.state);
                   if (!Number.isFinite(total) || !Number.isFinite(heating) || total <= 0) {
                     return '<div style="height:12px;width:100%;border-radius:999px;background:var(--divider-color);"></div>';
                   }
@@ -477,15 +477,15 @@ views:
                                 name: Thermostat calling for heat
                               - entity: sensor.energy_heating_hours_today
                                 name: Heating hours today
-                              - entity: sensor.slimmelezer_gas_during_heating_demand
+                              - entity: sensor.slimmelezer_gas_heating_time_weighted
                                 name: Gas during heating demand · m³
-                              - entity: sensor.slimmelezer_gas_outside_heating_demand
+                              - entity: sensor.slimmelezer_gas_outside_heating_time_weighted
                                 name: Gas outside heating demand · m³
-                              - entity: sensor.slimmelezer_gas_unclassified
+                              - entity: sensor.slimmelezer_gas_unclassified_time_weighted
                                 name: Unclassified gas · m³
-                              - entity: sensor.slimmelezer_gas_heating_cost_total
+                              - entity: sensor.slimmelezer_gas_heating_time_weighted_cost_total
                                 name: Heating-demand gas cost · €
-                              - entity: sensor.slimmelezer_gas_outside_heating_cost_total
+                              - entity: sensor.slimmelezer_gas_outside_heating_time_weighted_cost_total
                                 name: Outside-heating gas cost · €
                           - type: statistics-graph
                             title: Gas by classification · 7 days
@@ -495,11 +495,11 @@ views:
                             stat_types:
                               - change
                             entities:
-                              - entity: sensor.slimmelezer_gas_during_heating_demand
+                              - entity: sensor.slimmelezer_gas_heating_time_weighted
                                 name: During heating
-                              - entity: sensor.slimmelezer_gas_outside_heating_demand
+                              - entity: sensor.slimmelezer_gas_outside_heating_time_weighted
                                 name: Outside heating
-                              - entity: sensor.slimmelezer_gas_unclassified
+                              - entity: sensor.slimmelezer_gas_unclassified_time_weighted
                                 name: Unclassified
                           - type: history-graph
                             title: Heating state and gas meter · 24 hours
