@@ -1,0 +1,1582 @@
+# ============================================================
+# SLIMMELEZER ENERGY HABITS PACKAGE
+# Home Assistant packages directory
+#
+# Uses existing entities from the HA configuration:
+# - SlimmeLezer Mini electricity and gas
+# - Resideo T6 thermostat
+# - existing appliance entities
+# - existing presence, motion and entry-contact entities
+#
+# Gas attribution is an estimate based on thermostat hvac_action
+# at the moment the gas meter entity updates. It is NOT a separate
+# physical measurement of hot-water or space-heating gas.
+# ============================================================
+
+# ------------------------------------------------------------
+# MANUAL ACTIVITY SESSION HELPERS
+# One household-meter activity session at a time. Each session
+# snapshots the selected cumulative meter at start and stop.
+# ------------------------------------------------------------
+input_boolean:
+  energy_manual_activity_running:
+    name: Manual energy activity running
+    icon: mdi:timer-play-outline
+  energy_baseline_initialized:
+    name: Energy baseline sampling initialized
+    icon: mdi:database-check
+  energy_baseline_electricity_sample_valid:
+    name: Electricity baseline sample valid
+  energy_baseline_gas_heating_sample_valid:
+    name: Gas heating baseline sample valid
+  energy_baseline_gas_idle_sample_valid:
+    name: Gas idle baseline sample valid
+  energy_manual_last_net_valid:
+    name: Last activity net estimate valid
+
+input_select:
+  energy_manual_activity_type:
+    name: Manual activity type
+    options:
+      - Shower
+      - Gas cooking
+      - Electric cooking
+      - Other
+    icon: mdi:format-list-bulleted
+  energy_manual_energy_source:
+    name: Manual activity energy source
+    options:
+      - Gas
+      - Electricity
+    icon: mdi:meter-gas
+
+input_text:
+  energy_manual_last_baseline_status:
+    name: Last activity baseline status
+    max: 255
+    mode: text
+  energy_manual_activity_name:
+    name: Activity name
+    min: 0
+    max: 60
+    mode: text
+  energy_manual_last_session:
+    name: Last completed energy activity
+    max: 255
+    mode: text
+
+input_datetime:
+  energy_manual_activity_started_at:
+    name: Manual activity started at
+    has_date: true
+    has_time: true
+  energy_manual_hvac_last_check:
+    name: Manual activity last HVAC check
+    has_date: true
+    has_time: true
+  energy_baseline_sampled_at:
+    name: Energy baseline last sample time
+    has_date: true
+    has_time: true
+
+input_number:
+  energy_manual_start_gas_m3:
+    name: Manual session gas meter at start
+    min: 0
+    max: 1000000
+    step: 0.001
+    mode: box
+    unit_of_measurement: m³
+  energy_manual_start_electricity_kwh:
+    name: Manual session electricity meter at start
+    min: 0
+    max: 10000000
+    step: 0.001
+    mode: box
+    unit_of_measurement: kWh
+  energy_manual_shower_gas_total:
+    name: Manual shower gas gross total
+    min: 0
+    max: 100000
+    step: 0.001
+    mode: box
+    unit_of_measurement: m³
+  energy_manual_gas_cooking_total:
+    name: Manual gas cooking gross total
+    min: 0
+    max: 100000
+    step: 0.001
+    mode: box
+    unit_of_measurement: m³
+  energy_manual_electric_cooking_total:
+    name: Manual electric cooking gross total
+    min: 0
+    max: 1000000
+    step: 0.001
+    mode: box
+    unit_of_measurement: kWh
+  energy_manual_custom_gas_total:
+    name: Manual other gas gross total
+    min: 0
+    max: 100000
+    step: 0.001
+    mode: box
+    unit_of_measurement: m³
+  energy_manual_custom_electricity_total:
+    name: Manual other electricity gross total
+    min: 0
+    max: 1000000
+    step: 0.001
+    mode: box
+    unit_of_measurement: kWh
+
+  # Rolling-baseline learning: 5-minute meter deltas captured only outside sessions.
+  energy_baseline_last_gas_m3:
+    name: Baseline gas meter snapshot
+    min: 0
+    max: 1000000
+    step: 0.001
+    mode: box
+    unit_of_measurement: m³
+  energy_baseline_last_electricity_kwh:
+    name: Baseline electricity meter snapshot
+    min: 0
+    max: 10000000
+    step: 0.001
+    mode: box
+    unit_of_measurement: kWh
+  energy_baseline_electricity_5m_sample:
+    name: Quiet electricity use per 5 minutes
+    min: 0
+    max: 10
+    step: 0.000001
+    mode: box
+    unit_of_measurement: kWh
+  energy_baseline_gas_heating_5m_sample:
+    name: Background gas during heating per 5 minutes
+    min: 0
+    max: 1
+    step: 0.000001
+    mode: box
+    unit_of_measurement: m³
+  energy_baseline_gas_idle_5m_sample:
+    name: Background gas without heating per 5 minutes
+    min: 0
+    max: 1
+    step: 0.000001
+    mode: box
+    unit_of_measurement: m³
+  energy_baseline_max_power_w:
+    name: Maximum grid power for quiet baseline sample
+    min: 100
+    max: 2000
+    step: 25
+    initial: 450
+    mode: slider
+    unit_of_measurement: W
+
+  # Minutes spent in each thermostat state during a manual gas session.
+  energy_manual_heating_minutes:
+    name: Manual session minutes with heating demand
+    min: 0
+    max: 1000
+    step: 0.01
+    mode: box
+    unit_of_measurement: min
+  energy_manual_idle_minutes:
+    name: Manual session minutes without heating demand
+    min: 0
+    max: 1000
+    step: 0.01
+    mode: box
+    unit_of_measurement: min
+  energy_manual_unknown_hvac_minutes:
+    name: Manual session minutes with unknown HVAC state
+    min: 0
+    max: 1000
+    step: 0.01
+    mode: box
+    unit_of_measurement: min
+
+  # Last completed session - values for the selected fuel/electricity source.
+  energy_manual_last_gross_gas_m3:
+    name: Last session gross gas
+    min: 0
+    max: 1000
+    step: 0.001
+    mode: box
+    unit_of_measurement: m³
+  energy_manual_last_baseline_gas_m3:
+    name: Last session estimated gas baseline
+    min: 0
+    max: 1000
+    step: 0.001
+    mode: box
+    unit_of_measurement: m³
+  energy_manual_last_net_gas_m3:
+    name: Last session net additional gas
+    min: 0
+    max: 1000
+    step: 0.001
+    mode: box
+    unit_of_measurement: m³
+  energy_manual_last_gross_electricity_kwh:
+    name: Last session gross electricity
+    min: 0
+    max: 1000
+    step: 0.001
+    mode: box
+    unit_of_measurement: kWh
+  energy_manual_last_baseline_electricity_kwh:
+    name: Last session estimated electricity baseline
+    min: 0
+    max: 1000
+    step: 0.001
+    mode: box
+    unit_of_measurement: kWh
+  energy_manual_last_net_electricity_kwh:
+    name: Last session net additional electricity
+    min: 0
+    max: 1000
+    step: 0.001
+    mode: box
+    unit_of_measurement: kWh
+  energy_manual_last_gross_cost_eur:
+    name: Last session gross estimated cost
+    min: 0
+    max: 10000
+    step: 0.0001
+    mode: box
+    unit_of_measurement: EUR
+  energy_manual_last_baseline_cost_eur:
+    name: Last session baseline estimated cost
+    min: 0
+    max: 10000
+    step: 0.0001
+    mode: box
+    unit_of_measurement: EUR
+  energy_manual_last_net_cost_eur:
+    name: Last session net additional estimated cost
+    min: 0
+    max: 10000
+    step: 0.0001
+    mode: box
+    unit_of_measurement: EUR
+
+  # Per-activity cumulative baseline and net counters. Existing *_total helpers remain gross.
+  energy_manual_shower_gas_baseline_total:
+    name: Shower gas baseline total
+    min: 0
+    max: 100000
+    step: 0.001
+    mode: box
+    unit_of_measurement: m³
+  energy_manual_shower_gas_net_total:
+    name: Shower gas net total
+    min: 0
+    max: 100000
+    step: 0.001
+    mode: box
+    unit_of_measurement: m³
+  energy_manual_gas_cooking_baseline_total:
+    name: Gas cooking baseline total
+    min: 0
+    max: 100000
+    step: 0.001
+    mode: box
+    unit_of_measurement: m³
+  energy_manual_gas_cooking_net_total:
+    name: Gas cooking net total
+    min: 0
+    max: 100000
+    step: 0.001
+    mode: box
+    unit_of_measurement: m³
+  energy_manual_electric_cooking_baseline_total:
+    name: Electric cooking baseline total
+    min: 0
+    max: 100000
+    step: 0.001
+    mode: box
+    unit_of_measurement: kWh
+  energy_manual_electric_cooking_net_total:
+    name: Electric cooking net total
+    min: 0
+    max: 100000
+    step: 0.001
+    mode: box
+    unit_of_measurement: kWh
+  energy_manual_custom_gas_baseline_total:
+    name: Other gas baseline total
+    min: 0
+    max: 100000
+    step: 0.001
+    mode: box
+    unit_of_measurement: m³
+  energy_manual_custom_gas_net_total:
+    name: Other gas net total
+    min: 0
+    max: 100000
+    step: 0.001
+    mode: box
+    unit_of_measurement: m³
+  energy_manual_custom_electricity_baseline_total:
+    name: Other electricity baseline total
+    min: 0
+    max: 100000
+    step: 0.001
+    mode: box
+    unit_of_measurement: kWh
+  energy_manual_custom_electricity_net_total:
+    name: Other electricity net total
+    min: 0
+    max: 100000
+    step: 0.001
+    mode: box
+    unit_of_measurement: kWh
+
+# ------------------------------------------------------------
+# STATE-BASED TEMPLATE SENSORS
+# ------------------------------------------------------------
+template:
+  - sensor:
+      # Combined T1 + T2 cumulative electricity register.
+      - name: Slimmelezer Electricity Total
+        unique_id: slimmelezer_electricity_total
+        device_class: energy
+        state_class: total_increasing
+        unit_of_measurement: kWh
+        availability: >
+          {{ is_number(states('sensor.slimmelezer_mini_energy_consumed_tariff_1'))
+             and is_number(states('sensor.slimmelezer_mini_energy_consumed_tariff_2')) }}
+        state: >
+          {{ (states('sensor.slimmelezer_mini_energy_consumed_tariff_1') | float(0)
+              + states('sensor.slimmelezer_mini_energy_consumed_tariff_2') | float(0)) | round(3) }}
+
+      # Lifetime variable electricity cost at the supplied fixed rate.
+      - name: Slimmelezer Electricity Cost Total
+        unique_id: slimmelezer_electricity_cost_total
+        device_class: monetary
+        state_class: total_increasing
+        unit_of_measurement: EUR
+        availability: "{{ is_number(states('sensor.slimmelezer_electricity_total')) }}"
+        state: >
+          {{ (states('sensor.slimmelezer_electricity_total') | float(0) * 0.26697) | round(5) }}
+
+      # Lifetime variable gas cost at the supplied fixed rate.
+      - name: Slimmelezer Gas Cost Total
+        unique_id: slimmelezer_gas_cost_total
+        device_class: monetary
+        state_class: total_increasing
+        unit_of_measurement: EUR
+        availability: "{{ is_number(states('sensor.slimmelezer_mini_gas_consumed')) }}"
+        state: >
+          {{ (states('sensor.slimmelezer_mini_gas_consumed') | float(0) * 1.43817) | round(5) }}
+
+      # Total estimated variable cost for electricity + gas.
+      - name: Slimmelezer Energy Cost Total
+        unique_id: slimmelezer_energy_cost_total
+        device_class: monetary
+        state_class: total_increasing
+        unit_of_measurement: EUR
+        availability: >
+          {{ is_number(states('sensor.slimmelezer_electricity_cost_total'))
+             and is_number(states('sensor.slimmelezer_gas_cost_total')) }}
+        state: >
+          {{ (states('sensor.slimmelezer_electricity_cost_total') | float(0)
+              + states('sensor.slimmelezer_gas_cost_total') | float(0)) | round(5) }}
+
+      # Appliance monthly cost proxies. The source entities are the
+      # existing monthly kWh sensors from the washer/dryer smart plugs.
+      - name: Energy Washer Cost This Month
+        unique_id: energy_washer_cost_this_month
+        device_class: monetary
+        state_class: measurement
+        unit_of_measurement: EUR
+        availability: "{{ is_number(states('sensor.smart_plug_3_this_month_s_consumption')) }}"
+        state: >
+          {{ (states('sensor.smart_plug_3_this_month_s_consumption') | float(0) * 0.26697) | round(2) }}
+
+      - name: Energy Dryer Cost This Month
+        unique_id: energy_dryer_cost_this_month
+        device_class: monetary
+        state_class: measurement
+        unit_of_measurement: EUR
+        availability: "{{ is_number(states('sensor.fridge_2_this_month_s_consumption')) }}"
+        state: >
+          {{ (states('sensor.fridge_2_this_month_s_consumption') | float(0) * 0.26697) | round(2) }}
+
+  - sensor:
+      - name: Energy House Empty Check
+        unique_id: energy_house_empty_check
+        icon: mdi:clipboard-check-outline
+        state: >
+          {% set reasons = [] %}
+          {% if is_state('binary_sensor.anca_presence_combined', 'on') %}
+            {% set reasons = reasons + ['Anca presence is home'] %}
+          {% endif %}
+          {% if is_state('binary_sensor.dan_presence_combined', 'on') %}
+            {% set reasons = reasons + ['Dan presence is home'] %}
+          {% endif %}
+          {% set motion_ids = [
+            'binary_sensor.kitchen_motion_sensor',
+            'binary_sensor.small_bedroom_motion_occupancy',
+            'binary_sensor.bathroom_motion_occupancy',
+            'binary_sensor.big_bedroom_motion_occupancy',
+            'binary_sensor.hal_motion_all',
+            'binary_sensor.living_room_motion_all'
+          ] %}
+          {% for item in expand(motion_ids) %}
+            {% if item.state == 'on' %}
+              {% set reasons = reasons + [item.name ~ ' detects motion'] %}
+            {% elif item.state in ['unknown', 'unavailable'] %}
+              {% set reasons = reasons + [item.name ~ ' unavailable'] %}
+            {% endif %}
+          {% endfor %}
+          {% if states('binary_sensor.anca_presence_combined') in ['unknown', 'unavailable'] %}
+            {% set reasons = reasons + ['Anca presence unavailable'] %}
+          {% endif %}
+          {% if states('binary_sensor.dan_presence_combined') in ['unknown', 'unavailable'] %}
+            {% set reasons = reasons + ['Dan presence unavailable'] %}
+          {% endif %}
+          {{ reasons | join('; ') if reasons | count > 0 else 'No people or motion detected; empty confirmation pending' }}
+        attributes:
+          people_away: >
+            {{ is_state('binary_sensor.anca_presence_combined', 'off')
+               and is_state('binary_sensor.dan_presence_combined', 'off') }}
+          entry_contact_open: "{{ is_state('binary_sensor.energy_entry_contact_open', 'on') }}"
+
+  - binary_sensor:
+      # Existing combined presence sensors are the primary source of truth.
+      # In the existing automations, ON means the person has arrived/home;
+      # OFF means away. The empty-house sensor therefore requires BOTH OFF.
+      - name: Energy Someone Home
+        unique_id: energy_someone_home
+        icon: mdi:home-account
+        availability: >
+          {{ states('binary_sensor.anca_presence_combined') in ['on', 'off']
+             and states('binary_sensor.dan_presence_combined') in ['on', 'off'] }}
+        state: >
+          {{ is_state('binary_sensor.anca_presence_combined', 'on')
+             or is_state('binary_sensor.dan_presence_combined', 'on') }}
+
+      # Motion is an optional safety override, NOT a dependency for availability.
+      # Any monitored motion reporting ON means occupied. Unknown/unavailable
+      # motion entities are skipped and reported by Energy House Empty Check.
+      # This prevents one offline motion sensor from making the whole house
+      # occupancy result unavailable. Combined person-presence sensors remain
+      # the authoritative source for whether someone is home.
+      - name: Energy Motion Detected
+        unique_id: energy_motion_detected
+        icon: mdi:motion-sensor
+        state: >
+          {% set motion_ids = [
+            'binary_sensor.kitchen_motion_sensor',
+            'binary_sensor.small_bedroom_motion_occupancy',
+            'binary_sensor.bathroom_motion_occupancy',
+            'binary_sensor.big_bedroom_motion_occupancy',
+            'binary_sensor.hal_motion_all',
+            'binary_sensor.living_room_motion_all'
+          ] %}
+          {{ expand(motion_ids) | selectattr('state', 'eq', 'on') | list | count > 0 }}
+
+      # Contact sensors are retained as diagnostics, but do NOT block the
+      # empty-house state. A door/window left open should not make an empty
+      # apartment appear occupied indefinitely.
+      - name: Energy Entry Contact Open
+        unique_id: energy_entry_contact_open
+        icon: mdi:door-open
+        availability: >
+          {{ states('binary_sensor.contactsensor_rear_door_2') in ['on', 'off']
+             and states('binary_sensor.contactsensor_front_door_2') in ['on', 'off'] }}
+        state: >
+          {{ is_state('binary_sensor.contactsensor_rear_door_2', 'on')
+             or is_state('binary_sensor.contactsensor_front_door_2', 'on') }}
+
+      # Empty = both combined person-presence sensors report away AND no
+      # monitored motion sensor currently reports ON. Availability depends
+      # ONLY on the two authoritative combined presence sensors. An offline
+      # motion sensor must not make this entity unavailable; it is listed in
+      # Energy House Empty Check instead. Entry contacts are diagnostics only.
+      - name: Energy House Empty
+        unique_id: energy_house_empty
+        icon: mdi:home-export-outline
+        availability: >
+          {{ states('binary_sensor.anca_presence_combined') in ['on', 'off']
+             and states('binary_sensor.dan_presence_combined') in ['on', 'off'] }}
+        state: >
+          {{ is_state('binary_sensor.anca_presence_combined', 'off')
+             and is_state('binary_sensor.dan_presence_combined', 'off')
+             and is_state('binary_sensor.energy_motion_detected', 'off') }}
+        delay_on: "00:10:00"
+
+      - name: Energy Thermostat Heating
+        unique_id: energy_thermostat_heating
+        icon: mdi:radiator
+        availability: >
+          {{ states('climate.tstat_838e9c_lyric_t6_thermostat') not in ['unknown', 'unavailable']
+             and state_attr('climate.tstat_838e9c_lyric_t6_thermostat', 'hvac_action') in ['heating', 'idle', 'off'] }}
+        state: >
+          {{ state_attr('climate.tstat_838e9c_lyric_t6_thermostat', 'hvac_action') == 'heating' }}
+
+      - name: Energy Dishwasher Running
+        unique_id: energy_dishwasher_running
+        icon: mdi:dishwasher
+        availability: "{{ is_number(states('sensor.dishwasher_program_progress')) }}"
+        state: >
+          {% set progress = states('sensor.dishwasher_program_progress') | float(-1) %}
+          {{ progress > 0 and progress < 100 }}
+
+      # This is the oven's power switch state, not proof of active heating.
+      - name: Energy Oven Powered
+        unique_id: energy_oven_powered
+        icon: mdi:stove
+        availability: "{{ states('switch.oven_power') in ['on', 'off'] }}"
+        state: "{{ is_state('switch.oven_power', 'on') }}"
+
+      # Media-player state indicates the TV box is awake/active, not its wattage.
+      - name: Energy TV Box Awake
+        unique_id: energy_tv_box_awake
+        icon: mdi:television
+        availability: "{{ states('media_player.mibox4') not in ['unknown', 'unavailable'] }}"
+        state: "{{ states('media_player.mibox4') not in ['off', 'standby', 'unknown', 'unavailable'] }}"
+
+# ------------------------------------------------------------
+# TRIGGER-BASED GAS ATTRIBUTION
+# ------------------------------------------------------------
+# Each new gas-meter reading is differenced against the previous
+# reading and assigned according to the thermostat's hvac_action
+# at that update: heating / idle-or-off / unknown.
+# Counters start from zero when first installed and do not backfill.
+# ------------------------------------------------------------
+  - triggers:
+      - trigger: state
+        entity_id: sensor.slimmelezer_mini_gas_consumed
+    sensor:
+      - name: Slimmelezer Gas During Heating Demand
+        unique_id: slimmelezer_gas_during_heating_demand
+        device_class: gas
+        state_class: total_increasing
+        unit_of_measurement: m³
+        icon: mdi:radiator
+        state: >
+          {% set old = trigger.from_state.state if trigger.from_state is not none else 'unknown' %}
+          {% set new = trigger.to_state.state if trigger.to_state is not none else 'unknown' %}
+          {% set delta = (new | float(0)) - (old | float(0)) if is_number(old) and is_number(new) else 0 %}
+          {% set delta = [delta, 0] | max %}
+          {% set previous_total = this.state | float(0) %}
+          {% if state_attr('climate.tstat_838e9c_lyric_t6_thermostat', 'hvac_action') == 'heating' %}
+            {{ (previous_total + delta) | round(3) }}
+          {% else %}
+            {{ previous_total | round(3) }}
+          {% endif %}
+
+      - name: Slimmelezer Gas Outside Heating Demand
+        unique_id: slimmelezer_gas_outside_heating_demand
+        device_class: gas
+        state_class: total_increasing
+        unit_of_measurement: m³
+        icon: mdi:water-boiler
+        state: >
+          {% set old = trigger.from_state.state if trigger.from_state is not none else 'unknown' %}
+          {% set new = trigger.to_state.state if trigger.to_state is not none else 'unknown' %}
+          {% set delta = (new | float(0)) - (old | float(0)) if is_number(old) and is_number(new) else 0 %}
+          {% set delta = [delta, 0] | max %}
+          {% set previous_total = this.state | float(0) %}
+          {% set action = state_attr('climate.tstat_838e9c_lyric_t6_thermostat', 'hvac_action') %}
+          {% if action in ['idle', 'off'] %}
+            {{ (previous_total + delta) | round(3) }}
+          {% else %}
+            {{ previous_total | round(3) }}
+          {% endif %}
+
+      - name: Slimmelezer Gas Unclassified
+        unique_id: slimmelezer_gas_unclassified
+        device_class: gas
+        state_class: total_increasing
+        unit_of_measurement: m³
+        icon: mdi:help-circle-outline
+        state: >
+          {% set old = trigger.from_state.state if trigger.from_state is not none else 'unknown' %}
+          {% set new = trigger.to_state.state if trigger.to_state is not none else 'unknown' %}
+          {% set delta = (new | float(0)) - (old | float(0)) if is_number(old) and is_number(new) else 0 %}
+          {% set delta = [delta, 0] | max %}
+          {% set previous_total = this.state | float(0) %}
+          {% set action = state_attr('climate.tstat_838e9c_lyric_t6_thermostat', 'hvac_action') %}
+          {% if action not in ['heating', 'idle', 'off'] %}
+            {{ (previous_total + delta) | round(3) }}
+          {% else %}
+            {{ previous_total | round(3) }}
+          {% endif %}
+
+  - sensor:
+      - name: Slimmelezer Gas Heating Cost Total
+        unique_id: slimmelezer_gas_heating_cost_total
+        device_class: monetary
+        state_class: total_increasing
+        unit_of_measurement: EUR
+        availability: "{{ is_number(states('sensor.slimmelezer_gas_during_heating_demand')) }}"
+        state: >
+          {{ (states('sensor.slimmelezer_gas_during_heating_demand') | float(0) * 1.43817) | round(5) }}
+
+      - name: Slimmelezer Gas Outside Heating Cost Total
+        unique_id: slimmelezer_gas_outside_heating_cost_total
+        device_class: monetary
+        state_class: total_increasing
+        unit_of_measurement: EUR
+        availability: "{{ is_number(states('sensor.slimmelezer_gas_outside_heating_demand')) }}"
+        state: >
+          {{ (states('sensor.slimmelezer_gas_outside_heating_demand') | float(0) * 1.43817) | round(5) }}
+
+      - name: Slimmelezer Gas Unclassified Cost Total
+        unique_id: slimmelezer_gas_unclassified_cost_total
+        device_class: monetary
+        state_class: total_increasing
+        unit_of_measurement: EUR
+        availability: "{{ is_number(states('sensor.slimmelezer_gas_unclassified')) }}"
+        state: >
+          {{ (states('sensor.slimmelezer_gas_unclassified') | float(0) * 1.43817) | round(5) }}
+
+
+  - sensor:
+      - name: Energy Activity Baseline Status
+        unique_id: energy_activity_baseline_status
+        icon: mdi:chart-bell-curve
+        state: >
+          {% set ec = state_attr('sensor.energy_baseline_electricity_5m_mean', 'count') | int(0) %}
+          {% set gh = state_attr('sensor.energy_baseline_gas_heating_5m_mean', 'count') | int(0) %}
+          {% set gi = state_attr('sensor.energy_baseline_gas_idle_5m_mean', 'count') | int(0) %}
+          {% if ec >= 24 and gh >= 24 and gi >= 24 %}
+            Baseline established · electricity {{ ec }} · gas heating {{ gh }} · gas idle {{ gi }} samples
+          {% else %}
+            Learning baseline · electricity {{ ec }}/24 · gas heating {{ gh }}/24 · gas idle {{ gi }}/24 samples
+          {% endif %}
+        attributes:
+          electricity_samples: "{{ state_attr('sensor.energy_baseline_electricity_5m_mean', 'count') | int(0) }}"
+          gas_heating_samples: "{{ state_attr('sensor.energy_baseline_gas_heating_5m_mean', 'count') | int(0) }}"
+          gas_idle_samples: "{{ state_attr('sensor.energy_baseline_gas_idle_5m_mean', 'count') | int(0) }}"
+
+      # Baseline and net cumulative counters for activities. Existing *_total sensors are gross.
+      - name: Energy Manual Shower Gas Baseline Total
+        unique_id: energy_manual_shower_gas_baseline_total_sensor
+        device_class: gas
+        state_class: total_increasing
+        unit_of_measurement: m³
+        state: "{{ states('input_number.energy_manual_shower_gas_baseline_total') | float(0) | round(3) }}"
+      - name: Energy Manual Shower Gas Net Total
+        unique_id: energy_manual_shower_gas_net_total_sensor
+        device_class: gas
+        state_class: total_increasing
+        unit_of_measurement: m³
+        state: "{{ states('input_number.energy_manual_shower_gas_net_total') | float(0) | round(3) }}"
+      - name: Energy Manual Gas Cooking Baseline Total
+        unique_id: energy_manual_gas_cooking_baseline_total_sensor
+        device_class: gas
+        state_class: total_increasing
+        unit_of_measurement: m³
+        state: "{{ states('input_number.energy_manual_gas_cooking_baseline_total') | float(0) | round(3) }}"
+      - name: Energy Manual Gas Cooking Net Total
+        unique_id: energy_manual_gas_cooking_net_total_sensor
+        device_class: gas
+        state_class: total_increasing
+        unit_of_measurement: m³
+        state: "{{ states('input_number.energy_manual_gas_cooking_net_total') | float(0) | round(3) }}"
+      - name: Energy Manual Electric Cooking Baseline Total
+        unique_id: energy_manual_electric_cooking_baseline_total_sensor
+        device_class: energy
+        state_class: total_increasing
+        unit_of_measurement: kWh
+        state: "{{ states('input_number.energy_manual_electric_cooking_baseline_total') | float(0) | round(3) }}"
+      - name: Energy Manual Electric Cooking Net Total
+        unique_id: energy_manual_electric_cooking_net_total_sensor
+        device_class: energy
+        state_class: total_increasing
+        unit_of_measurement: kWh
+        state: "{{ states('input_number.energy_manual_electric_cooking_net_total') | float(0) | round(3) }}"
+      - name: Energy Manual Other Gas Baseline Total
+        unique_id: energy_manual_other_gas_baseline_total_sensor
+        device_class: gas
+        state_class: total_increasing
+        unit_of_measurement: m³
+        state: "{{ states('input_number.energy_manual_custom_gas_baseline_total') | float(0) | round(3) }}"
+      - name: Energy Manual Other Gas Net Total
+        unique_id: energy_manual_other_gas_net_total_sensor
+        device_class: gas
+        state_class: total_increasing
+        unit_of_measurement: m³
+        state: "{{ states('input_number.energy_manual_custom_gas_net_total') | float(0) | round(3) }}"
+      - name: Energy Manual Other Electricity Baseline Total
+        unique_id: energy_manual_other_electricity_baseline_total_sensor
+        device_class: energy
+        state_class: total_increasing
+        unit_of_measurement: kWh
+        state: "{{ states('input_number.energy_manual_custom_electricity_baseline_total') | float(0) | round(3) }}"
+      - name: Energy Manual Other Electricity Net Total
+        unique_id: energy_manual_other_electricity_net_total_sensor
+        device_class: energy
+        state_class: total_increasing
+        unit_of_measurement: kWh
+        state: "{{ states('input_number.energy_manual_custom_electricity_net_total') | float(0) | round(3) }}"
+
+  # Statistics sample sources are force-refreshed by the 5-minute sampling timestamp.
+  # Attribute changes are also recorded by the Statistics integration, allowing repeated
+  # identical sample values (including zero-use intervals) to be represented.
+  - triggers:
+      - trigger: state
+        entity_id:
+          - input_datetime.energy_baseline_sampled_at
+          - input_boolean.energy_baseline_electricity_sample_valid
+    sensor:
+      - name: Energy Electricity Baseline Sample
+        unique_id: energy_electricity_baseline_sample
+        unit_of_measurement: kWh
+        state_class: measurement
+        icon: mdi:flash-outline
+        availability: "{{ is_state('input_boolean.energy_baseline_electricity_sample_valid', 'on') }}"
+        state: "{{ states('input_number.energy_baseline_electricity_5m_sample') | float(0) }}"
+        attributes:
+          sampled_at: "{{ states('input_datetime.energy_baseline_sampled_at') }}"
+
+  - triggers:
+      - trigger: state
+        entity_id:
+          - input_datetime.energy_baseline_sampled_at
+          - input_boolean.energy_baseline_gas_heating_sample_valid
+    sensor:
+      - name: Energy Gas Heating Baseline Sample
+        unique_id: energy_gas_heating_baseline_sample
+        unit_of_measurement: m³
+        state_class: measurement
+        icon: mdi:radiator
+        availability: "{{ is_state('input_boolean.energy_baseline_gas_heating_sample_valid', 'on') }}"
+        state: "{{ states('input_number.energy_baseline_gas_heating_5m_sample') | float(0) }}"
+        attributes:
+          sampled_at: "{{ states('input_datetime.energy_baseline_sampled_at') }}"
+
+  - triggers:
+      - trigger: state
+        entity_id:
+          - input_datetime.energy_baseline_sampled_at
+          - input_boolean.energy_baseline_gas_idle_sample_valid
+    sensor:
+      - name: Energy Gas Idle Baseline Sample
+        unique_id: energy_gas_idle_baseline_sample
+        unit_of_measurement: m³
+        state_class: measurement
+        icon: mdi:water-boiler
+        availability: "{{ is_state('input_boolean.energy_baseline_gas_idle_sample_valid', 'on') }}"
+        state: "{{ states('input_number.energy_baseline_gas_idle_5m_sample') | float(0) }}"
+        attributes:
+          sampled_at: "{{ states('input_datetime.energy_baseline_sampled_at') }}"
+
+# ------------------------------------------------------------
+# DAILY RUNTIME / PRESENCE HOURS
+# ------------------------------------------------------------
+
+  # ----------------------------------------------------------
+  # MANUAL ACTIVITY COUNTERS + RUNNING TIMER
+  # The meter increments during a session are assigned to the
+  # selected activity. These remain whole-house time-window
+  # estimates, not isolated appliance measurements.
+  # ----------------------------------------------------------
+  - sensor:
+      - name: Energy Manual Activity Elapsed
+        unique_id: energy_manual_activity_elapsed
+        device_class: duration
+        state_class: measurement
+        unit_of_measurement: min
+        icon: mdi:timer-outline
+        state: >
+          {% if is_state('input_boolean.energy_manual_activity_running', 'on') %}
+            {% set started = as_timestamp(states('input_datetime.energy_manual_activity_started_at'), 0) %}
+            {{ ((as_timestamp(now()) - started) / 60) | round(0) if started > 0 else 0 }}
+          {% else %}0{% endif %}
+
+      - name: Energy Manual Shower Gas Total
+        unique_id: energy_manual_shower_gas_total
+        device_class: gas
+        state_class: total_increasing
+        unit_of_measurement: m³
+        icon: mdi:shower
+        state: "{{ states('input_number.energy_manual_shower_gas_total') | float(0) | round(3) }}"
+
+      - name: Energy Manual Gas Cooking Total
+        unique_id: energy_manual_gas_cooking_total
+        device_class: gas
+        state_class: total_increasing
+        unit_of_measurement: m³
+        icon: mdi:pot-steam
+        state: "{{ states('input_number.energy_manual_gas_cooking_total') | float(0) | round(3) }}"
+
+      - name: Energy Manual Electric Cooking Total
+        unique_id: energy_manual_electric_cooking_total
+        device_class: energy
+        state_class: total_increasing
+        unit_of_measurement: kWh
+        icon: mdi:stove
+        state: "{{ states('input_number.energy_manual_electric_cooking_total') | float(0) | round(3) }}"
+
+      - name: Energy Manual Other Gas Total
+        unique_id: energy_manual_custom_gas_total
+        device_class: gas
+        state_class: total_increasing
+        unit_of_measurement: m³
+        icon: mdi:gas-burner
+        state: "{{ states('input_number.energy_manual_custom_gas_total') | float(0) | round(3) }}"
+
+      - name: Energy Manual Other Electricity Total
+        unique_id: energy_manual_custom_electricity_total
+        device_class: energy
+        state_class: total_increasing
+        unit_of_measurement: kWh
+        icon: mdi:flash
+        state: "{{ states('input_number.energy_manual_custom_electricity_total') | float(0) | round(3) }}"
+
+      - name: Energy Manual Shower Cost Total
+        unique_id: energy_manual_shower_cost_total
+        device_class: monetary
+        state_class: total_increasing
+        unit_of_measurement: EUR
+        state: "{{ (states('sensor.energy_manual_shower_gas_total') | float(0) * 1.43817) | round(5) }}"
+
+      - name: Energy Manual Gas Cooking Cost Total
+        unique_id: energy_manual_gas_cooking_cost_total
+        device_class: monetary
+        state_class: total_increasing
+        unit_of_measurement: EUR
+        state: "{{ (states('sensor.energy_manual_gas_cooking_total') | float(0) * 1.43817) | round(5) }}"
+
+      - name: Energy Manual Electric Cooking Cost Total
+        unique_id: energy_manual_electric_cooking_cost_total
+        device_class: monetary
+        state_class: total_increasing
+        unit_of_measurement: EUR
+        state: "{{ (states('sensor.energy_manual_electric_cooking_total') | float(0) * 0.26697) | round(5) }}"
+
+      - name: Energy Manual Other Gas Cost Total
+        unique_id: energy_manual_other_gas_cost_total
+        device_class: monetary
+        state_class: total_increasing
+        unit_of_measurement: EUR
+        state: "{{ (states('sensor.energy_manual_custom_gas_total') | float(0) * 1.43817) | round(5) }}"
+
+      - name: Energy Manual Other Electricity Cost Total
+        unique_id: energy_manual_other_electricity_cost_total
+        device_class: monetary
+        state_class: total_increasing
+        unit_of_measurement: EUR
+        state: "{{ (states('sensor.energy_manual_custom_electricity_total') | float(0) * 0.26697) | round(5) }}"
+
+# ------------------------------------------------------------
+# MANUAL ACTIVITY START / STOP SCRIPTS
+# Only one session can run at a time. A session measures the
+# selected whole-house meter delta between Start and Stop.
+# ------------------------------------------------------------
+script:
+  energy_manual_record_hvac_segment:
+    alias: Energy - Record manual session HVAC segment
+    icon: mdi:timer-sand
+    mode: queued
+    sequence:
+      - condition: state
+        entity_id: input_boolean.energy_manual_activity_running
+        state: "on"
+      - variables:
+          check_ts: "{{ as_timestamp(states('input_datetime.energy_manual_hvac_last_check'), as_timestamp(now())) }}"
+          hvac_action: "{{ state_attr('climate.tstat_838e9c_lyric_t6_thermostat', 'hvac_action') }}"
+      - variables:
+          segment_minutes: "{{ ([((as_timestamp(now()) - (check_ts | float(as_timestamp(now())))) / 60), 0] | max) | round(2) }}"
+      - choose:
+          - conditions:
+              - condition: template
+                value_template: "{{ hvac_action == 'heating' }}"
+            sequence:
+              - service: input_number.set_value
+                target:
+                  entity_id: input_number.energy_manual_heating_minutes
+                data:
+                  value: "{{ (states('input_number.energy_manual_heating_minutes') | float(0)) + (segment_minutes | float(0)) }}"
+          - conditions:
+              - condition: template
+                value_template: "{{ hvac_action in ['idle', 'off'] }}"
+            sequence:
+              - service: input_number.set_value
+                target:
+                  entity_id: input_number.energy_manual_idle_minutes
+                data:
+                  value: "{{ (states('input_number.energy_manual_idle_minutes') | float(0)) + (segment_minutes | float(0)) }}"
+        default:
+          - service: input_number.set_value
+            target:
+              entity_id: input_number.energy_manual_unknown_hvac_minutes
+            data:
+              value: "{{ (states('input_number.energy_manual_unknown_hvac_minutes') | float(0)) + (segment_minutes | float(0)) }}"
+      - service: input_datetime.set_datetime
+        target:
+          entity_id: input_datetime.energy_manual_hvac_last_check
+        data:
+          datetime: "{{ now().strftime('%Y-%m-%d %H:%M:%S') }}"
+
+  energy_manual_activity_start:
+    alias: Energy - Start selected activity
+    icon: mdi:play-circle
+    mode: single
+    sequence:
+      - condition: state
+        entity_id: input_boolean.energy_manual_activity_running
+        state: "off"
+      - condition: template
+        value_template: >
+          {{ states('input_text.energy_manual_activity_name') | trim | length > 0
+             and states('input_select.energy_manual_energy_source') in ['Gas', 'Electricity'] }}
+      - condition: template
+        value_template: >
+          {% if is_state('input_select.energy_manual_energy_source', 'Gas') %}
+            {{ is_number(states('sensor.slimmelezer_mini_gas_consumed')) }}
+          {% else %}
+            {{ is_number(states('sensor.slimmelezer_electricity_total')) }}
+          {% endif %}
+      - choose:
+          - conditions:
+              - condition: state
+                entity_id: input_select.energy_manual_energy_source
+                state: Gas
+            sequence:
+              - service: input_number.set_value
+                target:
+                  entity_id: input_number.energy_manual_start_gas_m3
+                data:
+                  value: "{{ states('sensor.slimmelezer_mini_gas_consumed') | float(0) }}"
+          - conditions:
+              - condition: state
+                entity_id: input_select.energy_manual_energy_source
+                state: Electricity
+            sequence:
+              - service: input_number.set_value
+                target:
+                  entity_id: input_number.energy_manual_start_electricity_kwh
+                data:
+                  value: "{{ states('sensor.slimmelezer_electricity_total') | float(0) }}"
+      - service: input_number.set_value
+        target:
+          entity_id: input_number.energy_manual_heating_minutes
+        data:
+          value: 0
+      - service: input_number.set_value
+        target:
+          entity_id: input_number.energy_manual_idle_minutes
+        data:
+          value: 0
+      - service: input_number.set_value
+        target:
+          entity_id: input_number.energy_manual_unknown_hvac_minutes
+        data:
+          value: 0
+      - service: input_datetime.set_datetime
+        target:
+          entity_id:
+            - input_datetime.energy_manual_activity_started_at
+            - input_datetime.energy_manual_hvac_last_check
+        data:
+          datetime: "{{ now().strftime('%Y-%m-%d %H:%M:%S') }}"
+      - service: input_boolean.turn_on
+        target:
+          entity_id: input_boolean.energy_manual_activity_running
+      - service: logbook.log
+        data:
+          name: Energy activity
+          message: >-
+            Started {{ states('input_text.energy_manual_activity_name') }}
+            ({{ states('input_select.energy_manual_energy_source') }})
+          entity_id: input_boolean.energy_manual_activity_running
+
+  energy_manual_activity_stop:
+    alias: Energy - Stop and record gross, baseline and net activity use
+    icon: mdi:stop-circle
+    mode: single
+    sequence:
+      - condition: state
+        entity_id: input_boolean.energy_manual_activity_running
+        state: "on"
+      # Account for the final partial minute before calculating the session.
+      - action: script.energy_manual_record_hvac_segment
+      - condition: template
+        value_template: >
+          {% if is_state('input_select.energy_manual_energy_source', 'Gas') %}
+            {{ is_number(states('sensor.slimmelezer_mini_gas_consumed')) }}
+          {% else %}
+            {{ is_number(states('sensor.slimmelezer_electricity_total')) }}
+          {% endif %}
+      # Stage 1: capture source readings and rolling sample statistics.
+      - variables:
+          activity_name: "{{ states('input_text.energy_manual_activity_name') | trim }}"
+          activity_type: "{{ states('input_select.energy_manual_activity_type') }}"
+          energy_source: "{{ states('input_select.energy_manual_energy_source') }}"
+          gross_gas: >-
+            {{ ([states('sensor.slimmelezer_mini_gas_consumed') | float(0)
+                 - states('input_number.energy_manual_start_gas_m3') | float(0), 0] | max) | round(3) }}
+          gross_electricity: >-
+            {{ ([states('sensor.slimmelezer_electricity_total') | float(0)
+                 - states('input_number.energy_manual_start_electricity_kwh') | float(0), 0] | max) | round(3) }}
+          elapsed_minutes: >-
+            {% set started = as_timestamp(states('input_datetime.energy_manual_activity_started_at'), 0) %}
+            {{ ((as_timestamp(now()) - started) / 60) | round(2) if started > 0 else 0 }}
+          heat_minutes: "{{ states('input_number.energy_manual_heating_minutes') | float(0) }}"
+          idle_minutes: "{{ states('input_number.energy_manual_idle_minutes') | float(0) }}"
+          unknown_minutes: "{{ states('input_number.energy_manual_unknown_hvac_minutes') | float(0) }}"
+          electricity_samples: "{{ state_attr('sensor.energy_baseline_electricity_5m_mean', 'count') | int(0) }}"
+          gas_heating_samples: "{{ state_attr('sensor.energy_baseline_gas_heating_5m_mean', 'count') | int(0) }}"
+          gas_idle_samples: "{{ state_attr('sensor.energy_baseline_gas_idle_5m_mean', 'count') | int(0) }}"
+          electricity_rate_5m: "{{ states('sensor.energy_baseline_electricity_5m_mean') | float(0) }}"
+          gas_heating_rate_5m: "{{ states('sensor.energy_baseline_gas_heating_5m_mean') | float(0) }}"
+          gas_idle_rate_5m: "{{ states('sensor.energy_baseline_gas_idle_5m_mean') | float(0) }}"
+      # Stage 2: check whether each relevant baseline is sufficiently learned.
+      - variables:
+          electricity_baseline_ready: >-
+            {{ is_number(states('sensor.energy_baseline_electricity_5m_mean')) and (electricity_samples | int(0)) >= 24 }}
+          gas_baseline_ready: >-
+            {{ unknown_minutes | float(0) < 0.5
+               and (heat_minutes | float(0) < 0.5 or (is_number(states('sensor.energy_baseline_gas_heating_5m_mean')) and (gas_heating_samples | int(0)) >= 24))
+               and (idle_minutes | float(0) < 0.5 or (is_number(states('sensor.energy_baseline_gas_idle_5m_mean')) and (gas_idle_samples | int(0)) >= 24))
+               and ((heat_minutes | float(0)) + (idle_minutes | float(0))) >= ((elapsed_minutes | float(0)) - 2) }}
+      # Stage 3: calculate baseline, net, costs and helper mapping.
+      - variables:
+          electricity_baseline: >-
+            {{ ((electricity_rate_5m | float(0)) * ((elapsed_minutes | float(0)) / 5)) | round(3) if electricity_baseline_ready | bool else 0 }}
+          gas_baseline: >-
+            {{ ((((gas_heating_rate_5m | float(0)) * (heat_minutes | float(0)) / 5)
+                + ((gas_idle_rate_5m | float(0)) * (idle_minutes | float(0)) / 5)) | round(3)) if gas_baseline_ready | bool else 0 }}
+          baseline_ready: "{{ (electricity_baseline_ready if energy_source == 'Electricity' else gas_baseline_ready) | bool }}"
+      - variables:
+          gross: "{{ gross_gas if energy_source == 'Gas' else gross_electricity }}"
+          baseline: "{{ gas_baseline if energy_source == 'Gas' else electricity_baseline }}"
+          unit: "{{ 'm³' if energy_source == 'Gas' else 'kWh' }}"
+          rate: "{{ 1.43817 if energy_source == 'Gas' else 0.26697 }}"
+          gross_helper: >-
+            {% if energy_source == 'Gas' and activity_type == 'Shower' %}input_number.energy_manual_shower_gas_total
+            {% elif energy_source == 'Gas' and activity_type == 'Gas cooking' %}input_number.energy_manual_gas_cooking_total
+            {% elif energy_source == 'Gas' %}input_number.energy_manual_custom_gas_total
+            {% elif activity_type == 'Electric cooking' %}input_number.energy_manual_electric_cooking_total
+            {% else %}input_number.energy_manual_custom_electricity_total{% endif %}
+          baseline_helper: >-
+            {% if energy_source == 'Gas' and activity_type == 'Shower' %}input_number.energy_manual_shower_gas_baseline_total
+            {% elif energy_source == 'Gas' and activity_type == 'Gas cooking' %}input_number.energy_manual_gas_cooking_baseline_total
+            {% elif energy_source == 'Gas' %}input_number.energy_manual_custom_gas_baseline_total
+            {% elif activity_type == 'Electric cooking' %}input_number.energy_manual_electric_cooking_baseline_total
+            {% else %}input_number.energy_manual_custom_electricity_baseline_total{% endif %}
+          net_helper: >-
+            {% if energy_source == 'Gas' and activity_type == 'Shower' %}input_number.energy_manual_shower_gas_net_total
+            {% elif energy_source == 'Gas' and activity_type == 'Gas cooking' %}input_number.energy_manual_gas_cooking_net_total
+            {% elif energy_source == 'Gas' %}input_number.energy_manual_custom_gas_net_total
+            {% elif activity_type == 'Electric cooking' %}input_number.energy_manual_electric_cooking_net_total
+            {% else %}input_number.energy_manual_custom_electricity_net_total{% endif %}
+      - variables:
+          net: "{{ ([((gross | float(0)) - (baseline | float(0))), 0] | max) | round(3) if baseline_ready | bool else 0 }}"
+          gross_cost: "{{ ((gross | float(0)) * (rate | float(0))) | round(4) }}"
+          baseline_cost: "{{ ((baseline | float(0)) * (rate | float(0))) | round(4) if baseline_ready | bool else 0 }}"
+          net_cost: "{{ ((net | float(0)) * (rate | float(0))) | round(4) if baseline_ready | bool else 0 }}"
+      # Always retain the measured whole-house meter difference (gross).
+      - service: input_number.set_value
+        target:
+          entity_id: "{{ gross_helper | trim }}"
+        data:
+          value: "{{ (states(gross_helper | trim) | float(0)) + (gross | float(0)) }}"
+      # Add baseline and net totals only when a suitable rolling baseline exists.
+      - if:
+          - condition: template
+            value_template: "{{ baseline_ready | bool }}"
+        then:
+          - service: input_number.set_value
+            target:
+              entity_id: "{{ baseline_helper | trim }}"
+            data:
+              value: "{{ (states(baseline_helper | trim) | float(0)) + (baseline | float(0)) }}"
+          - service: input_number.set_value
+            target:
+              entity_id: "{{ net_helper | trim }}"
+            data:
+              value: "{{ (states(net_helper | trim) | float(0)) + (net | float(0)) }}"
+      # Store the most recent session as separate gross, baseline and net fields.
+      - choose:
+          - conditions:
+              - condition: template
+                value_template: "{{ energy_source == 'Gas' }}"
+            sequence:
+              - service: input_number.set_value
+                target:
+                  entity_id: input_number.energy_manual_last_gross_gas_m3
+                data:
+                  value: "{{ gross }}"
+              - service: input_number.set_value
+                target:
+                  entity_id: input_number.energy_manual_last_baseline_gas_m3
+                data:
+                  value: "{{ baseline if baseline_ready | bool else 0 }}"
+              - service: input_number.set_value
+                target:
+                  entity_id: input_number.energy_manual_last_net_gas_m3
+                data:
+                  value: "{{ net if baseline_ready | bool else 0 }}"
+              - service: input_number.set_value
+                target:
+                  entity_id: input_number.energy_manual_last_gross_electricity_kwh
+                data:
+                  value: 0
+              - service: input_number.set_value
+                target:
+                  entity_id: input_number.energy_manual_last_baseline_electricity_kwh
+                data:
+                  value: 0
+              - service: input_number.set_value
+                target:
+                  entity_id: input_number.energy_manual_last_net_electricity_kwh
+                data:
+                  value: 0
+          - conditions:
+              - condition: template
+                value_template: "{{ energy_source == 'Electricity' }}"
+            sequence:
+              - service: input_number.set_value
+                target:
+                  entity_id: input_number.energy_manual_last_gross_electricity_kwh
+                data:
+                  value: "{{ gross }}"
+              - service: input_number.set_value
+                target:
+                  entity_id: input_number.energy_manual_last_baseline_electricity_kwh
+                data:
+                  value: "{{ baseline if baseline_ready | bool else 0 }}"
+              - service: input_number.set_value
+                target:
+                  entity_id: input_number.energy_manual_last_net_electricity_kwh
+                data:
+                  value: "{{ net if baseline_ready | bool else 0 }}"
+              - service: input_number.set_value
+                target:
+                  entity_id: input_number.energy_manual_last_gross_gas_m3
+                data:
+                  value: 0
+              - service: input_number.set_value
+                target:
+                  entity_id: input_number.energy_manual_last_baseline_gas_m3
+                data:
+                  value: 0
+              - service: input_number.set_value
+                target:
+                  entity_id: input_number.energy_manual_last_net_gas_m3
+                data:
+                  value: 0
+      - service: input_number.set_value
+        target:
+          entity_id: input_number.energy_manual_last_gross_cost_eur
+        data:
+          value: "{{ gross_cost }}"
+      - service: input_number.set_value
+        target:
+          entity_id: input_number.energy_manual_last_baseline_cost_eur
+        data:
+          value: "{{ baseline_cost }}"
+      - service: input_number.set_value
+        target:
+          entity_id: input_number.energy_manual_last_net_cost_eur
+        data:
+          value: "{{ net_cost }}"
+      - choose:
+          - conditions:
+              - condition: template
+                value_template: "{{ baseline_ready | bool }}"
+            sequence:
+              - service: input_boolean.turn_on
+                target:
+                  entity_id: input_boolean.energy_manual_last_net_valid
+        default:
+          - service: input_boolean.turn_off
+            target:
+              entity_id: input_boolean.energy_manual_last_net_valid
+      - service: input_text.set_value
+        target:
+          entity_id: input_text.energy_manual_last_baseline_status
+        data:
+          value: >-
+            {% if not (baseline_ready | bool) %}
+              Baseline learning: insufficient quiet samples (minimum 24 per relevant category). Gross recorded; net withheld.
+            {% elif baseline | float(0) > gross | float(0) %}
+              7-day baseline exceeded gross; net clipped to 0. Baseline may be noisy for this short session.
+            {% else %}
+              7-day rolling baseline; {{ 'electricity ' ~ electricity_samples ~ ' samples' if energy_source == 'Electricity' else 'gas heating ' ~ gas_heating_samples ~ ' / gas idle ' ~ gas_idle_samples ~ ' samples' }}. Net is an estimate.
+            {% endif %}
+      - service: input_text.set_value
+        target:
+          entity_id: input_text.energy_manual_last_session
+        data:
+          value: >-
+            {{ activity_name }} · {{ elapsed_minutes | round(0) | int }} min · Gross {{ gross }} {{ unit }} (€{{ gross_cost }}) ·
+            {% if baseline_ready | bool %}Baseline {{ baseline }} {{ unit }} (€{{ baseline_cost }}) · Net {{ net }} {{ unit }} (€{{ net_cost }}){% else %}Baseline learning · Net pending{% endif %}
+      - service: logbook.log
+        data:
+          name: Energy activity
+          message: >-
+            Completed {{ activity_name }} · {{ elapsed_minutes | round(0) | int }} min · Gross {{ gross }} {{ unit }} (€{{ gross_cost }}) ·
+            {% if baseline_ready | bool %}Baseline {{ baseline }} {{ unit }} (€{{ baseline_cost }}) · Net additional {{ net }} {{ unit }} (€{{ net_cost }}){% else %}Baseline not ready; net withheld. Gross recorded {{ gross }} {{ unit }} (€{{ gross_cost }}).{% endif %}
+          entity_id: input_boolean.energy_manual_activity_running
+      - service: input_boolean.turn_off
+        target:
+          entity_id: input_boolean.energy_manual_activity_running
+
+  energy_start_shower:
+    alias: Energy - Start shower
+    icon: mdi:shower
+    mode: single
+    sequence:
+      - condition: state
+        entity_id: input_boolean.energy_manual_activity_running
+        state: "off"
+      - service: input_select.select_option
+        target:
+          entity_id: input_select.energy_manual_activity_type
+        data:
+          option: Shower
+      - service: input_select.select_option
+        target:
+          entity_id: input_select.energy_manual_energy_source
+        data:
+          option: Gas
+      - service: input_text.set_value
+        target:
+          entity_id: input_text.energy_manual_activity_name
+        data:
+          value: Shower
+      - action: script.energy_manual_activity_start
+
+  energy_start_gas_cooking:
+    alias: Energy - Start gas cooking
+    icon: mdi:pot-steam
+    mode: single
+    sequence:
+      - condition: state
+        entity_id: input_boolean.energy_manual_activity_running
+        state: "off"
+      - service: input_select.select_option
+        target:
+          entity_id: input_select.energy_manual_activity_type
+        data:
+          option: Gas cooking
+      - service: input_select.select_option
+        target:
+          entity_id: input_select.energy_manual_energy_source
+        data:
+          option: Gas
+      - service: input_text.set_value
+        target:
+          entity_id: input_text.energy_manual_activity_name
+        data:
+          value: Gas cooking
+      - action: script.energy_manual_activity_start
+
+  energy_start_electric_cooking:
+    alias: Energy - Start electric cooking
+    icon: mdi:stove
+    mode: single
+    sequence:
+      - condition: state
+        entity_id: input_boolean.energy_manual_activity_running
+        state: "off"
+      - service: input_select.select_option
+        target:
+          entity_id: input_select.energy_manual_activity_type
+        data:
+          option: Electric cooking
+      - service: input_select.select_option
+        target:
+          entity_id: input_select.energy_manual_energy_source
+        data:
+          option: Electricity
+      - service: input_text.set_value
+        target:
+          entity_id: input_text.energy_manual_activity_name
+        data:
+          value: Electric cooking
+      - action: script.energy_manual_activity_start
+
+  energy_start_custom:
+    alias: Energy - Start custom activity
+    icon: mdi:tag-plus
+    mode: single
+    sequence:
+      - condition: state
+        entity_id: input_boolean.energy_manual_activity_running
+        state: "off"
+      - condition: template
+        value_template: "{{ states('input_text.energy_manual_activity_name') | trim | length > 0 }}"
+      - service: input_select.select_option
+        target:
+          entity_id: input_select.energy_manual_activity_type
+        data:
+          option: Other
+      - action: script.energy_manual_activity_start
+
+automation:
+  - id: energy_baseline_sample_every_five_minutes
+    alias: Energy - Learn quiet baseline every 5 minutes
+    description: >-
+      Learns the normal low-load electricity baseline and gas baselines split by
+      thermostat heating demand. Samples are not taken during manual activity sessions.
+    mode: single
+    triggers:
+      - trigger: time_pattern
+        minutes: "/5"
+    actions:
+      - choose:
+          - conditions:
+              - condition: state
+                entity_id: input_boolean.energy_baseline_initialized
+                state: "off"
+            sequence:
+              - condition: template
+                value_template: >-
+                  {{ is_number(states('sensor.slimmelezer_mini_gas_consumed'))
+                     and is_number(states('sensor.slimmelezer_electricity_total')) }}
+              - service: input_number.set_value
+                target:
+                  entity_id: input_number.energy_baseline_last_gas_m3
+                data:
+                  value: "{{ states('sensor.slimmelezer_mini_gas_consumed') | float(0) }}"
+              - service: input_number.set_value
+                target:
+                  entity_id: input_number.energy_baseline_last_electricity_kwh
+                data:
+                  value: "{{ states('sensor.slimmelezer_electricity_total') | float(0) }}"
+              - service: input_boolean.turn_on
+                target:
+                  entity_id: input_boolean.energy_baseline_initialized
+        default:
+          - variables:
+              gas_now: "{{ states('sensor.slimmelezer_mini_gas_consumed') | float(0) }}"
+              electricity_now: "{{ states('sensor.slimmelezer_electricity_total') | float(0) }}"
+              gas_previous: "{{ states('input_number.energy_baseline_last_gas_m3') | float(0) }}"
+              electricity_previous: "{{ states('input_number.energy_baseline_last_electricity_kwh') | float(0) }}"
+              gas_valid: "{{ is_number(states('sensor.slimmelezer_mini_gas_consumed')) }}"
+              electricity_valid: "{{ is_number(states('sensor.slimmelezer_electricity_total')) }}"
+              hvac_action: "{{ state_attr('climate.tstat_838e9c_lyric_t6_thermostat', 'hvac_action') }}"
+              quiet_power: >-
+                {% set appliance_ids = [
+                  'binary_sensor.washing_machine_running',
+                  'binary_sensor.dryer_running',
+                  'switch.dishwasher_power',
+                  'switch.oven_power'
+                ] %}
+                {{ is_number(states('sensor.slimmelezer_mini_power_consumed'))
+                   and states('sensor.slimmelezer_mini_power_consumed') | float(999999)
+                       <= states('input_number.energy_baseline_max_power_w') | float(450)
+                   and state_attr('sensor.slimmelezer_mini_power_consumed', 'unit_of_measurement') == 'W'
+                   and (expand(appliance_ids) | selectattr('state', 'eq', 'off') | list | count) == (appliance_ids | count) }}
+          - variables:
+              gas_delta: "{{ ([gas_now | float(0) - gas_previous | float(0), 0] | max) | round(6) }}"
+              electricity_delta: "{{ ([electricity_now | float(0) - electricity_previous | float(0), 0] | max) | round(6) }}"
+          # Always advance snapshots so a manual session or an excluded high-load
+          # period never spills into the next eligible baseline interval.
+          - if:
+              - condition: template
+                value_template: "{{ gas_valid | bool }}"
+            then:
+              - service: input_number.set_value
+                target:
+                  entity_id: input_number.energy_baseline_last_gas_m3
+                data:
+                  value: "{{ gas_now }}"
+          - if:
+              - condition: template
+                value_template: "{{ electricity_valid | bool }}"
+            then:
+              - service: input_number.set_value
+                target:
+                  entity_id: input_number.energy_baseline_last_electricity_kwh
+                data:
+                  value: "{{ electricity_now }}"
+          # Electricity quiet-baseline sample.
+          - choose:
+              - conditions:
+                  - condition: state
+                    entity_id: input_boolean.energy_manual_activity_running
+                    state: "off"
+                  - condition: template
+                    value_template: "{{ (electricity_valid | bool) and (quiet_power | bool) }}"
+                sequence:
+                  - service: input_number.set_value
+                    target:
+                      entity_id: input_number.energy_baseline_electricity_5m_sample
+                    data:
+                      value: "{{ electricity_delta }}"
+                  - service: input_boolean.turn_on
+                    target:
+                      entity_id: input_boolean.energy_baseline_electricity_sample_valid
+            default:
+              - service: input_boolean.turn_off
+                target:
+                  entity_id: input_boolean.energy_baseline_electricity_sample_valid
+          # Gas baseline samples are separated by thermostat demand state.
+          - choose:
+              - conditions:
+                  - condition: state
+                    entity_id: input_boolean.energy_manual_activity_running
+                    state: "off"
+                  - condition: template
+                    value_template: "{{ (gas_valid | bool) and hvac_action == 'heating' }}"
+                sequence:
+                  - service: input_number.set_value
+                    target:
+                      entity_id: input_number.energy_baseline_gas_heating_5m_sample
+                    data:
+                      value: "{{ gas_delta }}"
+                  - service: input_boolean.turn_on
+                    target:
+                      entity_id: input_boolean.energy_baseline_gas_heating_sample_valid
+                  - service: input_boolean.turn_off
+                    target:
+                      entity_id: input_boolean.energy_baseline_gas_idle_sample_valid
+              - conditions:
+                  - condition: state
+                    entity_id: input_boolean.energy_manual_activity_running
+                    state: "off"
+                  - condition: template
+                    value_template: "{{ (gas_valid | bool) and hvac_action in ['idle', 'off'] }}"
+                sequence:
+                  - service: input_number.set_value
+                    target:
+                      entity_id: input_number.energy_baseline_gas_idle_5m_sample
+                    data:
+                      value: "{{ gas_delta }}"
+                  - service: input_boolean.turn_on
+                    target:
+                      entity_id: input_boolean.energy_baseline_gas_idle_sample_valid
+                  - service: input_boolean.turn_off
+                    target:
+                      entity_id: input_boolean.energy_baseline_gas_heating_sample_valid
+            default:
+              - service: input_boolean.turn_off
+                target:
+                  entity_id:
+                    - input_boolean.energy_baseline_gas_heating_sample_valid
+                    - input_boolean.energy_baseline_gas_idle_sample_valid
+          - service: input_datetime.set_datetime
+            target:
+              entity_id: input_datetime.energy_baseline_sampled_at
+            data:
+              datetime: "{{ now().strftime('%Y-%m-%d %H:%M:%S') }}"
+
+  - id: energy_manual_hvac_minute_sampler
+    alias: Energy - Track thermostat state during manual activity
+    description: Samples T6 heating/idle time while a manual gas activity session is active.
+    mode: single
+    triggers:
+      - trigger: time_pattern
+        minutes: "/1"
+    conditions:
+      - condition: state
+        entity_id: input_boolean.energy_manual_activity_running
+        state: "on"
+    actions:
+      - action: script.energy_manual_record_hvac_segment
+
+sensor:
+  - platform: history_stats
+    name: Energy Heating Hours Today
+    unique_id: energy_heating_hours_today
+    entity_id: binary_sensor.energy_thermostat_heating
+    state: "on"
+    type: time
+    start: "{{ today_at() }}"
+    end: "{{ now() }}"
+    state_class: total_increasing
+
+  - platform: history_stats
+    name: Energy House Empty Hours Today
+    unique_id: energy_house_empty_hours_today
+    entity_id: binary_sensor.energy_house_empty
+    state: "on"
+    type: time
+    start: "{{ today_at() }}"
+    end: "{{ now() }}"
+    state_class: total_increasing
+
+  - platform: history_stats
+    name: Energy Washer Runtime Today
+    unique_id: energy_washer_runtime_today
+    entity_id: binary_sensor.washing_machine_running
+    state: "on"
+    type: time
+    start: "{{ today_at() }}"
+    end: "{{ now() }}"
+    state_class: total_increasing
+
+  - platform: history_stats
+    name: Energy Dryer Runtime Today
+    unique_id: energy_dryer_runtime_today
+    entity_id: binary_sensor.dryer_running
+    state: "on"
+    type: time
+    start: "{{ today_at() }}"
+    end: "{{ now() }}"
+    state_class: total_increasing
+
+  - platform: history_stats
+    name: Energy Dishwasher Runtime Today
+    unique_id: energy_dishwasher_runtime_today
+    entity_id: binary_sensor.energy_dishwasher_running
+    state: "on"
+    type: time
+    start: "{{ today_at() }}"
+    end: "{{ now() }}"
+    state_class: total_increasing
+
+  - platform: history_stats
+    name: Energy Oven Powered Hours Today
+    unique_id: energy_oven_powered_hours_today
+    entity_id: binary_sensor.energy_oven_powered
+    state: "on"
+    type: time
+    start: "{{ today_at() }}"
+    end: "{{ now() }}"
+    state_class: total_increasing
+
+  - platform: history_stats
+    name: Energy TV Box Awake Hours Today
+    unique_id: energy_tv_box_awake_hours_today
+    entity_id: binary_sensor.energy_tv_box_awake
+    state: "on"
+    type: time
+    start: "{{ today_at() }}"
+    end: "{{ now() }}"
+    state_class: total_increasing
+
+  # Seven-day rolling mean of quiet 5-minute meter deltas. At least 24 valid
+  # samples are required before a session can show a net estimate.
+  - platform: statistics
+    name: Energy Baseline Electricity 5m Mean
+    unique_id: energy_baseline_electricity_5m_mean
+    entity_id: sensor.energy_electricity_baseline_sample
+    state_characteristic: mean
+    max_age:
+      days: 7
+    sampling_size: 2016
+    precision: 6
+
+  - platform: statistics
+    name: Energy Baseline Gas Heating 5m Mean
+    unique_id: energy_baseline_gas_heating_5m_mean
+    entity_id: sensor.energy_gas_heating_baseline_sample
+    state_characteristic: mean
+    max_age:
+      days: 7
+    sampling_size: 2016
+    precision: 6
+
+  - platform: statistics
+    name: Energy Baseline Gas Idle 5m Mean
+    unique_id: energy_baseline_gas_idle_5m_mean
+    entity_id: sensor.energy_gas_idle_baseline_sample
+    state_characteristic: mean
+    max_age:
+      days: 7
+    sampling_size: 2016
+    precision: 6
