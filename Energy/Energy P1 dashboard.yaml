@@ -530,64 +530,96 @@ views:
                       content:
                         type: vertical-stack
                         cards:
-                          - type: entities
-                            title: Meter totals
-                            entities:
-                              - entity: sensor.slimmelezer_mini_energy_consumed_tariff_1
-                                name: Tariff 1 · cumulative kWh
-                              - entity: sensor.slimmelezer_mini_energy_consumed_tariff_2
-                                name: Tariff 2 · cumulative kWh
-                              - entity: sensor.slimmelezer_electricity_total
-                                name: Total electricity · kWh
-                              - entity: sensor.slimmelezer_mini_gas_consumed
-                                name: Gas meter · cumulative m³
+                          - type: markdown
+                            content: >-
+                              **Current month:** choose **This month** in the selector
+                              below. The totals and daily graphs then show consumption
+                              from the first day of this month through today, not the
+                              lifetime meter register.
+                          - type: energy-date-selection
+                            collection_key: energy_month_usage
+                          - type: grid
+                            columns: 3
+                            square: false
+                            cards:
+                              - type: statistic
+                                entity: sensor.slimmelezer_electricity_total
+                                name: Electricity · month to date · kWh
+                                stat_type: change
+                                period: energy_date_selection
+                                collection_key: energy_month_usage
+                              - type: statistic
+                                entity: sensor.slimmelezer_mini_gas_consumed
+                                name: Gas · month to date · m³
+                                stat_type: change
+                                period: energy_date_selection
+                                collection_key: energy_month_usage
+                              - type: statistic
+                                entity: sensor.slimmelezer_energy_cost_total
+                                name: Total cost · month to date · €
+                                stat_type: change
+                                period: energy_date_selection
+                                collection_key: energy_month_usage
+                              - type: statistic
+                                entity: sensor.slimmelezer_electricity_cost_total
+                                name: Electricity cost · month to date · €
+                                stat_type: change
+                                period: energy_date_selection
+                                collection_key: energy_month_usage
+                              - type: statistic
+                                entity: sensor.slimmelezer_gas_cost_total
+                                name: Gas cost · month to date · €
+                                stat_type: change
+                                period: energy_date_selection
+                                collection_key: energy_month_usage
                           - type: statistics-graph
-                            title: Electricity by hour · 7 days
-                            chart_type: bar-stack
-                            period: hour
-                            days_to_show: 7
-                            stat_types:
-                              - change
-                            entities:
-                              - entity: sensor.slimmelezer_mini_energy_consumed_tariff_1
-                                name: T1
-                              - entity: sensor.slimmelezer_mini_energy_consumed_tariff_2
-                                name: T2
-                          - type: statistics-graph
-                            title: Gas by hour · 7 days
+                            title: Electricity by hour · last 7 days
                             chart_type: bar
                             period: hour
                             days_to_show: 7
                             stat_types:
                               - change
                             entities:
-                              - entity: sensor.slimmelezer_mini_gas_consumed
-                                name: Gas
-                          - type: statistics-graph
-                            title: Electricity by day · 30 days
-                            chart_type: bar
-                            period: day
-                            days_to_show: 30
-                            stat_types:
-                              - change
-                            entities:
                               - entity: sensor.slimmelezer_electricity_total
-                                name: Electricity · kWh
+                                name: Electricity total · kWh
                           - type: statistics-graph
-                            title: Gas by day · 30 days
+                            title: Gas by hour · last 7 days
                             chart_type: bar
-                            period: day
-                            days_to_show: 30
+                            period: hour
+                            days_to_show: 7
                             stat_types:
                               - change
                             entities:
                               - entity: sensor.slimmelezer_mini_gas_consumed
                                 name: Gas · m³
                           - type: statistics-graph
-                            title: Daily cost · 30 days
+                            title: Electricity by day · current month
+                            chart_type: bar
+                            period: day
+                            energy_date_selection: true
+                            collection_key: energy_month_usage
+                            stat_types:
+                              - change
+                            entities:
+                              - entity: sensor.slimmelezer_electricity_total
+                                name: Electricity total · kWh
+                          - type: statistics-graph
+                            title: Gas by day · current month
+                            chart_type: bar
+                            period: day
+                            energy_date_selection: true
+                            collection_key: energy_month_usage
+                            stat_types:
+                              - change
+                            entities:
+                              - entity: sensor.slimmelezer_mini_gas_consumed
+                                name: Gas · m³
+                          - type: statistics-graph
+                            title: Daily cost · current month
                             chart_type: bar-stack
                             period: day
-                            days_to_show: 30
+                            energy_date_selection: true
+                            collection_key: energy_month_usage
                             stat_types:
                               - change
                             entities:
@@ -595,11 +627,76 @@ views:
                                 name: Electricity · €
                               - entity: sensor.slimmelezer_gas_cost_total
                                 name: Gas · €
+                          - type: markdown
+                            content: >-
+                              **Energy year:** use the selector to set a custom range
+                              from **1 July 2026 through today**. The yearly totals and
+                              monthly graphs below then show the July-to-date energy
+                              year, including readings already recorded since 1 July.
+                          - type: energy-date-selection
+                            collection_key: energy_fiscal_year
+                          - type: grid
+                            columns: 3
+                            square: false
+                            cards:
+                              - type: statistic
+                                entity: sensor.slimmelezer_electricity_total
+                                name: Electricity · energy year · kWh
+                                stat_type: change
+                                period: energy_date_selection
+                                collection_key: energy_fiscal_year
+                              - type: statistic
+                                entity: sensor.slimmelezer_mini_gas_consumed
+                                name: Gas · energy year · m³
+                                stat_type: change
+                                period: energy_date_selection
+                                collection_key: energy_fiscal_year
+                              - type: statistic
+                                entity: sensor.slimmelezer_energy_cost_total
+                                name: Total cost · energy year · €
+                                stat_type: change
+                                period: energy_date_selection
+                                collection_key: energy_fiscal_year
+                              - type: statistic
+                                entity: sensor.slimmelezer_electricity_cost_total
+                                name: Electricity cost · energy year · €
+                                stat_type: change
+                                period: energy_date_selection
+                                collection_key: energy_fiscal_year
+                              - type: statistic
+                                entity: sensor.slimmelezer_gas_cost_total
+                                name: Gas cost · energy year · €
+                                stat_type: change
+                                period: energy_date_selection
+                                collection_key: energy_fiscal_year
                           - type: statistics-graph
-                            title: Monthly cost · 12 months
+                            title: Electricity by month · energy year
+                            chart_type: bar
+                            period: month
+                            energy_date_selection: true
+                            collection_key: energy_fiscal_year
+                            stat_types:
+                              - change
+                            entities:
+                              - entity: sensor.slimmelezer_electricity_total
+                                name: Electricity total · kWh
+                          - type: statistics-graph
+                            title: Gas by month · energy year
+                            chart_type: bar
+                            period: month
+                            energy_date_selection: true
+                            collection_key: energy_fiscal_year
+                            stat_types:
+                              - change
+                            entities:
+                              - entity: sensor.slimmelezer_mini_gas_consumed
+                                name: Gas · m³
+                          - type: statistics-graph
+                            title: Monthly cost · energy year
                             chart_type: bar-stack
                             period: month
-                            days_to_show: 365
+                            energy_date_selection: true
+                            collection_key: energy_fiscal_year
                             stat_types:
                               - change
                             entities:
