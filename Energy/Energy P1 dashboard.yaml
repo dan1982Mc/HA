@@ -9,16 +9,21 @@ views:
         content: >
           # Energy habits
 
-          <span style="opacity:.65">Live use · daily cost · household
+          <span style="opacity:.65">Live power · monthly totals · household
           patterns</span>
       - type: heading
-        heading: Start / stop activity
+        heading: Household overview
         heading_style: subtitle
-        icon: mdi:timer-play-outline
+        icon: mdi:home-lightning-bolt
       - type: grid
-        columns: 2
+        columns: 3
         square: false
         cards:
+          - type: tile
+            entity: binary_sensor.energy_house_empty
+            name: Home status
+            icon: mdi:home-outline
+            vertical: false
           - type: tile
             entity: sensor.slimmelezer_mini_power_consumed
             name: Grid power
@@ -30,18 +35,31 @@ views:
             name: Heating
             icon: mdi:thermostat
             vertical: false
-          - type: tile
-            entity: binary_sensor.energy_house_empty
-            name: Home status
-            icon: mdi:home-outline
-            vertical: false
+      - type: grid
+        columns: 3
+        square: false
+        cards:
           - type: statistic
             entity: sensor.slimmelezer_energy_cost_total
-            name: Cost today
+            name: Cost this month
             stat_type: change
             period:
               calendar:
-                period: day
+                period: month
+          - type: statistic
+            entity: sensor.slimmelezer_electricity_total
+            name: Electricity this month
+            stat_type: change
+            period:
+              calendar:
+                period: month
+          - type: statistic
+            entity: sensor.slimmelezer_mini_gas_consumed
+            name: Gas this month
+            stat_type: change
+            period:
+              calendar:
+                period: month
       - type: custom:button-card
         entity: input_boolean.energy_manual_activity_running
         name: |
@@ -232,12 +250,6 @@ views:
                     - background: rgba(30, 160, 110, 0.16)
                   icon:
                     - color: var(--success-color)
-      - type: button
-        name: Start other activity
-        icon: mdi:play-circle-outline
-        tap_action:
-          action: call-service
-          service: script.energy_start_custom
       - type: entities
         title: Other activity
         show_header_toggle: false
@@ -246,38 +258,15 @@ views:
             name: Activity name
           - entity: input_select.energy_manual_energy_source
             name: Energy source
-      - type: grid
-        columns: 2
-        square: false
-        cards:
-          - type: statistic
-            entity: sensor.slimmelezer_electricity_total
-            name: Electricity today
-            stat_type: change
-            period:
-              calendar:
-                period: day
-          - type: statistic
-            entity: sensor.slimmelezer_mini_gas_consumed
-            name: Gas today
-            stat_type: change
-            period:
-              calendar:
-                period: day
-      - type: heading
-        heading: Right now
-        heading_style: subtitle
-        icon: mdi:flash-outline
-      - type: entities
-        title: Last recorded session
-        show_header_toggle: false
-        entities:
-          - entity: input_text.energy_manual_last_session
-            name: Last activity · gross / baseline / net
-          - entity: input_boolean.energy_manual_last_net_valid
-            name: Net estimate available
-          - entity: input_text.energy_manual_last_baseline_status
-            name: Baseline confidence
+          - type: button
+            name: Start other activity
+            icon: mdi:play-circle-outline
+            action_name: Start
+            tap_action:
+              action: perform-action
+              perform_action: script.turn_on
+              target:
+                entity_id: script.energy_start_custom
       - type: heading
         heading: Recent consumption
         heading_style: subtitle
@@ -987,11 +976,43 @@ views:
                 - justify-self: start
                 - font-size: 11px
                 - opacity: 0.6
-      - type: markdown
-        content: >
-          <center><span style="opacity:.6;font-size:12px">More detail is grouped
-          below. Double-click a group to open its popup; a single click opens
-          the related entity.</span></center>
+
+  - title: Details
+    path: energy-details
+    icon: mdi:chart-box-outline
+    type: masonry
+    cards:
+      - type: heading
+        heading: Manual activity
+        heading_style: subtitle
+        icon: mdi:timer-play-outline
+      - type: button
+        name: Start other activity
+        icon: mdi:play-circle-outline
+        show_state: false
+        tap_action:
+          action: perform-action
+          perform_action: script.turn_on
+          target:
+            entity_id: script.energy_start_custom
+      - type: heading
+        heading: Last recorded session
+        heading_style: subtitle
+        icon: mdi:clipboard-text-clock-outline
+      - type: entities
+        title: Last recorded session
+        show_header_toggle: false
+        entities:
+          - entity: input_text.energy_manual_last_session
+            name: Last activity · gross / baseline / net
+          - entity: input_boolean.energy_manual_last_net_valid
+            name: Net estimate available
+          - entity: input_text.energy_manual_last_baseline_status
+            name: Baseline confidence
+      - type: heading
+        heading: Meter readings · last 24 hours
+        heading_style: subtitle
+        icon: mdi:chart-timeline-variant
       - type: grid
         columns: 2
         square: false
