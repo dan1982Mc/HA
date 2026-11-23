@@ -1689,69 +1689,69 @@ automation:
                   entity_id: input_number.energy_gas_interval_unknown_seconds
                 data:
                   value: "{{ (states('input_number.energy_gas_interval_unknown_seconds') | float(0) + elapsed_seconds | float(0)) | round(0) }}"
-          # Normal interval accounting.
-          default:
-            - choose:
-                # Allocate the measured meter delta using the whole interval's
-                # heating / idle / unknown time proportions.
-                - conditions:
-                    - condition: template
-                      value_template: "{{ trigger.id == 'gas_meter' and gas_delta | float(0) > 0 }}"
-                  sequence:
-                    - service: input_number.set_value
-                      target:
-                        entity_id: input_number.energy_gas_time_weighted_heating_total_m3
-                      data:
-                        value: "{{ (states('input_number.energy_gas_time_weighted_heating_total_m3') | float(0) + heating_gas_delta | float(0)) | round(6) }}"
-                    - service: input_number.set_value
-                      target:
-                        entity_id: input_number.energy_gas_time_weighted_other_total_m3
-                      data:
-                        value: "{{ (states('input_number.energy_gas_time_weighted_other_total_m3') | float(0) + idle_gas_delta | float(0)) | round(6) }}"
-                    - service: input_number.set_value
-                      target:
-                        entity_id: input_number.energy_gas_time_weighted_unknown_total_m3
-                      data:
-                        value: "{{ (states('input_number.energy_gas_time_weighted_unknown_total_m3') | float(0) + unknown_gas_delta | float(0)) | round(6) }}"
-                    - service: input_number.set_value
-                      target:
-                        entity_id:
-                          - input_number.energy_gas_interval_heating_seconds
-                          - input_number.energy_gas_interval_idle_seconds
-                          - input_number.energy_gas_interval_unknown_seconds
-                      data:
-                        value: 0
-                    - service: input_number.set_value
-                      target:
-                        entity_id: input_number.energy_gas_last_meter_m3
-                      data:
-                        value: "{{ gas_now }}"
-              default:
-                # No positive meter delta yet: keep accumulating the interval.
-                - service: input_number.set_value
-                  target:
-                    entity_id: input_number.energy_gas_interval_heating_seconds
-                  data:
-                    value: "{{ heating_seconds | round(0) }}"
-                - service: input_number.set_value
-                  target:
-                    entity_id: input_number.energy_gas_interval_idle_seconds
-                  data:
-                    value: "{{ idle_seconds | round(0) }}"
-                - service: input_number.set_value
-                  target:
-                    entity_id: input_number.energy_gas_interval_unknown_seconds
-                  data:
-                    value: "{{ unknown_seconds | round(0) }}"
-                - if:
-                    - condition: template
-                      value_template: "{{ trigger.id == 'gas_meter' and gas_now | float(0) < gas_previous | float(0) }}"
-                  then:
-                    - service: input_number.set_value
-                      target:
-                        entity_id: input_number.energy_gas_last_meter_m3
-                      data:
-                        value: "{{ gas_now }}"
+        # Normal interval accounting.
+        default:
+          - choose:
+              # Allocate the measured meter delta using the whole interval's
+              # heating / idle / unknown time proportions.
+              - conditions:
+                  - condition: template
+                    value_template: "{{ trigger.id == 'gas_meter' and gas_delta | float(0) > 0 }}"
+                sequence:
+                  - service: input_number.set_value
+                    target:
+                      entity_id: input_number.energy_gas_time_weighted_heating_total_m3
+                    data:
+                      value: "{{ (states('input_number.energy_gas_time_weighted_heating_total_m3') | float(0) + heating_gas_delta | float(0)) | round(6) }}"
+                  - service: input_number.set_value
+                    target:
+                      entity_id: input_number.energy_gas_time_weighted_other_total_m3
+                    data:
+                      value: "{{ (states('input_number.energy_gas_time_weighted_other_total_m3') | float(0) + idle_gas_delta | float(0)) | round(6) }}"
+                  - service: input_number.set_value
+                    target:
+                      entity_id: input_number.energy_gas_time_weighted_unknown_total_m3
+                    data:
+                      value: "{{ (states('input_number.energy_gas_time_weighted_unknown_total_m3') | float(0) + unknown_gas_delta | float(0)) | round(6) }}"
+                  - service: input_number.set_value
+                    target:
+                      entity_id:
+                        - input_number.energy_gas_interval_heating_seconds
+                        - input_number.energy_gas_interval_idle_seconds
+                        - input_number.energy_gas_interval_unknown_seconds
+                    data:
+                      value: 0
+                  - service: input_number.set_value
+                    target:
+                      entity_id: input_number.energy_gas_last_meter_m3
+                    data:
+                      value: "{{ gas_now }}"
+            default:
+              # No positive meter delta yet: keep accumulating the interval.
+              - service: input_number.set_value
+                target:
+                  entity_id: input_number.energy_gas_interval_heating_seconds
+                data:
+                  value: "{{ heating_seconds | round(0) }}"
+              - service: input_number.set_value
+                target:
+                  entity_id: input_number.energy_gas_interval_idle_seconds
+                data:
+                  value: "{{ idle_seconds | round(0) }}"
+              - service: input_number.set_value
+                target:
+                  entity_id: input_number.energy_gas_interval_unknown_seconds
+                data:
+                  value: "{{ unknown_seconds | round(0) }}"
+              - if:
+                  - condition: template
+                    value_template: "{{ trigger.id == 'gas_meter' and gas_now | float(0) < gas_previous | float(0) }}"
+                then:
+                  - service: input_number.set_value
+                    target:
+                      entity_id: input_number.energy_gas_last_meter_m3
+                    data:
+                      value: "{{ gas_now }}"
       - service: input_datetime.set_datetime
         target:
           entity_id: input_datetime.energy_gas_interval_last_sample
