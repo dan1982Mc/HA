@@ -478,15 +478,15 @@ views:
                               - entity: sensor.energy_heating_hours_today
                                 name: Heating hours today
                               - entity: sensor.slimmelezer_gas_heating_time_weighted
-                                name: Gas during heating demand · m³
+                                name: Heating · time-weighted gas · m³
                               - entity: sensor.slimmelezer_gas_outside_heating_time_weighted
-                                name: Gas outside heating demand · m³
+                                name: Idle/off · time-weighted gas · m³
                               - entity: sensor.slimmelezer_gas_unclassified_time_weighted
-                                name: Unclassified gas · m³
+                                name: Unknown HVAC time · m³
                               - entity: sensor.slimmelezer_gas_heating_time_weighted_cost_total
-                                name: Heating-demand gas cost · €
+                                name: Heating · time-weighted gas cost · €
                               - entity: sensor.slimmelezer_gas_outside_heating_time_weighted_cost_total
-                                name: Outside-heating gas cost · €
+                                name: Idle/off · time-weighted gas cost · €
                           - type: statistics-graph
                             title: Gas by classification · 7 days
                             chart_type: bar-stack
@@ -496,11 +496,11 @@ views:
                               - change
                             entities:
                               - entity: sensor.slimmelezer_gas_heating_time_weighted
-                                name: During heating
+                                name: Heating · time weighted
                               - entity: sensor.slimmelezer_gas_outside_heating_time_weighted
-                                name: Outside heating
+                                name: Idle/off · time weighted
                               - entity: sensor.slimmelezer_gas_unclassified_time_weighted
-                                name: Unclassified
+                                name: Unknown HVAC · time weighted
                           - type: history-graph
                             title: Heating state and gas meter · 24 hours
                             hours_to_show: 24
@@ -516,8 +516,18 @@ views:
                               - entity: input_boolean.energy_manual_activity_running
                           - type: markdown
                             content: >
-                              Gas attribution by thermostat is an estimate. Manual
-                              sessions separately record the whole-house meter
+                              Gas attribution is time-weighted. Home Assistant tracks
+                              the T6 hvac_action state changes and checks the state
+                              every minute. When the gas meter updates, the interval's
+                              measured gas increase is divided according to the time
+                              spent heating, idle/off, or unknown. This assumes gas
+                              flow is approximately uniform during that interval;
+                              simultaneous showering or cooking can still skew the
+                              estimate. Time while Home Assistant is offline is
+                              allocated to unknown. The older snapshot-based sensors
+                              remain available for comparison but are not used here.
+
+                              Manual sessions separately record the whole-house meter
                               change between Start and Stop. They are not isolated
                               appliance measurements and can include other
                               simultaneous household use. Only one manual session
