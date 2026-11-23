@@ -469,6 +469,24 @@ template:
         state: >
           {{ (states('sensor.fridge_2_this_month_s_consumption') | float(0) * 0.26697) | round(2) }}
 
+      - name: Energy Dishwasher Cost This Month
+        unique_id: energy_dishwasher_cost_this_month
+        device_class: monetary
+        state_class: measurement
+        unit_of_measurement: EUR
+        availability: "{{ is_number(states('sensor.tv_outlet_this_month_s_consumption')) }}"
+        state: >
+          {{ (states('sensor.tv_outlet_this_month_s_consumption') | float(0) * 0.26697) | round(2) }}
+
+      - name: Energy Laptop Cost This Month
+        unique_id: energy_laptop_cost_this_month
+        device_class: monetary
+        state_class: measurement
+        unit_of_measurement: EUR
+        availability: "{{ is_number(states('sensor.garden_house_this_month_s_consumption')) }}"
+        state: >
+          {{ (states('sensor.garden_house_this_month_s_consumption') | float(0) * 0.26697) | round(2) }}
+
   - sensor:
       - name: Energy House Empty Check
         unique_id: energy_house_empty_check
@@ -603,6 +621,13 @@ template:
         icon: mdi:television
         availability: "{{ states('media_player.mibox4') not in ['unknown', 'unavailable'] }}"
         state: "{{ states('media_player.mibox4') not in ['off', 'standby', 'unknown', 'unavailable'] }}"
+
+      # Laptop activity uses the same 0.05 current threshold as the PC dashboard.
+      - name: Energy Laptop Running
+        unique_id: energy_laptop_running
+        icon: mdi:laptop
+        availability: "{{ is_number(states('sensor.garden_house_current')) }}"
+        state: "{{ states('sensor.garden_house_current') | float(0) > 0.05 }}"
 
 # ------------------------------------------------------------
 # TRIGGER-BASED GAS ATTRIBUTION
@@ -1865,6 +1890,192 @@ sensor:
       days: 7
     sampling_size: 2016
     precision: 6
+
+# ------------------------------------------------------------
+# MONTHLY APPLIANCE RUNTIME AND SESSION COUNTS
+# Runtime is the duration in the active state.
+# Starts count transitions into ON (one count per started session).
+# Weekly counts use the current calendar week, Monday through now.
+# ------------------------------------------------------------
+  - platform: history_stats
+    name: Energy Washer Runtime This Month
+    unique_id: energy_washer_runtime_this_month
+    entity_id: binary_sensor.washing_machine_running
+    state: "on"
+    type: time
+    start: "{{ now().replace(day=1, hour=0, minute=0, second=0, microsecond=0) }}"
+    end: "{{ now() }}"
+    state_class: total_increasing
+
+  - platform: history_stats
+    name: Energy Washer Starts This Month
+    unique_id: energy_washer_starts_this_month
+    entity_id: binary_sensor.washing_machine_running
+    state: "on"
+    type: count
+    start: "{{ now().replace(day=1, hour=0, minute=0, second=0, microsecond=0) }}"
+    end: "{{ now() }}"
+    state_class: total_increasing
+
+  - platform: history_stats
+    name: Energy Washer Starts This Week
+    unique_id: energy_washer_starts_this_week
+    entity_id: binary_sensor.washing_machine_running
+    state: "on"
+    type: count
+    start: "{{ now().replace(hour=0, minute=0, second=0, microsecond=0) - timedelta(days=now().weekday()) }}"
+    end: "{{ now() }}"
+    state_class: total_increasing
+
+  - platform: history_stats
+    name: Energy Dryer Runtime This Month
+    unique_id: energy_dryer_runtime_this_month
+    entity_id: binary_sensor.dryer_running
+    state: "on"
+    type: time
+    start: "{{ now().replace(day=1, hour=0, minute=0, second=0, microsecond=0) }}"
+    end: "{{ now() }}"
+    state_class: total_increasing
+
+  - platform: history_stats
+    name: Energy Dryer Starts This Month
+    unique_id: energy_dryer_starts_this_month
+    entity_id: binary_sensor.dryer_running
+    state: "on"
+    type: count
+    start: "{{ now().replace(day=1, hour=0, minute=0, second=0, microsecond=0) }}"
+    end: "{{ now() }}"
+    state_class: total_increasing
+
+  - platform: history_stats
+    name: Energy Dryer Starts This Week
+    unique_id: energy_dryer_starts_this_week
+    entity_id: binary_sensor.dryer_running
+    state: "on"
+    type: count
+    start: "{{ now().replace(hour=0, minute=0, second=0, microsecond=0) - timedelta(days=now().weekday()) }}"
+    end: "{{ now() }}"
+    state_class: total_increasing
+
+  - platform: history_stats
+    name: Energy Dishwasher Runtime This Month
+    unique_id: energy_dishwasher_runtime_this_month
+    entity_id: binary_sensor.energy_dishwasher_running
+    state: "on"
+    type: time
+    start: "{{ now().replace(day=1, hour=0, minute=0, second=0, microsecond=0) }}"
+    end: "{{ now() }}"
+    state_class: total_increasing
+
+  - platform: history_stats
+    name: Energy Dishwasher Starts This Month
+    unique_id: energy_dishwasher_starts_this_month
+    entity_id: binary_sensor.energy_dishwasher_running
+    state: "on"
+    type: count
+    start: "{{ now().replace(day=1, hour=0, minute=0, second=0, microsecond=0) }}"
+    end: "{{ now() }}"
+    state_class: total_increasing
+
+  - platform: history_stats
+    name: Energy Dishwasher Starts This Week
+    unique_id: energy_dishwasher_starts_this_week
+    entity_id: binary_sensor.energy_dishwasher_running
+    state: "on"
+    type: count
+    start: "{{ now().replace(hour=0, minute=0, second=0, microsecond=0) - timedelta(days=now().weekday()) }}"
+    end: "{{ now() }}"
+    state_class: total_increasing
+
+  - platform: history_stats
+    name: Energy Oven Runtime This Month
+    unique_id: energy_oven_runtime_this_month
+    entity_id: binary_sensor.energy_oven_powered
+    state: "on"
+    type: time
+    start: "{{ now().replace(day=1, hour=0, minute=0, second=0, microsecond=0) }}"
+    end: "{{ now() }}"
+    state_class: total_increasing
+
+  - platform: history_stats
+    name: Energy Oven Starts This Month
+    unique_id: energy_oven_starts_this_month
+    entity_id: binary_sensor.energy_oven_powered
+    state: "on"
+    type: count
+    start: "{{ now().replace(day=1, hour=0, minute=0, second=0, microsecond=0) }}"
+    end: "{{ now() }}"
+    state_class: total_increasing
+
+  - platform: history_stats
+    name: Energy Oven Starts This Week
+    unique_id: energy_oven_starts_this_week
+    entity_id: binary_sensor.energy_oven_powered
+    state: "on"
+    type: count
+    start: "{{ now().replace(hour=0, minute=0, second=0, microsecond=0) - timedelta(days=now().weekday()) }}"
+    end: "{{ now() }}"
+    state_class: total_increasing
+
+  - platform: history_stats
+    name: Energy TV Box Runtime This Month
+    unique_id: energy_tv_box_runtime_this_month
+    entity_id: binary_sensor.energy_tv_box_awake
+    state: "on"
+    type: time
+    start: "{{ now().replace(day=1, hour=0, minute=0, second=0, microsecond=0) }}"
+    end: "{{ now() }}"
+    state_class: total_increasing
+
+  - platform: history_stats
+    name: Energy TV Box Starts This Month
+    unique_id: energy_tv_box_starts_this_month
+    entity_id: binary_sensor.energy_tv_box_awake
+    state: "on"
+    type: count
+    start: "{{ now().replace(day=1, hour=0, minute=0, second=0, microsecond=0) }}"
+    end: "{{ now() }}"
+    state_class: total_increasing
+
+  - platform: history_stats
+    name: Energy TV Box Starts This Week
+    unique_id: energy_tv_box_starts_this_week
+    entity_id: binary_sensor.energy_tv_box_awake
+    state: "on"
+    type: count
+    start: "{{ now().replace(hour=0, minute=0, second=0, microsecond=0) - timedelta(days=now().weekday()) }}"
+    end: "{{ now() }}"
+    state_class: total_increasing
+
+  - platform: history_stats
+    name: Energy Laptop Runtime This Month
+    unique_id: energy_laptop_runtime_this_month
+    entity_id: binary_sensor.energy_laptop_running
+    state: "on"
+    type: time
+    start: "{{ now().replace(day=1, hour=0, minute=0, second=0, microsecond=0) }}"
+    end: "{{ now() }}"
+    state_class: total_increasing
+
+  - platform: history_stats
+    name: Energy Laptop Starts This Month
+    unique_id: energy_laptop_starts_this_month
+    entity_id: binary_sensor.energy_laptop_running
+    state: "on"
+    type: count
+    start: "{{ now().replace(day=1, hour=0, minute=0, second=0, microsecond=0) }}"
+    end: "{{ now() }}"
+    state_class: total_increasing
+
+  - platform: history_stats
+    name: Energy Laptop Starts This Week
+    unique_id: energy_laptop_starts_this_week
+    entity_id: binary_sensor.energy_laptop_running
+    state: "on"
+    type: count
+    start: "{{ now().replace(hour=0, minute=0, second=0, microsecond=0) - timedelta(days=now().weekday()) }}"
+    end: "{{ now() }}"
+    state_class: total_increasing
 
 # ------------------------------------------------------------
 # MONTHLY GAS SPLIT
