@@ -517,7 +517,7 @@ views:
                 icon: mdi:chart-box-outline
                 show_state: false
                 show_label: true
-                label: Hourly · daily · monthly
+                label: Month-to-date · July–June energy year
                 tap_action:
                   action: more-info
                 double_tap_action:
