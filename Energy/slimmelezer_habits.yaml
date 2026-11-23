@@ -1623,7 +1623,7 @@ automation:
             {{ as_timestamp(states('input_datetime.energy_gas_interval_last_sample'),
                as_timestamp(now())) }}
           elapsed_seconds: >-
-            {{ [now_timestamp | float(0) - last_sample_timestamp | float(0), 0] | max }}
+            {{ [(now_timestamp | float(0)) - (last_sample_timestamp | float(0)), 0] | max }}
           previous_hvac_state: "{{ states('input_select.energy_gas_previous_hvac_state') }}"
           current_hvac_state: >-
             {{ 'heating' if state_attr('climate.tstat_838e9c_lyric_t6_thermostat', 'hvac_action') == 'heating'
@@ -1632,7 +1632,7 @@ automation:
           gas_now: "{{ states('sensor.slimmelezer_mini_gas_consumed') | float(0) }}"
           gas_previous: "{{ states('input_number.energy_gas_last_meter_m3') | float(0) }}"
           gas_delta: >-
-            {{ [gas_now | float(0) - gas_previous | float(0), 0] | max }}
+            {{ [(gas_now | float(0)) - (gas_previous | float(0)), 0] | max }}
           heating_seconds: >-
             {{ states('input_number.energy_gas_interval_heating_seconds') | float(0)
                + (elapsed_seconds | float(0) if previous_hvac_state == 'heating' else 0) }}
@@ -1651,8 +1651,8 @@ automation:
             {{ ((gas_delta | float(0)) * (idle_seconds | float(0))
                 / (total_interval_seconds | float(1))) if total_interval_seconds | float(0) > 0 else 0 }}
           unknown_gas_delta: >-
-            {{ [gas_delta | float(0) - heating_gas_delta | float(0)
-                - idle_gas_delta | float(0), 0] | max }}
+            {{ [(gas_delta | float(0)) - (heating_gas_delta | float(0))
+                - (idle_gas_delta | float(0)), 0] | max }}
       - choose:
           # First run: take a gas-meter baseline; do not backfill prior use.
           - conditions:
