@@ -2037,19 +2037,22 @@ automation:
              and is_number(states('sensor.energy_gas_total_month'))
              and is_number(states('sensor.energy_electricity_total_month')) }}
     actions:
+      - variables:
+          archive_month_names: [jan, feb, mar, apr, may, jun, jul, aug, sep, oct, nov, dec]
+          archive_month: "{{ archive_month_names[now().month - 1] }}"
       - action: input_number.set_value
         target:
-          entity_id: "{{ 'input_number.energy_archive_gas_' ~ now().strftime('%b') | lower }}"
+          entity_id: "{{ 'input_number.energy_archive_gas_' ~ archive_month }}"
         data:
           value: "{{ states('sensor.energy_gas_total_month') | float(0) }}"
       - action: input_number.set_value
         target:
-          entity_id: "{{ 'input_number.energy_archive_electricity_' ~ now().strftime('%b') | lower }}"
+          entity_id: "{{ 'input_number.energy_archive_electricity_' ~ archive_month }}"
         data:
           value: "{{ states('sensor.energy_electricity_total_month') | float(0) }}"
       - action: input_number.set_value
         target:
-          entity_id: "{{ 'input_number.energy_archive_cost_' ~ now().strftime('%b') | lower }}"
+          entity_id: "{{ 'input_number.energy_archive_cost_' ~ archive_month }}"
         data:
           value: "{{ states('sensor.energy_cost_total_month') | float(0) }}"
   - id: energy_period_meters_seed_from_statistics
