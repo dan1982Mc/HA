@@ -1626,11 +1626,9 @@ automation:
             {{ [now_timestamp | float(0) - last_sample_timestamp | float(0), 0] | max }}
           previous_hvac_state: "{{ states('input_select.energy_gas_previous_hvac_state') }}"
           current_hvac_state: >-
-            {% set action = state_attr('climate.tstat_838e9c_lyric_t6_thermostat', 'hvac_action') %}
-            {% if action == 'heating' %}heating
-            {% elif action in ['idle', 'off'] %}idle
-            {% else %}unknown
-            {% endif %}
+            {{ 'heating' if state_attr('climate.tstat_838e9c_lyric_t6_thermostat', 'hvac_action') == 'heating'
+               else 'idle' if state_attr('climate.tstat_838e9c_lyric_t6_thermostat', 'hvac_action') in ['idle', 'off']
+               else 'unknown' }}
           gas_now: "{{ states('sensor.slimmelezer_mini_gas_consumed') | float(0) }}"
           gas_previous: "{{ states('input_number.energy_gas_last_meter_m3') | float(0) }}"
           gas_delta: >-
