@@ -16,7 +16,7 @@ views:
         heading_style: subtitle
         icon: mdi:home-lightning-bolt
       - type: grid
-        columns: 3
+        columns: 2
         square: false
         cards:
           - type: tile
@@ -36,7 +36,7 @@ views:
             icon: mdi:thermostat
             vertical: false
       - type: grid
-        columns: 3
+        columns: 2
         square: false
         cards:
           - type: statistic
@@ -121,7 +121,7 @@ views:
             - font-size: 11px
             - opacity: 0.8
       - type: grid
-        columns: 3
+        columns: 2
         square: false
         cards:
           - type: custom:button-card
