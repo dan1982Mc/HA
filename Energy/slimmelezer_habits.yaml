@@ -603,10 +603,16 @@ template:
       - name: Energy Dishwasher Running
         unique_id: energy_dishwasher_running
         icon: mdi:dishwasher
-        availability: "{{ is_number(states('sensor.dishwasher_program_progress')) }}"
+        # The progress sensor can be non-numeric while the dishwasher is idle.
+        # Keep this binary sensor available and interpret that state as OFF.
         state: >
-          {% set progress = states('sensor.dishwasher_program_progress') | float(-1) %}
-          {{ progress > 0 and progress < 100 }}
+          {% set progress = states('sensor.dishwasher_program_progress') %}
+          {% if is_number(progress) %}
+            {% set progress_value = progress | float(0) %}
+            {{ progress_value > 0 and progress_value < 100 }}
+          {% else %}
+            false
+          {% endif %}
 
       # This is the oven's power switch state, not proof of active heating.
       - name: Energy Oven Powered
