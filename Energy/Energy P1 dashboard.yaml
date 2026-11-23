@@ -1,1041 +1,1036 @@
-title: Energy Habits
-views:
   - title: Energy
     path: energy-habits
     icon: mdi:home-lightning-bolt
-    type: masonry
-    cards:
-      - type: markdown
-        content: >
-          # Energy habits
-
-          <span style="opacity:.65">Live power · monthly totals · household
-          patterns</span>
-      - type: heading
-        heading: Household overview
-        heading_style: subtitle
-        icon: mdi:home-lightning-bolt
+    type: sections
+    max_columns: 2
+    dense_section_placement: false
+    sections:
       - type: grid
-        columns: 2
-        square: false
+        title: Household overview
         cards:
-          - type: tile
-            entity: binary_sensor.energy_house_empty
-            name: Home status
-            icon: mdi:home-outline
-            vertical: false
-          - type: tile
-            entity: sensor.slimmelezer_mini_power_consumed
-            name: Grid power
-            icon: mdi:lightning-bolt
-            color: amber
-            vertical: false
-          - type: tile
-            entity: climate.tstat_838e9c_lyric_t6_thermostat
-            name: Heating
-            icon: mdi:thermostat
-            vertical: false
-      - type: grid
-        columns: 2
-        square: false
-        cards:
-          - type: statistic
-            entity: sensor.slimmelezer_energy_cost_total
-            name: Cost this month
-            stat_type: change
-            period:
-              calendar:
-                period: month
-          - type: statistic
-            entity: sensor.slimmelezer_electricity_total
-            name: Electricity this month
-            stat_type: change
-            period:
-              calendar:
-                period: month
-          - type: statistic
-            entity: sensor.slimmelezer_mini_gas_consumed
-            name: Gas this month
-            stat_type: change
-            period:
-              calendar:
-                period: month
-      - type: custom:button-card
-        entity: input_boolean.energy_manual_activity_running
-        name: |
-          [[[
-            return entity.state === 'on' ? 'STOP CURRENT ACTIVITY' : 'NO ACTIVITY RUNNING';
-          ]]]
-        icon: mdi:timer-stop-outline
-        show_state: false
-        show_label: true
-        triggers_update:
-          - input_text.energy_manual_activity_name
-          - input_select.energy_manual_energy_source
-          - sensor.energy_manual_activity_elapsed
-        label: |
-          [[[
-            const name = states['input_text.energy_manual_activity_name']?.state || 'Activity';
-            const source = states['input_select.energy_manual_energy_source']?.state || '';
-            const elapsed = states['sensor.energy_manual_activity_elapsed']?.state || '0';
-            return entity.state === 'on'
-              ? `${name} · ${source} · ${elapsed} min elapsed · tap to stop and record`
-              : 'Choose an activity below. Stop records meter change and elapsed time.';
-          ]]]
-        tap_action:
-          action: call-service
-          service: script.energy_manual_activity_stop
-        state:
-          - value: 'on'
-            styles:
-              card:
-                - background: rgba(220, 70, 70, 0.16)
-                - border: 1px solid var(--error-color)
-              icon:
-                - color: var(--error-color)
-              name:
-                - color: var(--error-color)
-          - value: 'off'
-            styles:
-              card:
-                - background: var(--ha-card-background)
-        styles:
-          card:
-            - min-height: 70px
-            - border-radius: 14px
-            - padding: 12px
-          grid:
-            - grid-template-areas: '"i n" "i l"'
-            - grid-template-columns: 42px 1fr
-            - grid-template-rows: min-content min-content
-          icon:
-            - width: 28px
-          name:
-            - justify-self: start
-            - font-size: 14px
-            - font-weight: 700
-          label:
-            - justify-self: start
-            - white-space: normal
-            - text-align: left
-            - font-size: 11px
-            - opacity: 0.8
-      - type: grid
-        columns: 2
-        square: false
-        cards:
+          - type: markdown
+            content: >
+                        <span style="opacity:.65">Live power · monthly totals · household
+              patterns</span>
+          - type: grid
+            columns: 3
+            square: false
+            cards:
+              - type: tile
+                entity: binary_sensor.energy_house_empty
+                name: Home status
+                icon: mdi:home-outline
+                vertical: false
+              - type: tile
+                entity: sensor.slimmelezer_mini_power_consumed
+                name: Grid power
+                icon: mdi:lightning-bolt
+                color: amber
+                vertical: false
+              - type: tile
+                entity: climate.tstat_838e9c_lyric_t6_thermostat
+                name: Heating
+                icon: mdi:thermostat
+                vertical: false
+          - type: grid
+            columns: 3
+            square: false
+            cards:
+              - type: statistic
+                entity: sensor.slimmelezer_energy_cost_total
+                name: Cost this month
+                stat_type: change
+                period:
+                  calendar:
+                    period: month
+              - type: statistic
+                entity: sensor.slimmelezer_electricity_total
+                name: Electricity this month
+                stat_type: change
+                period:
+                  calendar:
+                    period: month
+              - type: statistic
+                entity: sensor.slimmelezer_mini_gas_consumed
+                name: Gas this month
+                stat_type: change
+                period:
+                  calendar:
+                    period: month
           - type: custom:button-card
             entity: input_boolean.energy_manual_activity_running
-            name: Shower
-            icon: mdi:shower
+            name: |
+              [[[
+                return entity.state === 'on' ? 'STOP CURRENT ACTIVITY' : 'NO ACTIVITY RUNNING';
+              ]]]
+            icon: mdi:timer-stop-outline
             show_state: false
             show_label: true
             triggers_update:
-              - input_select.energy_manual_activity_type
+              - input_text.energy_manual_activity_name
+              - input_select.energy_manual_energy_source
               - sensor.energy_manual_activity_elapsed
             label: |
               [[[
-                return entity.state === 'on' && states['input_select.energy_manual_activity_type']?.state === 'Shower'
-                  ? `RUNNING · ${states['sensor.energy_manual_activity_elapsed']?.state || 0} min`
-                  : 'Start gas session';
+                const name = states['input_text.energy_manual_activity_name']?.state || 'Activity';
+                const source = states['input_select.energy_manual_energy_source']?.state || '';
+                const elapsed = states['sensor.energy_manual_activity_elapsed']?.state || '0';
+                return entity.state === 'on'
+                  ? `${name} · ${source} · ${elapsed} min elapsed · tap to stop and record`
+                  : 'Choose an activity below. Stop records meter change and elapsed time.';
               ]]]
             tap_action:
               action: call-service
-              service: script.energy_start_shower
-            styles:
-              card:
-                - min-height: 66px
-                - border-radius: 12px
-                - padding: 8px
-              icon:
-                - width: 24px
-              name:
-                - font-weight: 600
-                - font-size: 13px
-              label:
-                - font-size: 10px
-                - white-space: normal
+              service: script.energy_manual_activity_stop
             state:
-              - operator: template
-                value: >-
-                  [[[ return entity.state === 'on' &&
-                  states['input_select.energy_manual_activity_type']?.state ===
-                  'Shower'; ]]]
+              - value: 'on'
                 styles:
                   card:
-                    - background: rgba(30, 160, 110, 0.16)
+                    - background: rgba(220, 70, 70, 0.16)
+                    - border: 1px solid var(--error-color)
                   icon:
-                    - color: var(--success-color)
-          - type: custom:button-card
-            entity: input_boolean.energy_manual_activity_running
-            name: Gas cooking
-            icon: mdi:pot-steam
-            show_state: false
-            show_label: true
-            triggers_update:
-              - input_select.energy_manual_activity_type
-              - sensor.energy_manual_activity_elapsed
-            label: |
-              [[[
-                return entity.state === 'on' && states['input_select.energy_manual_activity_type']?.state === 'Gas cooking'
-                  ? `RUNNING · ${states['sensor.energy_manual_activity_elapsed']?.state || 0} min`
-                  : 'Start gas session';
-              ]]]
-            tap_action:
-              action: call-service
-              service: script.energy_start_gas_cooking
-            styles:
-              card:
-                - min-height: 66px
-                - border-radius: 12px
-                - padding: 8px
-              icon:
-                - width: 24px
-              name:
-                - font-weight: 600
-                - font-size: 13px
-              label:
-                - font-size: 10px
-                - white-space: normal
-            state:
-              - operator: template
-                value: >-
-                  [[[ return entity.state === 'on' &&
-                  states['input_select.energy_manual_activity_type']?.state ===
-                  'Gas cooking'; ]]]
+                    - color: var(--error-color)
+                  name:
+                    - color: var(--error-color)
+              - value: 'off'
                 styles:
                   card:
-                    - background: rgba(30, 160, 110, 0.16)
-                  icon:
-                    - color: var(--success-color)
-          - type: custom:button-card
-            entity: input_boolean.energy_manual_activity_running
-            name: Electric cooking
-            icon: mdi:stove
-            show_state: false
-            show_label: true
-            triggers_update:
-              - input_select.energy_manual_activity_type
-              - sensor.energy_manual_activity_elapsed
-            label: |
-              [[[
-                return entity.state === 'on' && states['input_select.energy_manual_activity_type']?.state === 'Electric cooking'
-                  ? `RUNNING · ${states['sensor.energy_manual_activity_elapsed']?.state || 0} min`
-                  : 'Start electricity session';
-              ]]]
-            tap_action:
-              action: call-service
-              service: script.energy_start_electric_cooking
+                    - background: var(--ha-card-background)
             styles:
               card:
-                - min-height: 66px
-                - border-radius: 12px
-                - padding: 8px
+                - min-height: 70px
+                - border-radius: 14px
+                - padding: 12px
+              grid:
+                - grid-template-areas: '"i n" "i l"'
+                - grid-template-columns: 42px 1fr
+                - grid-template-rows: min-content min-content
               icon:
-                - width: 24px
+                - width: 28px
               name:
-                - font-weight: 600
-                - font-size: 13px
+                - justify-self: start
+                - font-size: 14px
+                - font-weight: 700
               label:
-                - font-size: 10px
+                - justify-self: start
                 - white-space: normal
-            state:
-              - operator: template
-                value: >-
-                  [[[ return entity.state === 'on' &&
-                  states['input_select.energy_manual_activity_type']?.state ===
-                  'Electric cooking'; ]]]
+                - text-align: left
+                - font-size: 11px
+                - opacity: 0.8
+          - type: grid
+            columns: 3
+            square: false
+            cards:
+              - type: custom:button-card
+                entity: input_boolean.energy_manual_activity_running
+                name: Shower
+                icon: mdi:shower
+                show_state: false
+                show_label: true
+                triggers_update:
+                  - input_select.energy_manual_activity_type
+                  - sensor.energy_manual_activity_elapsed
+                label: |
+                  [[[
+                    return entity.state === 'on' && states['input_select.energy_manual_activity_type']?.state === 'Shower'
+                      ? `RUNNING · ${states['sensor.energy_manual_activity_elapsed']?.state || 0} min`
+                      : 'Start gas session';
+                  ]]]
+                tap_action:
+                  action: call-service
+                  service: script.energy_start_shower
                 styles:
                   card:
-                    - background: rgba(30, 160, 110, 0.16)
+                    - min-height: 66px
+                    - border-radius: 12px
+                    - padding: 8px
                   icon:
-                    - color: var(--success-color)
-      - type: entities
-        title: Other activity
-        show_header_toggle: false
-        entities:
-          - entity: input_text.energy_manual_activity_name
-            name: Activity name
-          - entity: input_select.energy_manual_energy_source
-            name: Energy source
+                    - width: 24px
+                  name:
+                    - font-weight: 600
+                    - font-size: 13px
+                  label:
+                    - font-size: 10px
+                    - white-space: normal
+                state:
+                  - operator: template
+                    value: >-
+                      [[[ return entity.state === 'on' &&
+                      states['input_select.energy_manual_activity_type']?.state ===
+                      'Shower'; ]]]
+                    styles:
+                      card:
+                        - background: rgba(30, 160, 110, 0.16)
+                      icon:
+                        - color: var(--success-color)
+              - type: custom:button-card
+                entity: input_boolean.energy_manual_activity_running
+                name: Gas cooking
+                icon: mdi:pot-steam
+                show_state: false
+                show_label: true
+                triggers_update:
+                  - input_select.energy_manual_activity_type
+                  - sensor.energy_manual_activity_elapsed
+                label: |
+                  [[[
+                    return entity.state === 'on' && states['input_select.energy_manual_activity_type']?.state === 'Gas cooking'
+                      ? `RUNNING · ${states['sensor.energy_manual_activity_elapsed']?.state || 0} min`
+                      : 'Start gas session';
+                  ]]]
+                tap_action:
+                  action: call-service
+                  service: script.energy_start_gas_cooking
+                styles:
+                  card:
+                    - min-height: 66px
+                    - border-radius: 12px
+                    - padding: 8px
+                  icon:
+                    - width: 24px
+                  name:
+                    - font-weight: 600
+                    - font-size: 13px
+                  label:
+                    - font-size: 10px
+                    - white-space: normal
+                state:
+                  - operator: template
+                    value: >-
+                      [[[ return entity.state === 'on' &&
+                      states['input_select.energy_manual_activity_type']?.state ===
+                      'Gas cooking'; ]]]
+                    styles:
+                      card:
+                        - background: rgba(30, 160, 110, 0.16)
+                      icon:
+                        - color: var(--success-color)
+              - type: custom:button-card
+                entity: input_boolean.energy_manual_activity_running
+                name: Electric cooking
+                icon: mdi:stove
+                show_state: false
+                show_label: true
+                triggers_update:
+                  - input_select.energy_manual_activity_type
+                  - sensor.energy_manual_activity_elapsed
+                label: |
+                  [[[
+                    return entity.state === 'on' && states['input_select.energy_manual_activity_type']?.state === 'Electric cooking'
+                      ? `RUNNING · ${states['sensor.energy_manual_activity_elapsed']?.state || 0} min`
+                      : 'Start electricity session';
+                  ]]]
+                tap_action:
+                  action: call-service
+                  service: script.energy_start_electric_cooking
+                styles:
+                  card:
+                    - min-height: 66px
+                    - border-radius: 12px
+                    - padding: 8px
+                  icon:
+                    - width: 24px
+                  name:
+                    - font-weight: 600
+                    - font-size: 13px
+                  label:
+                    - font-size: 10px
+                    - white-space: normal
+                state:
+                  - operator: template
+                    value: >-
+                      [[[ return entity.state === 'on' &&
+                      states['input_select.energy_manual_activity_type']?.state ===
+                      'Electric cooking'; ]]]
+                    styles:
+                      card:
+                        - background: rgba(30, 160, 110, 0.16)
+                      icon:
+                        - color: var(--success-color)
+          - type: entities
+            title: Other activity
+            show_header_toggle: false
+            entities:
+              - entity: input_text.energy_manual_activity_name
+                name: Activity name
+              - entity: input_select.energy_manual_energy_source
+                name: Energy source
+              - type: button
+                name: Start other activity
+                icon: mdi:play-circle-outline
+                action_name: Start
+                tap_action:
+                  action: perform-action
+                  perform_action: script.turn_on
+                  target:
+                    entity_id: script.energy_start_custom
+      - type: grid
+        title: Recent consumption
+        cards:
+          - type: grid
+            columns: 2
+            square: false
+            cards:
+              - type: custom:button-card
+                entity: sensor.slimmelezer_electricity_total
+                name: History & costs
+                icon: mdi:chart-box-outline
+                show_state: false
+                show_label: true
+                label: Hourly · daily · monthly
+                tap_action:
+                  action: more-info
+                double_tap_action:
+                  action: fire-dom-event
+                  browser_mod:
+                    service: browser_mod.popup
+                    data:
+                      title: Energy history & costs
+                      size: normal
+                      content:
+                        type: vertical-stack
+                        cards:
+                          - type: entities
+                            title: Meter totals
+                            entities:
+                              - entity: sensor.slimmelezer_mini_energy_consumed_tariff_1
+                                name: Tariff 1 · cumulative kWh
+                              - entity: sensor.slimmelezer_mini_energy_consumed_tariff_2
+                                name: Tariff 2 · cumulative kWh
+                              - entity: sensor.slimmelezer_electricity_total
+                                name: Total electricity · kWh
+                              - entity: sensor.slimmelezer_mini_gas_consumed
+                                name: Gas meter · cumulative m³
+                          - type: statistics-graph
+                            title: Electricity by hour · 7 days
+                            chart_type: bar-stack
+                            period: hour
+                            days_to_show: 7
+                            stat_types:
+                              - change
+                            entities:
+                              - entity: sensor.slimmelezer_mini_energy_consumed_tariff_1
+                                name: T1
+                              - entity: sensor.slimmelezer_mini_energy_consumed_tariff_2
+                                name: T2
+                          - type: statistics-graph
+                            title: Gas by hour · 7 days
+                            chart_type: bar
+                            period: hour
+                            days_to_show: 7
+                            stat_types:
+                              - change
+                            entities:
+                              - entity: sensor.slimmelezer_mini_gas_consumed
+                                name: Gas
+                          - type: statistics-graph
+                            title: Electricity by day · 30 days
+                            chart_type: bar
+                            period: day
+                            days_to_show: 30
+                            stat_types:
+                              - change
+                            entities:
+                              - entity: sensor.slimmelezer_electricity_total
+                                name: Electricity · kWh
+                          - type: statistics-graph
+                            title: Gas by day · 30 days
+                            chart_type: bar
+                            period: day
+                            days_to_show: 30
+                            stat_types:
+                              - change
+                            entities:
+                              - entity: sensor.slimmelezer_mini_gas_consumed
+                                name: Gas · m³
+                          - type: statistics-graph
+                            title: Daily cost · 30 days
+                            chart_type: bar-stack
+                            period: day
+                            days_to_show: 30
+                            stat_types:
+                              - change
+                            entities:
+                              - entity: sensor.slimmelezer_electricity_cost_total
+                                name: Electricity · €
+                              - entity: sensor.slimmelezer_gas_cost_total
+                                name: Gas · €
+                          - type: statistics-graph
+                            title: Monthly cost · 12 months
+                            chart_type: bar-stack
+                            period: month
+                            days_to_show: 365
+                            stat_types:
+                              - change
+                            entities:
+                              - entity: sensor.slimmelezer_electricity_cost_total
+                                name: Electricity · €
+                              - entity: sensor.slimmelezer_gas_cost_total
+                                name: Gas · €
+                styles:
+                  card:
+                    - min-height: 68px
+                    - border-radius: 14px
+                    - padding: 12px
+                  grid:
+                    - grid-template-areas: '"i n" "i l"'
+                    - grid-template-columns: 38px 1fr
+                  icon:
+                    - width: 26px
+                  name:
+                    - justify-self: start
+                    - font-size: 13px
+                    - font-weight: 600
+                  label:
+                    - justify-self: start
+                    - font-size: 11px
+                    - opacity: 0.6
+              - type: custom:button-card
+                entity: binary_sensor.energy_thermostat_heating
+                name: Heating & gas
+                icon: mdi:radiator
+                show_state: false
+                show_label: true
+                label: Heating split · shower markers
+                tap_action:
+                  action: more-info
+                double_tap_action:
+                  action: fire-dom-event
+                  browser_mod:
+                    service: browser_mod.popup
+                    data:
+                      title: Heating & gas analysis
+                      size: normal
+                      content:
+                        type: vertical-stack
+                        cards:
+                          - type: thermostat
+                            entity: climate.tstat_838e9c_lyric_t6_thermostat
+                            name: Resideo T6
+                          - type: entities
+                            title: Heating and gas allocation
+                            entities:
+                              - entity: binary_sensor.energy_thermostat_heating
+                                name: Thermostat calling for heat
+                              - entity: sensor.energy_heating_hours_today
+                                name: Heating hours today
+                              - entity: sensor.slimmelezer_gas_during_heating_demand
+                                name: Gas during heating demand · m³
+                              - entity: sensor.slimmelezer_gas_outside_heating_demand
+                                name: Gas outside heating demand · m³
+                              - entity: sensor.slimmelezer_gas_unclassified
+                                name: Unclassified gas · m³
+                              - entity: sensor.slimmelezer_gas_heating_cost_total
+                                name: Heating-demand gas cost · €
+                              - entity: sensor.slimmelezer_gas_outside_heating_cost_total
+                                name: Outside-heating gas cost · €
+                          - type: statistics-graph
+                            title: Gas by classification · 7 days
+                            chart_type: bar-stack
+                            period: day
+                            days_to_show: 7
+                            stat_types:
+                              - change
+                            entities:
+                              - entity: sensor.slimmelezer_gas_during_heating_demand
+                                name: During heating
+                              - entity: sensor.slimmelezer_gas_outside_heating_demand
+                                name: Outside heating
+                              - entity: sensor.slimmelezer_gas_unclassified
+                                name: Unclassified
+                          - type: history-graph
+                            title: Heating state and gas meter · 24 hours
+                            hours_to_show: 24
+                            entities:
+                              - entity: binary_sensor.energy_thermostat_heating
+                                name: Heating demand
+                              - entity: sensor.slimmelezer_mini_gas_consumed
+                                name: Cumulative gas meter
+                          - type: logbook
+                            title: Manual activity start / stop log · 7 days
+                            hours_to_show: 168
+                            entities:
+                              - entity: input_boolean.energy_manual_activity_running
+                          - type: markdown
+                            content: >
+                              Gas attribution by thermostat is an estimate. Manual
+                              sessions separately record the whole-house meter
+                              change between Start and Stop. They are not isolated
+                              appliance measurements and can include other
+                              simultaneous household use. Only one manual session
+                              can run at a time.
+                styles:
+                  card:
+                    - min-height: 68px
+                    - border-radius: 14px
+                    - padding: 12px
+                  grid:
+                    - grid-template-areas: '"i n" "i l"'
+                    - grid-template-columns: 38px 1fr
+                  icon:
+                    - width: 26px
+                  name:
+                    - justify-self: start
+                    - font-size: 13px
+                    - font-weight: 600
+                  label:
+                    - justify-self: start
+                    - font-size: 11px
+                    - opacity: 0.6
+              - type: custom:button-card
+                entity: binary_sensor.energy_dishwasher_running
+                name: Appliances
+                icon: mdi:washing-machine
+                show_state: false
+                show_label: true
+                label: Washer · dryer · dishwasher · oven · TV
+                tap_action:
+                  action: more-info
+                double_tap_action:
+                  action: fire-dom-event
+                  browser_mod:
+                    service: browser_mod.popup
+                    data:
+                      title: Appliance use
+                      size: normal
+                      content:
+                        type: vertical-stack
+                        cards:
+                          - type: entities
+                            title: Washer
+                            entities:
+                              - entity: binary_sensor.washing_machine_running
+                                name: Running
+                              - entity: sensor.smart_plug_3_current
+                                name: Smart-plug current
+                              - entity: sensor.smart_plug_3_this_month_s_consumption
+                                name: Energy this month · kWh
+                              - entity: sensor.energy_washer_cost_this_month
+                                name: Estimated cost this month · €
+                              - entity: sensor.energy_washer_runtime_today
+                                name: Runtime today · hours
+                          - type: entities
+                            title: Dryer
+                            entities:
+                              - entity: binary_sensor.dryer_running
+                                name: Running
+                              - entity: sensor.fridge_2_current
+                                name: Smart-plug current
+                              - entity: sensor.fridge_2_this_month_s_consumption
+                                name: Energy this month · kWh
+                              - entity: sensor.energy_dryer_cost_this_month
+                                name: Estimated cost this month · €
+                              - entity: sensor.energy_dryer_runtime_today
+                                name: Runtime today · hours
+                          - type: entities
+                            title: Other appliances · activity only
+                            entities:
+                              - entity: switch.dishwasher_power
+                                name: Dishwasher power
+                              - entity: sensor.dishwasher_program_progress
+                                name: Dishwasher program progress
+                              - entity: sensor.dishwasher_operation_state
+                                name: Dishwasher operation
+                              - entity: sensor.energy_dishwasher_runtime_today
+                                name: Dishwasher runtime today · hours
+                              - entity: switch.oven_power
+                                name: Oven power
+                              - entity: select.oven_active_program
+                                name: Oven program
+                              - entity: sensor.energy_oven_powered_hours_today
+                                name: Oven powered today · hours
+                              - entity: media_player.mibox4
+                                name: TV / MiBox activity
+                              - entity: sensor.energy_tv_box_awake_hours_today
+                                name: TV box awake today · hours
+                          - type: history-graph
+                            title: Appliance activity · 24 hours
+                            hours_to_show: 24
+                            entities:
+                              - entity: binary_sensor.washing_machine_running
+                                name: Washer
+                              - entity: binary_sensor.dryer_running
+                                name: Dryer
+                              - entity: binary_sensor.energy_dishwasher_running
+                                name: Dishwasher
+                              - entity: binary_sensor.energy_oven_powered
+                                name: Oven power
+                              - entity: binary_sensor.energy_tv_box_awake
+                                name: TV box
+                          - type: markdown
+                            content: >
+                              Washer and dryer have measured plug data. Dishwasher,
+                              oven and TV currently show activity/runtime only; they
+                              do not yet have individual kWh measurements.
+                styles:
+                  card:
+                    - min-height: 68px
+                    - border-radius: 14px
+                    - padding: 12px
+                  grid:
+                    - grid-template-areas: '"i n" "i l"'
+                    - grid-template-columns: 38px 1fr
+                  icon:
+                    - width: 26px
+                  name:
+                    - justify-self: start
+                    - font-size: 13px
+                    - font-weight: 600
+                  label:
+                    - justify-self: start
+                    - font-size: 11px
+                    - opacity: 0.6
+              - type: custom:button-card
+                entity: binary_sensor.energy_house_empty
+                name: Home & occupancy
+                icon: mdi:home-search-outline
+                show_state: false
+                show_label: true
+                label: Presence · motion · empty periods
+                tap_action:
+                  action: more-info
+                double_tap_action:
+                  action: fire-dom-event
+                  browser_mod:
+                    service: browser_mod.popup
+                    data:
+                      title: Home occupancy analysis
+                      size: normal
+                      content:
+                        type: vertical-stack
+                        cards:
+                          - type: entities
+                            title: Home state
+                            entities:
+                              - entity: binary_sensor.energy_house_empty
+                                name: Home empty (10-minute confirmation)
+                              - entity: sensor.energy_house_empty_hours_today
+                                name: Empty hours today
+                              - entity: sensor.energy_house_empty_check
+                                name: Why not empty?
+                              - entity: binary_sensor.energy_someone_home
+                                name: Someone home (combined presence)
+                              - entity: binary_sensor.energy_motion_detected
+                                name: Motion detected
+                              - entity: binary_sensor.energy_entry_contact_open
+                                name: Entry contact open (diagnostic)
+                              - entity: binary_sensor.dan_presence_combined
+                                name: Dan presence
+                              - entity: binary_sensor.anca_presence_combined
+                                name: Anca presence
+                          - type: history-graph
+                            title: Empty home vs electricity demand · 24 hours
+                            hours_to_show: 24
+                            entities:
+                              - entity: binary_sensor.energy_house_empty
+                                name: Inferred empty
+                              - entity: sensor.slimmelezer_mini_power_consumed
+                                name: Grid power · W
+                          - type: entities
+                            title: Motion and entry checks
+                            entities:
+                              - entity: binary_sensor.kitchen_motion_sensor
+                                name: Kitchen
+                              - entity: binary_sensor.small_bedroom_motion_occupancy
+                                name: Small bedroom
+                              - entity: binary_sensor.bathroom_motion_occupancy
+                                name: Bathroom
+                              - entity: binary_sensor.big_bedroom_motion_occupancy
+                                name: Big bedroom
+                              - entity: binary_sensor.hal_motion_all
+                                name: Hall · combined
+                              - entity: binary_sensor.living_room_motion_all
+                                name: Living room · combined
+                              - entity: binary_sensor.contactsensor_rear_door_2
+                                name: Front entry contact
+                              - entity: binary_sensor.contactsensor_front_door_2
+                                name: Dining exterior contact
+                          - type: markdown
+                            content: >
+                              Empty-house status requires both presence helpers OFF
+                              and the selected motion sensors clear for 10 minutes.
+                              Door contacts are diagnostic only. It is for energy
+                              analysis only; it does not control heating or
+                              appliances.
+                styles:
+                  card:
+                    - min-height: 68px
+                    - border-radius: 14px
+                    - padding: 12px
+                  grid:
+                    - grid-template-areas: '"i n" "i l"'
+                    - grid-template-columns: 38px 1fr
+                  icon:
+                    - width: 26px
+                  name:
+                    - justify-self: start
+                    - font-size: 13px
+                    - font-weight: 600
+                  label:
+                    - justify-self: start
+                    - font-size: 11px
+                    - opacity: 0.6
+              - type: custom:button-card
+                entity: sensor.slimmelezer_mini_voltage_phase_1
+                name: Meter & grid
+                icon: mdi:transmission-tower
+                show_state: false
+                show_label: true
+                label: Tariffs · voltage · current
+                tap_action:
+                  action: more-info
+                double_tap_action:
+                  action: fire-dom-event
+                  browser_mod:
+                    service: browser_mod.popup
+                    data:
+                      title: Meter registers & grid diagnostics
+                      size: normal
+                      content:
+                        type: vertical-stack
+                        cards:
+                          - type: entities
+                            title: SlimmeLezer meter
+                            entities:
+                              - entity: sensor.slimmelezer_mini_energy_consumed_tariff_1
+                                name: T1 · cumulative kWh
+                              - entity: sensor.slimmelezer_mini_energy_consumed_tariff_2
+                                name: T2 · cumulative kWh
+                              - entity: sensor.slimmelezer_electricity_total
+                                name: Combined electricity · kWh
+                              - entity: sensor.slimmelezer_mini_gas_consumed
+                                name: Gas index · m³
+                              - entity: sensor.slimmelezer_mini_power_consumed
+                                name: Current grid power · W
+                          - type: entities
+                            title: Phase 1
+                            entities:
+                              - entity: sensor.slimmelezer_mini_voltage_phase_1
+                                name: Voltage · V
+                              - entity: sensor.slimmelezer_mini_current_phase_1
+                                name: Current · A
+                          - type: history-graph
+                            title: Power · last 6 hours
+                            hours_to_show: 6
+                            entities:
+                              - entity: sensor.slimmelezer_mini_power_consumed
+                                name: Grid power
+                          - type: statistics-graph
+                            title: Voltage · 24 hours
+                            chart_type: line
+                            period: 5minute
+                            days_to_show: 1
+                            stat_types:
+                              - mean
+                              - min
+                              - max
+                            entities:
+                              - entity: sensor.slimmelezer_mini_voltage_phase_1
+                                name: Voltage
+                          - type: statistics-graph
+                            title: Current · 24 hours
+                            chart_type: line
+                            period: 5minute
+                            days_to_show: 1
+                            stat_types:
+                              - mean
+                              - max
+                            entities:
+                              - entity: sensor.slimmelezer_mini_current_phase_1
+                                name: Current
+                styles:
+                  card:
+                    - min-height: 68px
+                    - border-radius: 14px
+                    - padding: 12px
+                  grid:
+                    - grid-template-areas: '"i n" "i l"'
+                    - grid-template-columns: 38px 1fr
+                  icon:
+                    - width: 26px
+                  name:
+                    - justify-self: start
+                    - font-size: 13px
+                    - font-weight: 600
+                  label:
+                    - justify-self: start
+                    - font-size: 11px
+                    - opacity: 0.6
+              - type: custom:button-card
+                entity: input_boolean.energy_manual_activity_running
+                name: Manual sessions
+                icon: mdi:clipboard-text-clock-outline
+                show_state: false
+                show_label: true
+                label: Start / stop · gross, normal baseline and net additional use
+                tap_action:
+                  action: more-info
+                double_tap_action:
+                  action: fire-dom-event
+                  browser_mod:
+                    service: browser_mod.popup
+                    data:
+                      title: Manual activity sessions
+                      size: normal
+                      content:
+                        type: vertical-stack
+                        cards:
+                          - type: entities
+                            title: Baseline learning
+                            show_header_toggle: false
+                            entities:
+                              - entity: sensor.energy_activity_baseline_status
+                                name: Rolling baseline progress
+                              - entity: sensor.energy_baseline_electricity_5m_mean
+                                name: Quiet electricity mean per 5 min
+                              - entity: sensor.energy_baseline_gas_heating_5m_mean
+                                name: Gas baseline while heating · per 5 min
+                              - entity: sensor.energy_baseline_gas_idle_5m_mean
+                                name: Gas baseline while idle · per 5 min
+                              - entity: input_number.energy_baseline_max_power_w
+                                name: Electricity quiet-sample power limit
+                          - type: entities
+                            title: Current session
+                            entities:
+                              - entity: input_boolean.energy_manual_activity_running
+                                name: Running
+                              - entity: input_text.energy_manual_activity_name
+                                name: Activity
+                              - entity: input_select.energy_manual_energy_source
+                                name: Meter source
+                              - entity: input_datetime.energy_manual_activity_started_at
+                                name: Started at
+                              - entity: sensor.energy_manual_activity_elapsed
+                                name: Elapsed minutes
+                              - entity: sensor.slimmelezer_mini_gas_consumed
+                                name: Current gas register · check last update
+                                secondary_info: last-changed
+                              - entity: sensor.slimmelezer_electricity_total
+                                name: Current electricity register · check last update
+                                secondary_info: last-changed
+                              - entity: input_text.energy_manual_last_session
+                                name: Last completed session
+                          - type: entities
+                            title: Last session · measured gross vs estimated net
+                            show_header_toggle: false
+                            entities:
+                              - entity: input_text.energy_manual_last_baseline_status
+                                name: Baseline quality
+                              - entity: input_number.energy_manual_last_gross_gas_m3
+                                name: Gas gross · m³
+                              - entity: input_number.energy_manual_last_baseline_gas_m3
+                                name: Gas normal baseline · m³
+                              - entity: input_number.energy_manual_last_net_gas_m3
+                                name: Gas net additional · m³
+                              - entity: input_number.energy_manual_last_gross_electricity_kwh
+                                name: Electricity gross · kWh
+                              - entity: input_number.energy_manual_last_baseline_electricity_kwh
+                                name: Electricity normal baseline · kWh
+                              - entity: input_number.energy_manual_last_net_electricity_kwh
+                                name: Electricity net additional · kWh
+                              - entity: input_number.energy_manual_last_gross_cost_eur
+                                name: Gross cost · €
+                              - entity: input_number.energy_manual_last_baseline_cost_eur
+                                name: Baseline cost · €
+                              - entity: input_number.energy_manual_last_net_cost_eur
+                                name: Net additional cost · €
+                          - type: entities
+                            title: Cumulative recorded use · gross / baseline / net
+                            show_header_toggle: false
+                            entities:
+                              - entity: sensor.energy_manual_shower_gas_total
+                                name: Shower · gross gas m³
+                              - entity: sensor.energy_manual_shower_gas_baseline_total
+                                name: Shower · normal baseline m³
+                              - entity: sensor.energy_manual_shower_gas_net_total
+                                name: Shower · net additional gas m³
+                              - entity: sensor.energy_manual_gas_cooking_total
+                                name: Gas cooking · gross m³
+                              - entity: sensor.energy_manual_gas_cooking_baseline_total
+                                name: Gas cooking · baseline m³
+                              - entity: sensor.energy_manual_gas_cooking_net_total
+                                name: Gas cooking · net m³
+                              - entity: sensor.energy_manual_electric_cooking_total
+                                name: Electric cooking · gross kWh
+                              - entity: sensor.energy_manual_electric_cooking_baseline_total
+                                name: Electric cooking · baseline kWh
+                              - entity: sensor.energy_manual_electric_cooking_net_total
+                                name: Electric cooking · net kWh
+                              - entity: sensor.energy_manual_custom_gas_total
+                                name: Other gas · gross m³
+                              - entity: sensor.energy_manual_other_gas_baseline_total
+                                name: Other gas · baseline m³
+                              - entity: sensor.energy_manual_other_gas_net_total
+                                name: Other gas · net m³
+                              - entity: sensor.energy_manual_custom_electricity_total
+                                name: Other electricity · gross kWh
+                              - entity: sensor.energy_manual_other_electricity_baseline_total
+                                name: Other electricity · baseline kWh
+                              - entity: sensor.energy_manual_other_electricity_net_total
+                                name: Other electricity · net kWh
+                              - entity: sensor.energy_manual_shower_cost_total
+                                name: Shower gross cost · €
+                              - entity: sensor.energy_manual_gas_cooking_cost_total
+                                name: Gas cooking gross cost · €
+                              - entity: sensor.energy_manual_electric_cooking_cost_total
+                                name: Electric cooking gross cost · €
+                              - entity: sensor.energy_manual_other_gas_cost_total
+                                name: Other gas gross cost · €
+                              - entity: sensor.energy_manual_other_electricity_cost_total
+                                name: Other electricity gross cost · €
+                          - type: statistics-graph
+                            title: Gas assigned to manual activities · daily
+                            chart_type: bar-stack
+                            period: day
+                            days_to_show: 30
+                            stat_types:
+                              - change
+                            entities:
+                              - entity: sensor.energy_manual_shower_gas_total
+                                name: Shower
+                              - entity: sensor.energy_manual_gas_cooking_total
+                                name: Gas cooking
+                              - entity: sensor.energy_manual_custom_gas_total
+                                name: Other gas
+                          - type: statistics-graph
+                            title: Net additional gas assigned to activities · daily
+                            chart_type: bar-stack
+                            period: day
+                            days_to_show: 30
+                            stat_types:
+                              - change
+                            entities:
+                              - entity: sensor.energy_manual_shower_gas_net_total
+                                name: Shower net
+                              - entity: sensor.energy_manual_gas_cooking_net_total
+                                name: Gas cooking net
+                              - entity: sensor.energy_manual_other_gas_net_total
+                                name: Other gas net
+                          - type: statistics-graph
+                            title: Electricity assigned to manual activities · daily
+                            chart_type: bar-stack
+                            period: day
+                            days_to_show: 30
+                            stat_types:
+                              - change
+                            entities:
+                              - entity: sensor.energy_manual_electric_cooking_total
+                                name: Electric cooking
+                              - entity: sensor.energy_manual_custom_electricity_total
+                                name: Other electricity
+                          - type: statistics-graph
+                            title: >-
+                              Net additional electricity assigned to activities ·
+                              daily
+                            chart_type: bar-stack
+                            period: day
+                            days_to_show: 30
+                            stat_types:
+                              - change
+                            entities:
+                              - entity: sensor.energy_manual_electric_cooking_net_total
+                                name: Electric cooking net
+                              - entity: sensor.energy_manual_other_electricity_net_total
+                                name: Other electricity net
+                          - type: logbook
+                            title: Session history · 7 days
+                            hours_to_show: 168
+                            entities:
+                              - entity: input_boolean.energy_manual_activity_running
+                          - type: markdown
+                            content: >-
+                              Gross = measured whole-house meter change during the
+                              session. Baseline = estimated normal use from the
+                              previous 7 days of eligible quiet 5-minute samples.
+                              Net = max(gross minus baseline, 0). Gross is always
+                              recorded; baseline and net are only recorded after at
+                              least 24 valid samples for each relevant mode.
+                              Electricity samples are restricted to low-load periods
+                              and exclude known washer, dryer, dishwasher and oven
+                              activity. Gas baseline is split by thermostat heating
+                              / idle state; unmarked gas use can still affect it.
+                              Net is a household-level estimate, not an isolated
+                              appliance measurement. Gas-meter resolution,
+                              concurrent use and time-of-day differences limit
+                              accuracy. The gross and net graphs are separate so
+                              gross is never hidden by baseline subtraction.
+                styles:
+                  card:
+                    - min-height: 68px
+                    - border-radius: 14px
+                    - padding: 12px
+                  grid:
+                    - grid-template-areas: '"i n" "i l"'
+                    - grid-template-columns: 38px 1fr
+                  icon:
+                    - width: 26px
+                  name:
+                    - justify-self: start
+                    - font-size: 13px
+                    - font-weight: 600
+                  label:
+                    - justify-self: start
+                    - font-size: 11px
+                    - opacity: 0.6
+  - title: Details
+    path: energy-details
+    icon: mdi:chart-box-outline
+    type: sections
+    max_columns: 2
+    dense_section_placement: false
+    sections:
+      - type: grid
+        title: Manual activity
+        cards:
           - type: button
             name: Start other activity
             icon: mdi:play-circle-outline
-            action_name: Start
+            show_state: false
             tap_action:
               action: perform-action
               perform_action: script.turn_on
               target:
                 entity_id: script.energy_start_custom
-      - type: heading
-        heading: Recent consumption
-        heading_style: subtitle
-        icon: mdi:chart-timeline-variant
-      - type: grid
-        columns: 2
-        square: false
-        cards:
-          - type: custom:button-card
-            entity: sensor.slimmelezer_electricity_total
-            name: History & costs
-            icon: mdi:chart-box-outline
-            show_state: false
-            show_label: true
-            label: Hourly · daily · monthly
-            tap_action:
-              action: more-info
-            double_tap_action:
-              action: fire-dom-event
-              browser_mod:
-                service: browser_mod.popup
-                data:
-                  title: Energy history & costs
-                  size: normal
-                  content:
-                    type: vertical-stack
-                    cards:
-                      - type: entities
-                        title: Meter totals
-                        entities:
-                          - entity: sensor.slimmelezer_mini_energy_consumed_tariff_1
-                            name: Tariff 1 · cumulative kWh
-                          - entity: sensor.slimmelezer_mini_energy_consumed_tariff_2
-                            name: Tariff 2 · cumulative kWh
-                          - entity: sensor.slimmelezer_electricity_total
-                            name: Total electricity · kWh
-                          - entity: sensor.slimmelezer_mini_gas_consumed
-                            name: Gas meter · cumulative m³
-                      - type: statistics-graph
-                        title: Electricity by hour · 7 days
-                        chart_type: bar-stack
-                        period: hour
-                        days_to_show: 7
-                        stat_types:
-                          - change
-                        entities:
-                          - entity: sensor.slimmelezer_mini_energy_consumed_tariff_1
-                            name: T1
-                          - entity: sensor.slimmelezer_mini_energy_consumed_tariff_2
-                            name: T2
-                      - type: statistics-graph
-                        title: Gas by hour · 7 days
-                        chart_type: bar
-                        period: hour
-                        days_to_show: 7
-                        stat_types:
-                          - change
-                        entities:
-                          - entity: sensor.slimmelezer_mini_gas_consumed
-                            name: Gas
-                      - type: statistics-graph
-                        title: Electricity by day · 30 days
-                        chart_type: bar
-                        period: day
-                        days_to_show: 30
-                        stat_types:
-                          - change
-                        entities:
-                          - entity: sensor.slimmelezer_electricity_total
-                            name: Electricity · kWh
-                      - type: statistics-graph
-                        title: Gas by day · 30 days
-                        chart_type: bar
-                        period: day
-                        days_to_show: 30
-                        stat_types:
-                          - change
-                        entities:
-                          - entity: sensor.slimmelezer_mini_gas_consumed
-                            name: Gas · m³
-                      - type: statistics-graph
-                        title: Daily cost · 30 days
-                        chart_type: bar-stack
-                        period: day
-                        days_to_show: 30
-                        stat_types:
-                          - change
-                        entities:
-                          - entity: sensor.slimmelezer_electricity_cost_total
-                            name: Electricity · €
-                          - entity: sensor.slimmelezer_gas_cost_total
-                            name: Gas · €
-                      - type: statistics-graph
-                        title: Monthly cost · 12 months
-                        chart_type: bar-stack
-                        period: month
-                        days_to_show: 365
-                        stat_types:
-                          - change
-                        entities:
-                          - entity: sensor.slimmelezer_electricity_cost_total
-                            name: Electricity · €
-                          - entity: sensor.slimmelezer_gas_cost_total
-                            name: Gas · €
-            styles:
-              card:
-                - min-height: 68px
-                - border-radius: 14px
-                - padding: 12px
-              grid:
-                - grid-template-areas: '"i n" "i l"'
-                - grid-template-columns: 38px 1fr
-              icon:
-                - width: 26px
-              name:
-                - justify-self: start
-                - font-size: 13px
-                - font-weight: 600
-              label:
-                - justify-self: start
-                - font-size: 11px
-                - opacity: 0.6
-          - type: custom:button-card
-            entity: binary_sensor.energy_thermostat_heating
-            name: Heating & gas
-            icon: mdi:radiator
-            show_state: false
-            show_label: true
-            label: Heating split · shower markers
-            tap_action:
-              action: more-info
-            double_tap_action:
-              action: fire-dom-event
-              browser_mod:
-                service: browser_mod.popup
-                data:
-                  title: Heating & gas analysis
-                  size: normal
-                  content:
-                    type: vertical-stack
-                    cards:
-                      - type: thermostat
-                        entity: climate.tstat_838e9c_lyric_t6_thermostat
-                        name: Resideo T6
-                      - type: entities
-                        title: Heating and gas allocation
-                        entities:
-                          - entity: binary_sensor.energy_thermostat_heating
-                            name: Thermostat calling for heat
-                          - entity: sensor.energy_heating_hours_today
-                            name: Heating hours today
-                          - entity: sensor.slimmelezer_gas_during_heating_demand
-                            name: Gas during heating demand · m³
-                          - entity: sensor.slimmelezer_gas_outside_heating_demand
-                            name: Gas outside heating demand · m³
-                          - entity: sensor.slimmelezer_gas_unclassified
-                            name: Unclassified gas · m³
-                          - entity: sensor.slimmelezer_gas_heating_cost_total
-                            name: Heating-demand gas cost · €
-                          - entity: sensor.slimmelezer_gas_outside_heating_cost_total
-                            name: Outside-heating gas cost · €
-                      - type: statistics-graph
-                        title: Gas by classification · 7 days
-                        chart_type: bar-stack
-                        period: day
-                        days_to_show: 7
-                        stat_types:
-                          - change
-                        entities:
-                          - entity: sensor.slimmelezer_gas_during_heating_demand
-                            name: During heating
-                          - entity: sensor.slimmelezer_gas_outside_heating_demand
-                            name: Outside heating
-                          - entity: sensor.slimmelezer_gas_unclassified
-                            name: Unclassified
-                      - type: history-graph
-                        title: Heating state and gas meter · 24 hours
-                        hours_to_show: 24
-                        entities:
-                          - entity: binary_sensor.energy_thermostat_heating
-                            name: Heating demand
-                          - entity: sensor.slimmelezer_mini_gas_consumed
-                            name: Cumulative gas meter
-                      - type: logbook
-                        title: Manual activity start / stop log · 7 days
-                        hours_to_show: 168
-                        entities:
-                          - entity: input_boolean.energy_manual_activity_running
-                      - type: markdown
-                        content: >
-                          Gas attribution by thermostat is an estimate. Manual
-                          sessions separately record the whole-house meter
-                          change between Start and Stop. They are not isolated
-                          appliance measurements and can include other
-                          simultaneous household use. Only one manual session
-                          can run at a time.
-            styles:
-              card:
-                - min-height: 68px
-                - border-radius: 14px
-                - padding: 12px
-              grid:
-                - grid-template-areas: '"i n" "i l"'
-                - grid-template-columns: 38px 1fr
-              icon:
-                - width: 26px
-              name:
-                - justify-self: start
-                - font-size: 13px
-                - font-weight: 600
-              label:
-                - justify-self: start
-                - font-size: 11px
-                - opacity: 0.6
-          - type: custom:button-card
-            entity: binary_sensor.energy_dishwasher_running
-            name: Appliances
-            icon: mdi:washing-machine
-            show_state: false
-            show_label: true
-            label: Washer · dryer · dishwasher · oven · TV
-            tap_action:
-              action: more-info
-            double_tap_action:
-              action: fire-dom-event
-              browser_mod:
-                service: browser_mod.popup
-                data:
-                  title: Appliance use
-                  size: normal
-                  content:
-                    type: vertical-stack
-                    cards:
-                      - type: entities
-                        title: Washer
-                        entities:
-                          - entity: binary_sensor.washing_machine_running
-                            name: Running
-                          - entity: sensor.smart_plug_3_current
-                            name: Smart-plug current
-                          - entity: sensor.smart_plug_3_this_month_s_consumption
-                            name: Energy this month · kWh
-                          - entity: sensor.energy_washer_cost_this_month
-                            name: Estimated cost this month · €
-                          - entity: sensor.energy_washer_runtime_today
-                            name: Runtime today · hours
-                      - type: entities
-                        title: Dryer
-                        entities:
-                          - entity: binary_sensor.dryer_running
-                            name: Running
-                          - entity: sensor.fridge_2_current
-                            name: Smart-plug current
-                          - entity: sensor.fridge_2_this_month_s_consumption
-                            name: Energy this month · kWh
-                          - entity: sensor.energy_dryer_cost_this_month
-                            name: Estimated cost this month · €
-                          - entity: sensor.energy_dryer_runtime_today
-                            name: Runtime today · hours
-                      - type: entities
-                        title: Other appliances · activity only
-                        entities:
-                          - entity: switch.dishwasher_power
-                            name: Dishwasher power
-                          - entity: sensor.dishwasher_program_progress
-                            name: Dishwasher program progress
-                          - entity: sensor.dishwasher_operation_state
-                            name: Dishwasher operation
-                          - entity: sensor.energy_dishwasher_runtime_today
-                            name: Dishwasher runtime today · hours
-                          - entity: switch.oven_power
-                            name: Oven power
-                          - entity: select.oven_active_program
-                            name: Oven program
-                          - entity: sensor.energy_oven_powered_hours_today
-                            name: Oven powered today · hours
-                          - entity: media_player.mibox4
-                            name: TV / MiBox activity
-                          - entity: sensor.energy_tv_box_awake_hours_today
-                            name: TV box awake today · hours
-                      - type: history-graph
-                        title: Appliance activity · 24 hours
-                        hours_to_show: 24
-                        entities:
-                          - entity: binary_sensor.washing_machine_running
-                            name: Washer
-                          - entity: binary_sensor.dryer_running
-                            name: Dryer
-                          - entity: binary_sensor.energy_dishwasher_running
-                            name: Dishwasher
-                          - entity: binary_sensor.energy_oven_powered
-                            name: Oven power
-                          - entity: binary_sensor.energy_tv_box_awake
-                            name: TV box
-                      - type: markdown
-                        content: >
-                          Washer and dryer have measured plug data. Dishwasher,
-                          oven and TV currently show activity/runtime only; they
-                          do not yet have individual kWh measurements.
-            styles:
-              card:
-                - min-height: 68px
-                - border-radius: 14px
-                - padding: 12px
-              grid:
-                - grid-template-areas: '"i n" "i l"'
-                - grid-template-columns: 38px 1fr
-              icon:
-                - width: 26px
-              name:
-                - justify-self: start
-                - font-size: 13px
-                - font-weight: 600
-              label:
-                - justify-self: start
-                - font-size: 11px
-                - opacity: 0.6
-          - type: custom:button-card
-            entity: binary_sensor.energy_house_empty
-            name: Home & occupancy
-            icon: mdi:home-search-outline
-            show_state: false
-            show_label: true
-            label: Presence · motion · empty periods
-            tap_action:
-              action: more-info
-            double_tap_action:
-              action: fire-dom-event
-              browser_mod:
-                service: browser_mod.popup
-                data:
-                  title: Home occupancy analysis
-                  size: normal
-                  content:
-                    type: vertical-stack
-                    cards:
-                      - type: entities
-                        title: Home state
-                        entities:
-                          - entity: binary_sensor.energy_house_empty
-                            name: Home empty (10-minute confirmation)
-                          - entity: sensor.energy_house_empty_hours_today
-                            name: Empty hours today
-                          - entity: sensor.energy_house_empty_check
-                            name: Why not empty?
-                          - entity: binary_sensor.energy_someone_home
-                            name: Someone home (combined presence)
-                          - entity: binary_sensor.energy_motion_detected
-                            name: Motion detected
-                          - entity: binary_sensor.energy_entry_contact_open
-                            name: Entry contact open (diagnostic)
-                          - entity: binary_sensor.dan_presence_combined
-                            name: Dan presence
-                          - entity: binary_sensor.anca_presence_combined
-                            name: Anca presence
-                      - type: history-graph
-                        title: Empty home vs electricity demand · 24 hours
-                        hours_to_show: 24
-                        entities:
-                          - entity: binary_sensor.energy_house_empty
-                            name: Inferred empty
-                          - entity: sensor.slimmelezer_mini_power_consumed
-                            name: Grid power · W
-                      - type: entities
-                        title: Motion and entry checks
-                        entities:
-                          - entity: binary_sensor.kitchen_motion_sensor
-                            name: Kitchen
-                          - entity: binary_sensor.small_bedroom_motion_occupancy
-                            name: Small bedroom
-                          - entity: binary_sensor.bathroom_motion_occupancy
-                            name: Bathroom
-                          - entity: binary_sensor.big_bedroom_motion_occupancy
-                            name: Big bedroom
-                          - entity: binary_sensor.hal_motion_all
-                            name: Hall · combined
-                          - entity: binary_sensor.living_room_motion_all
-                            name: Living room · combined
-                          - entity: binary_sensor.contactsensor_rear_door_2
-                            name: Front entry contact
-                          - entity: binary_sensor.contactsensor_front_door_2
-                            name: Dining exterior contact
-                      - type: markdown
-                        content: >
-                          Empty-house status requires both presence helpers OFF
-                          and the selected motion sensors clear for 10 minutes.
-                          Door contacts are diagnostic only. It is for energy
-                          analysis only; it does not control heating or
-                          appliances.
-            styles:
-              card:
-                - min-height: 68px
-                - border-radius: 14px
-                - padding: 12px
-              grid:
-                - grid-template-areas: '"i n" "i l"'
-                - grid-template-columns: 38px 1fr
-              icon:
-                - width: 26px
-              name:
-                - justify-self: start
-                - font-size: 13px
-                - font-weight: 600
-              label:
-                - justify-self: start
-                - font-size: 11px
-                - opacity: 0.6
-          - type: custom:button-card
-            entity: sensor.slimmelezer_mini_voltage_phase_1
-            name: Meter & grid
-            icon: mdi:transmission-tower
-            show_state: false
-            show_label: true
-            label: Tariffs · voltage · current
-            tap_action:
-              action: more-info
-            double_tap_action:
-              action: fire-dom-event
-              browser_mod:
-                service: browser_mod.popup
-                data:
-                  title: Meter registers & grid diagnostics
-                  size: normal
-                  content:
-                    type: vertical-stack
-                    cards:
-                      - type: entities
-                        title: SlimmeLezer meter
-                        entities:
-                          - entity: sensor.slimmelezer_mini_energy_consumed_tariff_1
-                            name: T1 · cumulative kWh
-                          - entity: sensor.slimmelezer_mini_energy_consumed_tariff_2
-                            name: T2 · cumulative kWh
-                          - entity: sensor.slimmelezer_electricity_total
-                            name: Combined electricity · kWh
-                          - entity: sensor.slimmelezer_mini_gas_consumed
-                            name: Gas index · m³
-                          - entity: sensor.slimmelezer_mini_power_consumed
-                            name: Current grid power · W
-                      - type: entities
-                        title: Phase 1
-                        entities:
-                          - entity: sensor.slimmelezer_mini_voltage_phase_1
-                            name: Voltage · V
-                          - entity: sensor.slimmelezer_mini_current_phase_1
-                            name: Current · A
-                      - type: history-graph
-                        title: Power · last 6 hours
-                        hours_to_show: 6
-                        entities:
-                          - entity: sensor.slimmelezer_mini_power_consumed
-                            name: Grid power
-                      - type: statistics-graph
-                        title: Voltage · 24 hours
-                        chart_type: line
-                        period: 5minute
-                        days_to_show: 1
-                        stat_types:
-                          - mean
-                          - min
-                          - max
-                        entities:
-                          - entity: sensor.slimmelezer_mini_voltage_phase_1
-                            name: Voltage
-                      - type: statistics-graph
-                        title: Current · 24 hours
-                        chart_type: line
-                        period: 5minute
-                        days_to_show: 1
-                        stat_types:
-                          - mean
-                          - max
-                        entities:
-                          - entity: sensor.slimmelezer_mini_current_phase_1
-                            name: Current
-            styles:
-              card:
-                - min-height: 68px
-                - border-radius: 14px
-                - padding: 12px
-              grid:
-                - grid-template-areas: '"i n" "i l"'
-                - grid-template-columns: 38px 1fr
-              icon:
-                - width: 26px
-              name:
-                - justify-self: start
-                - font-size: 13px
-                - font-weight: 600
-              label:
-                - justify-self: start
-                - font-size: 11px
-                - opacity: 0.6
-          - type: custom:button-card
-            entity: input_boolean.energy_manual_activity_running
-            name: Manual sessions
+          - type: heading
+            heading: Last recorded session
+            heading_style: subtitle
             icon: mdi:clipboard-text-clock-outline
-            show_state: false
-            show_label: true
-            label: Start / stop · gross, normal baseline and net additional use
-            tap_action:
-              action: more-info
-            double_tap_action:
-              action: fire-dom-event
-              browser_mod:
-                service: browser_mod.popup
-                data:
-                  title: Manual activity sessions
-                  size: normal
-                  content:
-                    type: vertical-stack
-                    cards:
-                      - type: entities
-                        title: Baseline learning
-                        show_header_toggle: false
-                        entities:
-                          - entity: sensor.energy_activity_baseline_status
-                            name: Rolling baseline progress
-                          - entity: sensor.energy_baseline_electricity_5m_mean
-                            name: Quiet electricity mean per 5 min
-                          - entity: sensor.energy_baseline_gas_heating_5m_mean
-                            name: Gas baseline while heating · per 5 min
-                          - entity: sensor.energy_baseline_gas_idle_5m_mean
-                            name: Gas baseline while idle · per 5 min
-                          - entity: input_number.energy_baseline_max_power_w
-                            name: Electricity quiet-sample power limit
-                      - type: entities
-                        title: Current session
-                        entities:
-                          - entity: input_boolean.energy_manual_activity_running
-                            name: Running
-                          - entity: input_text.energy_manual_activity_name
-                            name: Activity
-                          - entity: input_select.energy_manual_energy_source
-                            name: Meter source
-                          - entity: input_datetime.energy_manual_activity_started_at
-                            name: Started at
-                          - entity: sensor.energy_manual_activity_elapsed
-                            name: Elapsed minutes
-                          - entity: sensor.slimmelezer_mini_gas_consumed
-                            name: Current gas register · check last update
-                            secondary_info: last-changed
-                          - entity: sensor.slimmelezer_electricity_total
-                            name: Current electricity register · check last update
-                            secondary_info: last-changed
-                          - entity: input_text.energy_manual_last_session
-                            name: Last completed session
-                      - type: entities
-                        title: Last session · measured gross vs estimated net
-                        show_header_toggle: false
-                        entities:
-                          - entity: input_text.energy_manual_last_baseline_status
-                            name: Baseline quality
-                          - entity: input_number.energy_manual_last_gross_gas_m3
-                            name: Gas gross · m³
-                          - entity: input_number.energy_manual_last_baseline_gas_m3
-                            name: Gas normal baseline · m³
-                          - entity: input_number.energy_manual_last_net_gas_m3
-                            name: Gas net additional · m³
-                          - entity: input_number.energy_manual_last_gross_electricity_kwh
-                            name: Electricity gross · kWh
-                          - entity: input_number.energy_manual_last_baseline_electricity_kwh
-                            name: Electricity normal baseline · kWh
-                          - entity: input_number.energy_manual_last_net_electricity_kwh
-                            name: Electricity net additional · kWh
-                          - entity: input_number.energy_manual_last_gross_cost_eur
-                            name: Gross cost · €
-                          - entity: input_number.energy_manual_last_baseline_cost_eur
-                            name: Baseline cost · €
-                          - entity: input_number.energy_manual_last_net_cost_eur
-                            name: Net additional cost · €
-                      - type: entities
-                        title: Cumulative recorded use · gross / baseline / net
-                        show_header_toggle: false
-                        entities:
-                          - entity: sensor.energy_manual_shower_gas_total
-                            name: Shower · gross gas m³
-                          - entity: sensor.energy_manual_shower_gas_baseline_total
-                            name: Shower · normal baseline m³
-                          - entity: sensor.energy_manual_shower_gas_net_total
-                            name: Shower · net additional gas m³
-                          - entity: sensor.energy_manual_gas_cooking_total
-                            name: Gas cooking · gross m³
-                          - entity: sensor.energy_manual_gas_cooking_baseline_total
-                            name: Gas cooking · baseline m³
-                          - entity: sensor.energy_manual_gas_cooking_net_total
-                            name: Gas cooking · net m³
-                          - entity: sensor.energy_manual_electric_cooking_total
-                            name: Electric cooking · gross kWh
-                          - entity: sensor.energy_manual_electric_cooking_baseline_total
-                            name: Electric cooking · baseline kWh
-                          - entity: sensor.energy_manual_electric_cooking_net_total
-                            name: Electric cooking · net kWh
-                          - entity: sensor.energy_manual_custom_gas_total
-                            name: Other gas · gross m³
-                          - entity: sensor.energy_manual_other_gas_baseline_total
-                            name: Other gas · baseline m³
-                          - entity: sensor.energy_manual_other_gas_net_total
-                            name: Other gas · net m³
-                          - entity: sensor.energy_manual_custom_electricity_total
-                            name: Other electricity · gross kWh
-                          - entity: sensor.energy_manual_other_electricity_baseline_total
-                            name: Other electricity · baseline kWh
-                          - entity: sensor.energy_manual_other_electricity_net_total
-                            name: Other electricity · net kWh
-                          - entity: sensor.energy_manual_shower_cost_total
-                            name: Shower gross cost · €
-                          - entity: sensor.energy_manual_gas_cooking_cost_total
-                            name: Gas cooking gross cost · €
-                          - entity: sensor.energy_manual_electric_cooking_cost_total
-                            name: Electric cooking gross cost · €
-                          - entity: sensor.energy_manual_other_gas_cost_total
-                            name: Other gas gross cost · €
-                          - entity: sensor.energy_manual_other_electricity_cost_total
-                            name: Other electricity gross cost · €
-                      - type: statistics-graph
-                        title: Gas assigned to manual activities · daily
-                        chart_type: bar-stack
-                        period: day
-                        days_to_show: 30
-                        stat_types:
-                          - change
-                        entities:
-                          - entity: sensor.energy_manual_shower_gas_total
-                            name: Shower
-                          - entity: sensor.energy_manual_gas_cooking_total
-                            name: Gas cooking
-                          - entity: sensor.energy_manual_custom_gas_total
-                            name: Other gas
-                      - type: statistics-graph
-                        title: Net additional gas assigned to activities · daily
-                        chart_type: bar-stack
-                        period: day
-                        days_to_show: 30
-                        stat_types:
-                          - change
-                        entities:
-                          - entity: sensor.energy_manual_shower_gas_net_total
-                            name: Shower net
-                          - entity: sensor.energy_manual_gas_cooking_net_total
-                            name: Gas cooking net
-                          - entity: sensor.energy_manual_other_gas_net_total
-                            name: Other gas net
-                      - type: statistics-graph
-                        title: Electricity assigned to manual activities · daily
-                        chart_type: bar-stack
-                        period: day
-                        days_to_show: 30
-                        stat_types:
-                          - change
-                        entities:
-                          - entity: sensor.energy_manual_electric_cooking_total
-                            name: Electric cooking
-                          - entity: sensor.energy_manual_custom_electricity_total
-                            name: Other electricity
-                      - type: statistics-graph
-                        title: >-
-                          Net additional electricity assigned to activities ·
-                          daily
-                        chart_type: bar-stack
-                        period: day
-                        days_to_show: 30
-                        stat_types:
-                          - change
-                        entities:
-                          - entity: sensor.energy_manual_electric_cooking_net_total
-                            name: Electric cooking net
-                          - entity: sensor.energy_manual_other_electricity_net_total
-                            name: Other electricity net
-                      - type: logbook
-                        title: Session history · 7 days
-                        hours_to_show: 168
-                        entities:
-                          - entity: input_boolean.energy_manual_activity_running
-                      - type: markdown
-                        content: >-
-                          Gross = measured whole-house meter change during the
-                          session. Baseline = estimated normal use from the
-                          previous 7 days of eligible quiet 5-minute samples.
-                          Net = max(gross minus baseline, 0). Gross is always
-                          recorded; baseline and net are only recorded after at
-                          least 24 valid samples for each relevant mode.
-                          Electricity samples are restricted to low-load periods
-                          and exclude known washer, dryer, dishwasher and oven
-                          activity. Gas baseline is split by thermostat heating
-                          / idle state; unmarked gas use can still affect it.
-                          Net is a household-level estimate, not an isolated
-                          appliance measurement. Gas-meter resolution,
-                          concurrent use and time-of-day differences limit
-                          accuracy. The gross and net graphs are separate so
-                          gross is never hidden by baseline subtraction.
-            styles:
-              card:
-                - min-height: 68px
-                - border-radius: 14px
-                - padding: 12px
-              grid:
-                - grid-template-areas: '"i n" "i l"'
-                - grid-template-columns: 38px 1fr
-              icon:
-                - width: 26px
-              name:
-                - justify-self: start
-                - font-size: 13px
-                - font-weight: 600
-              label:
-                - justify-self: start
-                - font-size: 11px
-                - opacity: 0.6
-
-  - title: Details
-    path: energy-details
-    icon: mdi:chart-box-outline
-    type: masonry
-    cards:
-      - type: heading
-        heading: Manual activity
-        heading_style: subtitle
-        icon: mdi:timer-play-outline
-      - type: button
-        name: Start other activity
-        icon: mdi:play-circle-outline
-        show_state: false
-        tap_action:
-          action: perform-action
-          perform_action: script.turn_on
-          target:
-            entity_id: script.energy_start_custom
-      - type: heading
-        heading: Last recorded session
-        heading_style: subtitle
-        icon: mdi:clipboard-text-clock-outline
-      - type: entities
-        title: Last recorded session
-        show_header_toggle: false
-        entities:
-          - entity: input_text.energy_manual_last_session
-            name: Last activity · gross / baseline / net
-          - entity: input_boolean.energy_manual_last_net_valid
-            name: Net estimate available
-          - entity: input_text.energy_manual_last_baseline_status
-            name: Baseline confidence
-      - type: heading
-        heading: Meter readings · last 24 hours
-        heading_style: subtitle
-        icon: mdi:chart-timeline-variant
+          - type: entities
+            title: Last recorded session
+            show_header_toggle: false
+            entities:
+              - entity: input_text.energy_manual_last_session
+                name: Last activity · gross / baseline / net
+              - entity: input_boolean.energy_manual_last_net_valid
+                name: Net estimate available
+              - entity: input_text.energy_manual_last_baseline_status
+                name: Baseline confidence
       - type: grid
-        columns: 2
-        square: false
+        title: Meter readings · last 24 hours
         cards:
-          - type: statistics-graph
-            title: Electricity · 24 hours
-            chart_type: bar-stack
-            period: 5minute
-            days_to_show: 1
-            stat_types:
-              - change
-            entities:
-              - entity: sensor.slimmelezer_mini_energy_consumed_tariff_1
-                name: T1
-              - entity: sensor.slimmelezer_mini_energy_consumed_tariff_2
-                name: T2
-          - type: statistics-graph
-            title: Gas · 24 hours
-            chart_type: bar
-            period: 5minute
-            days_to_show: 1
-            stat_types:
-              - change
-            entities:
-              - entity: sensor.slimmelezer_mini_gas_consumed
-                name: Gas
+          - type: grid
+            columns: 2
+            square: false
+            cards:
+              - type: statistics-graph
+                title: Electricity · 24 hours
+                chart_type: bar-stack
+                period: 5minute
+                days_to_show: 1
+                stat_types:
+                  - change
+                entities:
+                  - entity: sensor.slimmelezer_mini_energy_consumed_tariff_1
+                    name: T1
+                  - entity: sensor.slimmelezer_mini_energy_consumed_tariff_2
+                    name: T2
+              - type: statistics-graph
+                title: Gas · 24 hours
+                chart_type: bar
+                period: 5minute
+                days_to_show: 1
+                stat_types:
+                  - change
+                entities:
+                  - entity: sensor.slimmelezer_mini_gas_consumed
+                    name: Gas
