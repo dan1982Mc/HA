@@ -629,10 +629,12 @@ views:
                                 name: Gas · €
                           - type: markdown
                             content: >-
-                              **Energy year:** use the selector to set a custom range
-                              from **1 July 2026 through today**. The yearly totals and
-                              monthly graphs below then show the July-to-date energy
-                              year, including readings already recorded since 1 July.
+                              **Energy year:** set the selector to a custom range
+                              from **1 July 2026 through today**. Values use the
+                              retained long-term statistics for each source. If a
+                              source only began recording statistics after 1 July,
+                              its total can only start from its first recorded value;
+                              earlier usage cannot be reconstructed from that sensor.
                           - type: energy-date-selection
                             collection_key: energy_fiscal_year
                           - type: grid
