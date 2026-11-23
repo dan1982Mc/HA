@@ -45,22 +45,48 @@ views:
                 icon: mdi:currency-eur
                 show_state: true
                 show_label: false
+                triggers_update:
+                  - sensor.energy_cost_yoy_difference
                 state_display: |
                   [[[
                     const value = Number(entity?.state);
                     return Number.isFinite(value) ? '€' + value.toFixed(2) : '—';
                   ]]]
+                custom_fields:
+                  comparison: |
+                    [[[
+                      const comp = states['sensor.energy_cost_yoy_difference'];
+                      const difference = Number(comp?.state);
+                      const percentage = Number(comp?.attributes?.percentage);
+                      if (!Number.isFinite(difference) || !Number.isFinite(percentage)) {
+                        return '<div style="display:flex;justify-content:space-between;width:100%;"><span>—</span><span>—</span></div>';
+                      }
+                      const color = difference < -0.000001
+                        ? 'var(--success-color)'
+                        : difference > 0.000001
+                          ? 'var(--error-color)'
+                          : 'var(--secondary-text-color)';
+                      const delta = difference > 0 ? '+' : difference < 0 ? '−' : '';
+                      const percent = percentage > 0 ? '+' : percentage < 0 ? '−' : '';
+                      const left = delta + '€' + Math.abs(difference).toFixed(2);
+                      const right = percent + Math.abs(percentage).toFixed(1) + '%';
+                      return '<div style="display:flex;align-items:center;justify-content:space-between;width:100%;gap:6px;color:' + color + ';font-size:11px;font-weight:700;line-height:14px;">' +
+                        '<span style="text-align:left;">' + left + '</span>' +
+                        '<span style="text-align:right;">' + right + '</span>' +
+                        '</div>';
+                    ]]]
                 tap_action:
                   action: more-info
                 styles:
                   card:
-                    - min-height: 92px
+                    - min-height: 110px
                     - border-radius: 14px
-                    - padding: 12px
+                    - padding: 10px 12px
                   grid:
-                    - grid-template-areas: '"i n" "i s"'
-                    - grid-template-columns: 34px 1fr
-                    - grid-template-rows: min-content min-content
+                    - grid-template-areas: '"i n" "i s" "comparison comparison"'
+                    - grid-template-columns: 34px minmax(0, 1fr)
+                    - grid-template-rows: min-content min-content min-content
+                    - row-gap: 3px
                   icon:
                     - width: 26px
                   name:
@@ -72,28 +98,59 @@ views:
                     - font-size: 25px
                     - line-height: 1.2
                     - font-weight: 700
+                  custom_fields:
+                    comparison:
+                      - width: 100%
+                      - justify-self: stretch
+                      - align-self: end
               - type: custom:button-card
                 entity: sensor.energy_electricity_total_month
                 name: Electricity this month
                 icon: mdi:lightning-bolt
                 show_state: true
                 show_label: false
+                triggers_update:
+                  - sensor.energy_electricity_yoy_difference
                 state_display: |
                   [[[
                     const value = Number(entity?.state);
                     return Number.isFinite(value) ? value.toFixed(1) + ' kWh' : '—';
                   ]]]
+                custom_fields:
+                  comparison: |
+                    [[[
+                      const comp = states['sensor.energy_electricity_yoy_difference'];
+                      const difference = Number(comp?.state);
+                      const percentage = Number(comp?.attributes?.percentage);
+                      if (!Number.isFinite(difference) || !Number.isFinite(percentage)) {
+                        return '<div style="display:flex;justify-content:space-between;width:100%;"><span>—</span><span>—</span></div>';
+                      }
+                      const color = difference < -0.000001
+                        ? 'var(--success-color)'
+                        : difference > 0.000001
+                          ? 'var(--error-color)'
+                          : 'var(--secondary-text-color)';
+                      const delta = difference > 0 ? '+' : difference < 0 ? '−' : '';
+                      const percent = percentage > 0 ? '+' : percentage < 0 ? '−' : '';
+                      const left = delta + Math.abs(difference).toFixed(1) + ' kWh';
+                      const right = percent + Math.abs(percentage).toFixed(1) + '%';
+                      return '<div style="display:flex;align-items:center;justify-content:space-between;width:100%;gap:6px;color:' + color + ';font-size:11px;font-weight:700;line-height:14px;">' +
+                        '<span style="text-align:left;">' + left + '</span>' +
+                        '<span style="text-align:right;">' + right + '</span>' +
+                        '</div>';
+                    ]]]
                 tap_action:
                   action: more-info
                 styles:
                   card:
-                    - min-height: 92px
+                    - min-height: 110px
                     - border-radius: 14px
-                    - padding: 12px
+                    - padding: 10px 12px
                   grid:
-                    - grid-template-areas: '"i n" "i s"'
-                    - grid-template-columns: 34px 1fr
-                    - grid-template-rows: min-content min-content
+                    - grid-template-areas: '"i n" "i s" "comparison comparison"'
+                    - grid-template-columns: 34px minmax(0, 1fr)
+                    - grid-template-rows: min-content min-content min-content
+                    - row-gap: 3px
                   icon:
                     - width: 26px
                   name:
@@ -105,28 +162,59 @@ views:
                     - font-size: 25px
                     - line-height: 1.2
                     - font-weight: 700
+                  custom_fields:
+                    comparison:
+                      - width: 100%
+                      - justify-self: stretch
+                      - align-self: end
               - type: custom:button-card
                 entity: sensor.energy_gas_total_month
                 name: Gas this month
                 icon: mdi:fire
                 show_state: true
                 show_label: false
+                triggers_update:
+                  - sensor.energy_gas_yoy_difference
                 state_display: |
                   [[[
                     const value = Number(entity?.state);
                     return Number.isFinite(value) ? value.toFixed(2) + ' m³' : '—';
                   ]]]
+                custom_fields:
+                  comparison: |
+                    [[[
+                      const comp = states['sensor.energy_gas_yoy_difference'];
+                      const difference = Number(comp?.state);
+                      const percentage = Number(comp?.attributes?.percentage);
+                      if (!Number.isFinite(difference) || !Number.isFinite(percentage)) {
+                        return '<div style="display:flex;justify-content:space-between;width:100%;"><span>—</span><span>—</span></div>';
+                      }
+                      const color = difference < -0.000001
+                        ? 'var(--success-color)'
+                        : difference > 0.000001
+                          ? 'var(--error-color)'
+                          : 'var(--secondary-text-color)';
+                      const delta = difference > 0 ? '+' : difference < 0 ? '−' : '';
+                      const percent = percentage > 0 ? '+' : percentage < 0 ? '−' : '';
+                      const left = delta + Math.abs(difference).toFixed(2) + ' m³';
+                      const right = percent + Math.abs(percentage).toFixed(1) + '%';
+                      return '<div style="display:flex;align-items:center;justify-content:space-between;width:100%;gap:6px;color:' + color + ';font-size:11px;font-weight:700;line-height:14px;">' +
+                        '<span style="text-align:left;">' + left + '</span>' +
+                        '<span style="text-align:right;">' + right + '</span>' +
+                        '</div>';
+                    ]]]
                 tap_action:
                   action: more-info
                 styles:
                   card:
-                    - min-height: 92px
+                    - min-height: 110px
                     - border-radius: 14px
-                    - padding: 12px
+                    - padding: 10px 12px
                   grid:
-                    - grid-template-areas: '"i n" "i s"'
-                    - grid-template-columns: 34px 1fr
-                    - grid-template-rows: min-content min-content
+                    - grid-template-areas: '"i n" "i s" "comparison comparison"'
+                    - grid-template-columns: 34px minmax(0, 1fr)
+                    - grid-template-rows: min-content min-content min-content
+                    - row-gap: 3px
                   icon:
                     - width: 26px
                   name:
@@ -138,138 +226,12 @@ views:
                     - font-size: 25px
                     - line-height: 1.2
                     - font-weight: 700
-          - type: grid
-            columns: 3
-            square: false
-            cards:
-              - type: custom:button-card
-                entity: sensor.energy_cost_yoy_difference
-                name: Cost vs last year
-                show_icon: false
-                show_state: false
-                show_label: true
-                label: |
-                  [[[
-                    const difference = Number(entity?.state);
-                    const percentage = Number(entity?.attributes?.percentage);
-                    const period = entity?.attributes?.reference_period || 'previous year';
-                    if (!Number.isFinite(difference) || !Number.isFinite(percentage)) {
-                      return 'Previous-year reference not available';
-                    }
-                    const sign = difference > 0 ? '+' : difference < 0 ? '−' : '';
-                    const pctSign = percentage > 0 ? '+' : percentage < 0 ? '−' : '';
-                    return sign + '€' + Math.abs(difference).toFixed(2) +
-                      ' · ' + pctSign + Math.abs(percentage).toFixed(1) +
-                      '% vs ' + period + ' (full month)';
-                  ]]]
-                tap_action:
-                  action: more-info
-                styles:
-                  card:
-                    - min-height: 58px
-                    - border-radius: 12px
-                    - padding: 8px 10px
-                  grid:
-                    - grid-template-areas: '"n" "l"'
-                    - grid-template-columns: 1fr
-                  name:
-                    - justify-self: start
-                    - font-size: 11px
-                    - font-weight: 600
-                  label:
-                    - justify-self: start
-                    - text-align: left
-                    - white-space: normal
-                    - font-size: 12px
-                    - font-weight: 600
-              - type: custom:button-card
-                entity: sensor.energy_electricity_yoy_difference
-                name: Electricity vs last year
-                show_icon: false
-                show_state: false
-                show_label: true
-                label: |
-                  [[[
-                    const difference = Number(entity?.state);
-                    const percentage = Number(entity?.attributes?.percentage);
-                    const period = entity?.attributes?.reference_period || 'previous year';
-                    if (!Number.isFinite(difference) || !Number.isFinite(percentage)) {
-                      return 'Previous-year reference not available';
-                    }
-                    const sign = difference > 0 ? '+' : difference < 0 ? '−' : '';
-                    const pctSign = percentage > 0 ? '+' : percentage < 0 ? '−' : '';
-                    return sign + Math.abs(difference).toFixed(1) + ' kWh' +
-                      ' · ' + pctSign + Math.abs(percentage).toFixed(1) +
-                      '% vs ' + period + ' (full month)';
-                  ]]]
-                tap_action:
-                  action: more-info
-                styles:
-                  card:
-                    - min-height: 58px
-                    - border-radius: 12px
-                    - padding: 8px 10px
-                  grid:
-                    - grid-template-areas: '"n" "l"'
-                    - grid-template-columns: 1fr
-                  name:
-                    - justify-self: start
-                    - font-size: 11px
-                    - font-weight: 600
-                  label:
-                    - justify-self: start
-                    - text-align: left
-                    - white-space: normal
-                    - font-size: 12px
-                    - font-weight: 600
-              - type: custom:button-card
-                entity: sensor.energy_gas_yoy_difference
-                name: Gas vs last year
-                show_icon: false
-                show_state: false
-                show_label: true
-                label: |
-                  [[[
-                    const difference = Number(entity?.state);
-                    const percentage = Number(entity?.attributes?.percentage);
-                    const period = entity?.attributes?.reference_period || 'previous year';
-                    if (!Number.isFinite(difference) || !Number.isFinite(percentage)) {
-                      return 'Previous-year reference not available';
-                    }
-                    const sign = difference > 0 ? '+' : difference < 0 ? '−' : '';
-                    const pctSign = percentage > 0 ? '+' : percentage < 0 ? '−' : '';
-                    return sign + Math.abs(difference).toFixed(2) + ' m³' +
-                      ' · ' + pctSign + Math.abs(percentage).toFixed(1) +
-                      '% vs ' + period + ' (full month)';
-                  ]]]
-                tap_action:
-                  action: more-info
-                styles:
-                  card:
-                    - min-height: 58px
-                    - border-radius: 12px
-                    - padding: 8px 10px
-                  grid:
-                    - grid-template-areas: '"n" "l"'
-                    - grid-template-columns: 1fr
-                  name:
-                    - justify-self: start
-                    - font-size: 11px
-                    - font-weight: 600
-                  label:
-                    - justify-self: start
-                    - text-align: left
-                    - white-space: normal
-                    - font-size: 12px
-                    - font-weight: 600
-          - type: markdown
-            content: >-
-              Year-on-year values compare this month's usage so far with the full
-              same month last year, so the comparison remains provisional until
-              month end. The 2025 reference cost uses your supplied July 2025–June
-              2026 rates (€0.2345/kWh electricity and €1.8115/m³ gas); the current
-              month uses the rates configured in the Energy package. Later completed
-              months are archived with their actual monthly costs.
+                  custom_fields:
+                    comparison:
+                      - width: 100%
+                      - justify-self: stretch
+                      - align-self: end
+
           - type: custom:button-card
             entity: sensor.energy_gas_total_month
             name: Gas use split this month
@@ -1373,207 +1335,207 @@ views:
                     - justify-self: start
                     - font-size: 11px
                     - opacity: 0.6
-      - type: grid
-        title: Appliance activity · this month
-        column_span: 2
-        cards:
-          - type: custom:button-card
-            entity: binary_sensor.washing_machine_running
-            show_icon: false
-            show_name: false
-            show_state: false
-            tap_action:
-              action: none
-            triggers_update:
-              - binary_sensor.washing_machine_running
-              - sensor.smart_plug_3_this_month_s_consumption
-              - sensor.energy_washer_cost_this_month
-              - sensor.energy_washer_runtime_this_month
-              - sensor.energy_washer_starts_this_month
-              - binary_sensor.dryer_running
-              - sensor.fridge_2_this_month_s_consumption
-              - sensor.energy_dryer_cost_this_month
-              - sensor.energy_dryer_runtime_this_month
-              - sensor.energy_dryer_starts_this_month
-              - binary_sensor.energy_dishwasher_running
-              - sensor.tv_outlet_this_month_s_consumption
-              - sensor.energy_dishwasher_cost_this_month
-              - sensor.energy_dishwasher_runtime_this_month
-              - sensor.energy_dishwasher_starts_this_month
-              - binary_sensor.energy_laptop_running
-              - sensor.garden_house_this_month_s_consumption
-              - sensor.energy_laptop_cost_this_month
-              - sensor.energy_laptop_runtime_this_month
-              - sensor.energy_laptop_starts_this_month
-              - binary_sensor.energy_oven_powered
-              - sensor.energy_oven_runtime_this_month
-              - sensor.energy_oven_starts_this_month
-              - binary_sensor.energy_tv_box_awake
-              - sensor.energy_tv_box_runtime_this_month
-              - sensor.energy_tv_box_starts_this_month
-            custom_fields:
-              appliance_list: |
-                [[[
-                  const appliances = [
-                    { name: 'Washer', entity: 'binary_sensor.washing_machine_running', energy: 'sensor.smart_plug_3_this_month_s_consumption', cost: 'sensor.energy_washer_cost_this_month', runtime: 'sensor.energy_washer_runtime_this_month', sessions: 'sensor.energy_washer_starts_this_month' },
-                    { name: 'Dryer', entity: 'binary_sensor.dryer_running', energy: 'sensor.fridge_2_this_month_s_consumption', cost: 'sensor.energy_dryer_cost_this_month', runtime: 'sensor.energy_dryer_runtime_this_month', sessions: 'sensor.energy_dryer_starts_this_month' },
-                    { name: 'Dishwasher', entity: 'binary_sensor.energy_dishwasher_running', energy: 'sensor.tv_outlet_this_month_s_consumption', cost: 'sensor.energy_dishwasher_cost_this_month', runtime: 'sensor.energy_dishwasher_runtime_this_month', sessions: 'sensor.energy_dishwasher_starts_this_month' },
-                    { name: 'Laptop', entity: 'binary_sensor.energy_laptop_running', energy: 'sensor.garden_house_this_month_s_consumption', cost: 'sensor.energy_laptop_cost_this_month', runtime: 'sensor.energy_laptop_runtime_this_month', sessions: 'sensor.energy_laptop_starts_this_month' },
-                    { name: 'Oven', entity: 'binary_sensor.energy_oven_powered', energy: null, cost: null, runtime: 'sensor.energy_oven_runtime_this_month', sessions: 'sensor.energy_oven_starts_this_month' },
-                    { name: 'TV Box', entity: 'binary_sensor.energy_tv_box_awake', energy: null, cost: null, runtime: 'sensor.energy_tv_box_runtime_this_month', sessions: 'sensor.energy_tv_box_starts_this_month' }
-                  ];
-                  const value = (id, decimals, fallbackUnit) => {
-                    const item = hass.states[id];
-                    if (!item || item.state === 'unknown' || item.state === 'unavailable') return '—';
-                    const number = Number(item.state);
-                    if (!Number.isFinite(number)) return item.state;
-                    const unit = item.attributes.unit_of_measurement || fallbackUnit || '';
-                    return number.toFixed(decimals) + (unit ? ' ' + unit : '');
-                  };
-                  const money = (id) => {
-                    const item = hass.states[id];
-                    if (!item || item.state === 'unknown' || item.state === 'unavailable') return '—';
-                    const number = Number(item.state);
-                    return Number.isFinite(number) ? '€' + number.toFixed(2) : item.state;
-                  };
-                  const rows = appliances.map((a) => {
-                    const state = hass.states[a.entity];
-                    const running = state && state.state === 'on';
-                    const status = !state ? 'SENSOR MISSING' : running ? 'RUNNING' : state.state === 'off' ? 'IDLE' : state.state.toUpperCase();
-                    const nameColor = !state ? 'var(--error-color)' : running ? 'var(--success-color)' : 'var(--primary-text-color)';
-                    const energy = a.energy ? value(a.energy, 2, 'kWh') : 'Not metered';
-                    const cost = a.cost ? money(a.cost) : '—';
-                    const runtime = value(a.runtime, 1, 'h');
-                    const sessions = value(a.sessions, 0, '');
-                    return '<div style="padding:6px 0;border-bottom:1px solid var(--divider-color);">' +
-                      '<div style="display:flex;align-items:baseline;justify-content:space-between;gap:8px;margin-bottom:3px;">' +
-                        '<span style="font-size:14px;line-height:18px;font-weight:700;color:' + nameColor + ';">' + a.name + '</span>' +
-                        '<span style="font-size:9px;letter-spacing:.04em;opacity:.65;">' + status + '</span>' +
-                      '</div>' +
-                      '<div style="display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);column-gap:8px;row-gap:2px;font-size:12px;line-height:17px;color:var(--secondary-text-color);">' +
-                        '<span>Energy: <b style="color:var(--primary-text-color);font-weight:500;">' + energy + '</b></span>' +
-                        '<span>Cost: <b style="color:var(--primary-text-color);font-weight:500;">' + cost + '</b></span>' +
-                        '<span>Runtime: <b style="color:var(--primary-text-color);font-weight:500;">' + runtime + '</b></span>' +
-                        '<span>Sessions: <b style="color:var(--primary-text-color);font-weight:500;">' + sessions + '</b></span>' +
-                      '</div>' +
-                    '</div>';
-                  }).join('');
-                  return '<div style="width:100%;">' +
-                    rows +
-                    '<div style="padding-top:7px;font-size:9px;line-height:13px;color:var(--secondary-text-color);">' +
-                      'Electricity cost uses the configured €0.26697/kWh estimate. Oven and TV Box are activity-only and have no individual kWh meter; Oven tracks powered state and TV Box tracks awake state. ' +
-                      'Runtime and session totals depend on Recorder retention. Sessions count ON periods, not raw state changes.' +
-                    '</div></div>';
-                ]]]
-              activity_24h:
-                card:
-                  type: custom:button-card
-                  name: 24 hours activity
-                  show_icon: false
-                  show_state: false
-                  tap_action:
-                    action: fire-dom-event
-                    browser_mod:
-                      service: browser_mod.popup
-                      data:
-                        title: Appliance activity · last 24 hours
-                        size: normal
-                        content:
-                          type: history-graph
-                          title: Last 24 hours
-                          hours_to_show: 24
-                          show_names: true
-                          label_position: below
-                          entities:
-                            - entity: binary_sensor.washing_machine_running
-                              name: Washer
-                            - entity: binary_sensor.dryer_running
-                              name: Dryer
-                            - entity: binary_sensor.energy_dishwasher_running
-                              name: Dishwasher
-                            - entity: binary_sensor.energy_laptop_running
-                              name: Laptop
-                            - entity: binary_sensor.energy_oven_powered
-                              name: Oven
-                            - entity: binary_sensor.energy_tv_box_awake
-                              name: TV Box
-                  styles:
+          - type: vertical-stack
+            cards:
+              - type: markdown
+                content: "### Appliance activity · this month"
+              - type: custom:button-card
+                entity: binary_sensor.washing_machine_running
+                show_icon: false
+                show_name: false
+                show_state: false
+                tap_action:
+                  action: none
+                triggers_update:
+                  - binary_sensor.washing_machine_running
+                  - sensor.smart_plug_3_this_month_s_consumption
+                  - sensor.energy_washer_cost_this_month
+                  - sensor.energy_washer_runtime_this_month
+                  - sensor.energy_washer_starts_this_month
+                  - binary_sensor.dryer_running
+                  - sensor.fridge_2_this_month_s_consumption
+                  - sensor.energy_dryer_cost_this_month
+                  - sensor.energy_dryer_runtime_this_month
+                  - sensor.energy_dryer_starts_this_month
+                  - binary_sensor.energy_dishwasher_running
+                  - sensor.tv_outlet_this_month_s_consumption
+                  - sensor.energy_dishwasher_cost_this_month
+                  - sensor.energy_dishwasher_runtime_this_month
+                  - sensor.energy_dishwasher_starts_this_month
+                  - binary_sensor.energy_laptop_running
+                  - sensor.garden_house_this_month_s_consumption
+                  - sensor.energy_laptop_cost_this_month
+                  - sensor.energy_laptop_runtime_this_month
+                  - sensor.energy_laptop_starts_this_month
+                  - binary_sensor.energy_oven_powered
+                  - sensor.energy_oven_runtime_this_month
+                  - sensor.energy_oven_starts_this_month
+                  - binary_sensor.energy_tv_box_awake
+                  - sensor.energy_tv_box_runtime_this_month
+                  - sensor.energy_tv_box_starts_this_month
+                custom_fields:
+                  appliance_list: |
+                    [[[
+                      const appliances = [
+                        { name: 'Washer', entity: 'binary_sensor.washing_machine_running', energy: 'sensor.smart_plug_3_this_month_s_consumption', cost: 'sensor.energy_washer_cost_this_month', runtime: 'sensor.energy_washer_runtime_this_month', sessions: 'sensor.energy_washer_starts_this_month' },
+                        { name: 'Dryer', entity: 'binary_sensor.dryer_running', energy: 'sensor.fridge_2_this_month_s_consumption', cost: 'sensor.energy_dryer_cost_this_month', runtime: 'sensor.energy_dryer_runtime_this_month', sessions: 'sensor.energy_dryer_starts_this_month' },
+                        { name: 'Dishwasher', entity: 'binary_sensor.energy_dishwasher_running', energy: 'sensor.tv_outlet_this_month_s_consumption', cost: 'sensor.energy_dishwasher_cost_this_month', runtime: 'sensor.energy_dishwasher_runtime_this_month', sessions: 'sensor.energy_dishwasher_starts_this_month' },
+                        { name: 'Laptop', entity: 'binary_sensor.energy_laptop_running', energy: 'sensor.garden_house_this_month_s_consumption', cost: 'sensor.energy_laptop_cost_this_month', runtime: 'sensor.energy_laptop_runtime_this_month', sessions: 'sensor.energy_laptop_starts_this_month' },
+                        { name: 'Oven', entity: 'binary_sensor.energy_oven_powered', energy: null, cost: null, runtime: 'sensor.energy_oven_runtime_this_month', sessions: 'sensor.energy_oven_starts_this_month' },
+                        { name: 'TV Box', entity: 'binary_sensor.energy_tv_box_awake', energy: null, cost: null, runtime: 'sensor.energy_tv_box_runtime_this_month', sessions: 'sensor.energy_tv_box_starts_this_month' }
+                      ];
+                      const value = (id, decimals, fallbackUnit) => {
+                        const item = hass.states[id];
+                        if (!item || item.state === 'unknown' || item.state === 'unavailable') return '—';
+                        const number = Number(item.state);
+                        if (!Number.isFinite(number)) return item.state;
+                        const unit = item.attributes.unit_of_measurement || fallbackUnit || '';
+                        return number.toFixed(decimals) + (unit ? ' ' + unit : '');
+                      };
+                      const money = (id) => {
+                        const item = hass.states[id];
+                        if (!item || item.state === 'unknown' || item.state === 'unavailable') return '—';
+                        const number = Number(item.state);
+                        return Number.isFinite(number) ? '€' + number.toFixed(2) : item.state;
+                      };
+                      const rows = appliances.map((a) => {
+                        const state = hass.states[a.entity];
+                        const running = state && state.state === 'on';
+                        const status = !state ? 'SENSOR MISSING' : running ? 'RUNNING' : state.state === 'off' ? 'IDLE' : state.state.toUpperCase();
+                        const nameColor = !state ? 'var(--error-color)' : running ? 'var(--success-color)' : 'var(--primary-text-color)';
+                        const energy = a.energy ? value(a.energy, 2, 'kWh') : 'Not metered';
+                        const cost = a.cost ? money(a.cost) : '—';
+                        const runtime = value(a.runtime, 1, 'h');
+                        const sessions = value(a.sessions, 0, '');
+                        return '<div style="padding:6px 0;border-bottom:1px solid var(--divider-color);">' +
+                          '<div style="display:flex;align-items:baseline;justify-content:space-between;gap:8px;margin-bottom:3px;">' +
+                            '<span style="font-size:14px;line-height:18px;font-weight:700;color:' + nameColor + ';">' + a.name + '</span>' +
+                            '<span style="font-size:9px;letter-spacing:.04em;opacity:.65;">' + status + '</span>' +
+                          '</div>' +
+                          '<div style="display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);column-gap:8px;row-gap:2px;font-size:12px;line-height:17px;color:var(--secondary-text-color);">' +
+                            '<span>Energy: <b style="color:var(--primary-text-color);font-weight:500;">' + energy + '</b></span>' +
+                            '<span>Cost: <b style="color:var(--primary-text-color);font-weight:500;">' + cost + '</b></span>' +
+                            '<span>Runtime: <b style="color:var(--primary-text-color);font-weight:500;">' + runtime + '</b></span>' +
+                            '<span>Sessions: <b style="color:var(--primary-text-color);font-weight:500;">' + sessions + '</b></span>' +
+                          '</div>' +
+                        '</div>';
+                      }).join('');
+                      return '<div style="width:100%;">' +
+                        rows +
+                        '<div style="padding-top:7px;font-size:9px;line-height:13px;color:var(--secondary-text-color);">' +
+                          'Electricity cost uses the configured €0.26697/kWh estimate. Oven and TV Box are activity-only and have no individual kWh meter; Oven tracks powered state and TV Box tracks awake state. ' +
+                          'Runtime and session totals depend on Recorder retention. Sessions count ON periods, not raw state changes.' +
+                        '</div></div>';
+                    ]]]
+                  activity_24h:
                     card:
-                      - background: transparent
-                      - box-shadow: none
-                      - border: 0
-                      - padding: 3px 2px
-                      - min-height: 30px
-                    name:
-                      - color: var(--primary-color)
-                      - font-size: 11px
-                      - font-weight: 600
-                      - text-decoration: underline
-              activity_week:
-                card:
-                  type: custom:button-card
-                  name: 1 week activity
-                  show_icon: false
-                  show_state: false
-                  tap_action:
-                    action: fire-dom-event
-                    browser_mod:
-                      service: browser_mod.popup
-                      data:
-                        title: Appliance activity · last 7 days
-                        size: normal
-                        content:
-                          type: history-graph
-                          title: Last 7 days
-                          hours_to_show: 168
-                          show_names: true
-                          label_position: below
-                          entities:
-                            - entity: binary_sensor.washing_machine_running
-                              name: Washer
-                            - entity: binary_sensor.dryer_running
-                              name: Dryer
-                            - entity: binary_sensor.energy_dishwasher_running
-                              name: Dishwasher
-                            - entity: binary_sensor.energy_laptop_running
-                              name: Laptop
-                            - entity: binary_sensor.energy_oven_powered
-                              name: Oven
-                            - entity: binary_sensor.energy_tv_box_awake
-                              name: TV Box
-                  styles:
+                      type: custom:button-card
+                      name: 24 hours activity
+                      show_icon: false
+                      show_state: false
+                      tap_action:
+                        action: fire-dom-event
+                        browser_mod:
+                          service: browser_mod.popup
+                          data:
+                            title: Appliance activity · last 24 hours
+                            size: normal
+                            content:
+                              type: history-graph
+                              title: Last 24 hours
+                              hours_to_show: 24
+                              show_names: true
+                              label_position: below
+                              entities:
+                                - entity: binary_sensor.washing_machine_running
+                                  name: Washer
+                                - entity: binary_sensor.dryer_running
+                                  name: Dryer
+                                - entity: binary_sensor.energy_dishwasher_running
+                                  name: Dishwasher
+                                - entity: binary_sensor.energy_laptop_running
+                                  name: Laptop
+                                - entity: binary_sensor.energy_oven_powered
+                                  name: Oven
+                                - entity: binary_sensor.energy_tv_box_awake
+                                  name: TV Box
+                      styles:
+                        card:
+                          - background: transparent
+                          - box-shadow: none
+                          - border: 0
+                          - padding: 3px 2px
+                          - min-height: 30px
+                        name:
+                          - color: var(--primary-color)
+                          - font-size: 11px
+                          - font-weight: 600
+                          - text-decoration: underline
+                  activity_week:
                     card:
-                      - background: transparent
-                      - box-shadow: none
-                      - border: 0
-                      - padding: 3px 2px
-                      - min-height: 30px
-                    name:
-                      - color: var(--primary-color)
-                      - font-size: 11px
-                      - font-weight: 600
-                      - text-decoration: underline
-            styles:
-              card:
-                - border-radius: 14px
-                - padding: 10px 12px
-              grid:
-                - grid-template-areas: '"appliance_list appliance_list" "activity_24h activity_week"'
-                - grid-template-columns: minmax(0, 1fr) minmax(0, 1fr)
-                - grid-template-rows: min-content min-content
-                - column-gap: 8px
-                - row-gap: 5px
-              custom_fields:
-                appliance_list:
-                  - width: 100%
-                  - justify-self: stretch
-                  - align-self: stretch
-                activity_24h:
-                  - width: 100%
-                  - justify-self: stretch
-                activity_week:
-                  - width: 100%
-                  - justify-self: stretch
+                      type: custom:button-card
+                      name: 1 week activity
+                      show_icon: false
+                      show_state: false
+                      tap_action:
+                        action: fire-dom-event
+                        browser_mod:
+                          service: browser_mod.popup
+                          data:
+                            title: Appliance activity · last 7 days
+                            size: normal
+                            content:
+                              type: history-graph
+                              title: Last 7 days
+                              hours_to_show: 168
+                              show_names: true
+                              label_position: below
+                              entities:
+                                - entity: binary_sensor.washing_machine_running
+                                  name: Washer
+                                - entity: binary_sensor.dryer_running
+                                  name: Dryer
+                                - entity: binary_sensor.energy_dishwasher_running
+                                  name: Dishwasher
+                                - entity: binary_sensor.energy_laptop_running
+                                  name: Laptop
+                                - entity: binary_sensor.energy_oven_powered
+                                  name: Oven
+                                - entity: binary_sensor.energy_tv_box_awake
+                                  name: TV Box
+                      styles:
+                        card:
+                          - background: transparent
+                          - box-shadow: none
+                          - border: 0
+                          - padding: 3px 2px
+                          - min-height: 30px
+                        name:
+                          - color: var(--primary-color)
+                          - font-size: 11px
+                          - font-weight: 600
+                          - text-decoration: underline
+                styles:
+                  card:
+                    - border-radius: 14px
+                    - padding: 10px 12px
+                  grid:
+                    - grid-template-areas: '"appliance_list appliance_list" "activity_24h activity_week"'
+                    - grid-template-columns: minmax(0, 1fr) minmax(0, 1fr)
+                    - grid-template-rows: min-content min-content
+                    - column-gap: 8px
+                    - row-gap: 5px
+                  custom_fields:
+                    appliance_list:
+                      - width: 100%
+                      - justify-self: stretch
+                      - align-self: stretch
+                    activity_24h:
+                      - width: 100%
+                      - justify-self: stretch
+                    activity_week:
+                      - width: 100%
+                      - justify-self: stretch
   - title: Details
     path: energy-details
     icon: mdi:chart-box-outline
