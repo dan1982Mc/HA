@@ -39,21 +39,235 @@ views:
             columns: 3
             square: false
             cards:
-              - type: tile
+              - type: custom:button-card
                 entity: sensor.energy_cost_total_month
                 name: Cost this month
                 icon: mdi:currency-eur
-                vertical: false
-              - type: tile
+                show_state: true
+                show_label: false
+                state_display: |
+                  [[[
+                    const value = Number(entity?.state);
+                    return Number.isFinite(value) ? '€' + value.toFixed(2) : '—';
+                  ]]]
+                tap_action:
+                  action: more-info
+                styles:
+                  card:
+                    - min-height: 92px
+                    - border-radius: 14px
+                    - padding: 12px
+                  grid:
+                    - grid-template-areas: '"i n" "i s"'
+                    - grid-template-columns: 34px 1fr
+                    - grid-template-rows: min-content min-content
+                  icon:
+                    - width: 26px
+                  name:
+                    - justify-self: start
+                    - font-size: 12px
+                    - font-weight: 600
+                  state:
+                    - justify-self: start
+                    - font-size: 25px
+                    - line-height: 1.2
+                    - font-weight: 700
+              - type: custom:button-card
                 entity: sensor.energy_electricity_total_month
                 name: Electricity this month
                 icon: mdi:lightning-bolt
-                vertical: false
-              - type: tile
+                show_state: true
+                show_label: false
+                state_display: |
+                  [[[
+                    const value = Number(entity?.state);
+                    return Number.isFinite(value) ? value.toFixed(1) + ' kWh' : '—';
+                  ]]]
+                tap_action:
+                  action: more-info
+                styles:
+                  card:
+                    - min-height: 92px
+                    - border-radius: 14px
+                    - padding: 12px
+                  grid:
+                    - grid-template-areas: '"i n" "i s"'
+                    - grid-template-columns: 34px 1fr
+                    - grid-template-rows: min-content min-content
+                  icon:
+                    - width: 26px
+                  name:
+                    - justify-self: start
+                    - font-size: 12px
+                    - font-weight: 600
+                  state:
+                    - justify-self: start
+                    - font-size: 25px
+                    - line-height: 1.2
+                    - font-weight: 700
+              - type: custom:button-card
                 entity: sensor.energy_gas_total_month
                 name: Gas this month
                 icon: mdi:fire
-                vertical: false
+                show_state: true
+                show_label: false
+                state_display: |
+                  [[[
+                    const value = Number(entity?.state);
+                    return Number.isFinite(value) ? value.toFixed(2) + ' m³' : '—';
+                  ]]]
+                tap_action:
+                  action: more-info
+                styles:
+                  card:
+                    - min-height: 92px
+                    - border-radius: 14px
+                    - padding: 12px
+                  grid:
+                    - grid-template-areas: '"i n" "i s"'
+                    - grid-template-columns: 34px 1fr
+                    - grid-template-rows: min-content min-content
+                  icon:
+                    - width: 26px
+                  name:
+                    - justify-self: start
+                    - font-size: 12px
+                    - font-weight: 600
+                  state:
+                    - justify-self: start
+                    - font-size: 25px
+                    - line-height: 1.2
+                    - font-weight: 700
+          - type: grid
+            columns: 3
+            square: false
+            cards:
+              - type: custom:button-card
+                entity: sensor.energy_cost_yoy_difference
+                name: Cost vs last year
+                show_icon: false
+                show_state: false
+                show_label: true
+                label: |
+                  [[[
+                    const difference = Number(entity?.state);
+                    const percentage = Number(entity?.attributes?.percentage);
+                    const period = entity?.attributes?.reference_period || 'previous year';
+                    if (!Number.isFinite(difference) || !Number.isFinite(percentage)) {
+                      return 'Previous-year reference not available';
+                    }
+                    const sign = difference > 0 ? '+' : difference < 0 ? '−' : '';
+                    const pctSign = percentage > 0 ? '+' : percentage < 0 ? '−' : '';
+                    return sign + '€' + Math.abs(difference).toFixed(2) +
+                      ' · ' + pctSign + Math.abs(percentage).toFixed(1) +
+                      '% vs ' + period + ' (full month)';
+                  ]]]
+                tap_action:
+                  action: more-info
+                styles:
+                  card:
+                    - min-height: 58px
+                    - border-radius: 12px
+                    - padding: 8px 10px
+                  grid:
+                    - grid-template-areas: '"n" "l"'
+                    - grid-template-columns: 1fr
+                  name:
+                    - justify-self: start
+                    - font-size: 11px
+                    - font-weight: 600
+                  label:
+                    - justify-self: start
+                    - text-align: left
+                    - white-space: normal
+                    - font-size: 12px
+                    - font-weight: 600
+              - type: custom:button-card
+                entity: sensor.energy_electricity_yoy_difference
+                name: Electricity vs last year
+                show_icon: false
+                show_state: false
+                show_label: true
+                label: |
+                  [[[
+                    const difference = Number(entity?.state);
+                    const percentage = Number(entity?.attributes?.percentage);
+                    const period = entity?.attributes?.reference_period || 'previous year';
+                    if (!Number.isFinite(difference) || !Number.isFinite(percentage)) {
+                      return 'Previous-year reference not available';
+                    }
+                    const sign = difference > 0 ? '+' : difference < 0 ? '−' : '';
+                    const pctSign = percentage > 0 ? '+' : percentage < 0 ? '−' : '';
+                    return sign + Math.abs(difference).toFixed(1) + ' kWh' +
+                      ' · ' + pctSign + Math.abs(percentage).toFixed(1) +
+                      '% vs ' + period + ' (full month)';
+                  ]]]
+                tap_action:
+                  action: more-info
+                styles:
+                  card:
+                    - min-height: 58px
+                    - border-radius: 12px
+                    - padding: 8px 10px
+                  grid:
+                    - grid-template-areas: '"n" "l"'
+                    - grid-template-columns: 1fr
+                  name:
+                    - justify-self: start
+                    - font-size: 11px
+                    - font-weight: 600
+                  label:
+                    - justify-self: start
+                    - text-align: left
+                    - white-space: normal
+                    - font-size: 12px
+                    - font-weight: 600
+              - type: custom:button-card
+                entity: sensor.energy_gas_yoy_difference
+                name: Gas vs last year
+                show_icon: false
+                show_state: false
+                show_label: true
+                label: |
+                  [[[
+                    const difference = Number(entity?.state);
+                    const percentage = Number(entity?.attributes?.percentage);
+                    const period = entity?.attributes?.reference_period || 'previous year';
+                    if (!Number.isFinite(difference) || !Number.isFinite(percentage)) {
+                      return 'Previous-year reference not available';
+                    }
+                    const sign = difference > 0 ? '+' : difference < 0 ? '−' : '';
+                    const pctSign = percentage > 0 ? '+' : percentage < 0 ? '−' : '';
+                    return sign + Math.abs(difference).toFixed(2) + ' m³' +
+                      ' · ' + pctSign + Math.abs(percentage).toFixed(1) +
+                      '% vs ' + period + ' (full month)';
+                  ]]]
+                tap_action:
+                  action: more-info
+                styles:
+                  card:
+                    - min-height: 58px
+                    - border-radius: 12px
+                    - padding: 8px 10px
+                  grid:
+                    - grid-template-areas: '"n" "l"'
+                    - grid-template-columns: 1fr
+                  name:
+                    - justify-self: start
+                    - font-size: 11px
+                    - font-weight: 600
+                  label:
+                    - justify-self: start
+                    - text-align: left
+                    - white-space: normal
+                    - font-size: 12px
+                    - font-weight: 600
+          - type: markdown
+            content: >-
+              Year-on-year values compare this month's usage so far with the full
+              same month last year, so the comparison remains provisional until
+              month end. Previous-year cost is estimated using the supplied rates
+              of €0.2345/kWh and €1.8115/m³.
           - type: custom:button-card
             entity: sensor.energy_gas_total_month
             name: Gas use split this month
