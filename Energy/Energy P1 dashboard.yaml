@@ -121,6 +121,147 @@ views:
                 - font-size: 11px
                 - opacity: 0.9
           - type: custom:button-card
+            entity: input_boolean.energy_shower_auto_active
+            name: Automatic shower gas tracking
+            icon: mdi:shower
+            show_state: false
+            show_label: true
+            triggers_update:
+              - sensor.energy_gas_shower_month
+              - sensor.energy_gas_shower_week
+              - sensor.thermometer_living_humidity
+              - light.bathroom_lights_all
+              - binary_sensor.bathroom_door_contact
+            label: |
+              [[[
+                const month = Number(states['sensor.energy_gas_shower_month']?.state);
+                const week = Number(states['sensor.energy_gas_shower_week']?.state);
+                const fmt = (v) => Number.isFinite(v) ? v.toFixed(3) + ' m³' : '—';
+                if (entity?.state === 'on') {
+                  return 'SHOWER DETECTED · ' + (states['sensor.thermometer_living_humidity']?.state || '—') + '% humidity';
+                }
+                return 'This month ' + fmt(month) + ' · This week ' + fmt(week) + ' · auto-detection armed';
+              ]]]
+            tap_action:
+              action: fire-dom-event
+              browser_mod:
+                service: browser_mod.popup
+                data:
+                  title: Automatic shower gas tracking
+                  size: normal
+                  content:
+                    type: vertical-stack
+                    cards:
+                      - type: entities
+                        title: Detection conditions
+                        show_header_toggle: false
+                        entities:
+                          - entity: input_boolean.energy_shower_auto_active
+                            name: Shower detected
+                          - entity: sensor.thermometer_living_humidity
+                            name: Bathroom humidity
+                          - entity: light.bathroom_lights_all
+                            name: Bathroom lights
+                          - entity: binary_sensor.bathroom_door_contact
+                            name: Bathroom door contact
+                      - type: entities
+                        title: Estimated shower gas use
+                        show_header_toggle: false
+                        entities:
+                          - entity: sensor.slimmelezer_gas_shower_time_weighted
+                            name: All-time shower gas estimate · m³
+                          - entity: sensor.energy_gas_shower_month
+                            name: This month · m³
+                          - entity: sensor.energy_gas_shower_cost_this_month
+                            name: This month · estimated cost
+                          - entity: sensor.energy_gas_shower_week
+                            name: This calendar week · m³
+                          - entity: sensor.energy_gas_shower_cost_this_week
+                            name: This calendar week · estimated cost
+                          - entity: sensor.energy_shower_runtime_this_month
+                            name: Shower runtime this month · hours
+                          - entity: sensor.energy_shower_sessions_this_month
+                            name: Sessions this month
+                          - entity: sensor.energy_shower_runtime_last_7_days
+                            name: Shower runtime · rolling 7 days
+                          - entity: sensor.energy_shower_sessions_last_7_days
+                            name: Sessions · rolling 7 days
+                      - type: statistics-graph
+                        title: Estimated shower gas · daily · last 7 days
+                        chart_type: bar
+                        period: day
+                        days_to_show: 7
+                        stat_types:
+                          - change
+                        entities:
+                          - entity: sensor.slimmelezer_gas_shower_time_weighted
+                            name: Estimated shower gas
+                      - type: statistics-graph
+                        title: Actual P1 gas use · daily · last 7 days
+                        chart_type: bar
+                        period: day
+                        days_to_show: 7
+                        stat_types:
+                          - change
+                        entities:
+                          - entity: sensor.slimmelezer_mini_gas_consumed
+                            name: Total gas from P1
+                      - type: history-graph
+                        title: Shower detection signals · last 7 days
+                        hours_to_show: 168
+                        entities:
+                          - entity: sensor.thermometer_living_humidity
+                            name: Humidity
+                          - entity: light.bathroom_lights_all
+                            name: Bathroom lights
+                          - entity: binary_sensor.bathroom_door_contact
+                            name: Bathroom door
+                      - type: logbook
+                        title: Automatically detected showers
+                        hours_to_show: 168
+                        entities:
+                          - entity: input_boolean.energy_shower_auto_active
+                      - type: markdown
+                        content: >-
+                          A shower starts when humidity is above 85%, the bathroom
+                          lights are on, and the door contact is closed (off).
+                          It ends after the lights are off for one minute. The door
+                          can also end it as a fallback after it has been open for
+                          two minutes and humidity is below 85%.
+
+                          Gas is estimated by assigning the share of each gas-meter
+                          interval that overlapped a detected shower. The gas meter
+                          refreshes roughly hourly, so this assumes gas flow was
+                          uniform during that interval. The shower figure is an
+                          estimate and overlaps the heating/idle gas classification;
+                          do not add it to those categories.
+
+                          The historic P1 gas and humidity/light/door graphs can show
+                          the last seven days if Recorder retained them. The new
+                          automatic shower marker and shower-gas estimate start
+                          when this package is activated; they cannot recreate
+                          past shower sessions automatically.
+            styles:
+              card:
+                - min-height: 70px
+                - border-radius: 14px
+                - padding: 12px
+              grid:
+                - grid-template-areas: '"i n" "i l"'
+                - grid-template-columns: 42px 1fr
+              icon:
+                - width: 28px
+              name:
+                - justify-self: start
+                - font-size: 14px
+                - font-weight: 700
+              label:
+                - justify-self: start
+                - white-space: normal
+                - text-align: left
+                - font-size: 11px
+                - opacity: 0.8
+          - type: custom:button-card
             entity: input_boolean.energy_manual_activity_running
             name: |
               [[[
@@ -483,6 +624,16 @@ views:
                                 name: Idle/off · time-weighted gas · m³
                               - entity: sensor.slimmelezer_gas_unclassified_time_weighted
                                 name: Unknown HVAC time · m³
+                              - entity: sensor.slimmelezer_gas_shower_time_weighted
+                                name: Shower · overlapping time-weighted estimate · m³
+                              - entity: sensor.energy_gas_shower_month
+                                name: Shower estimate this month · m³
+                              - entity: sensor.energy_gas_shower_cost_this_month
+                                name: Shower estimate this month · €
+                              - entity: sensor.energy_gas_shower_week
+                                name: Shower estimate this week · m³
+                              - entity: sensor.energy_gas_shower_cost_this_week
+                                name: Shower estimate this week · €
                               - entity: sensor.slimmelezer_gas_heating_time_weighted_cost_total
                                 name: Heating · time-weighted gas cost · €
                               - entity: sensor.slimmelezer_gas_outside_heating_time_weighted_cost_total
