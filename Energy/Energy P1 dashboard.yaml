@@ -331,6 +331,12 @@ views:
         title: Appliance activity
         column_span: 2
         cards:
+          - type: markdown
+            content: >-
+              Monthly electricity costs are estimated using the configured
+              €0.26697/kWh rate. Oven and TV Box have activity tracking but no
+              individual kWh meters. Session count records each transition
+              into the running state.
           - type: grid
             columns: 2
             square: false
