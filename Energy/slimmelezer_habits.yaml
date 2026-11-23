@@ -38,6 +38,9 @@ input_boolean:
   energy_period_meters_seeded:
     name: Month and energy-year meters initialized
     icon: mdi:calendar-check
+  energy_yoy_archive_seeded:
+    name: Year-on-year monthly archive initialized
+    icon: mdi:database-check
   energy_gas_attribution_initialized:
     name: Time-weighted gas attribution initialized
     icon: mdi:timer-check-outline
@@ -428,7 +431,6 @@ input_number:
     step: 0.001
     mode: box
     unit_of_measurement: m³
-    initial: 112
   energy_archive_electricity_jan:
     name: YoY archive electricity JAN · previous year
     min: 0
@@ -436,7 +438,6 @@ input_number:
     step: 0.001
     mode: box
     unit_of_measurement: kWh
-    initial: 399
   energy_archive_gas_feb:
     name: YoY archive gas FEB · previous year
     min: 0
@@ -444,7 +445,6 @@ input_number:
     step: 0.001
     mode: box
     unit_of_measurement: m³
-    initial: 71
   energy_archive_electricity_feb:
     name: YoY archive electricity FEB · previous year
     min: 0
@@ -452,7 +452,6 @@ input_number:
     step: 0.001
     mode: box
     unit_of_measurement: kWh
-    initial: 330
   energy_archive_gas_mar:
     name: YoY archive gas MAR · previous year
     min: 0
@@ -460,7 +459,6 @@ input_number:
     step: 0.001
     mode: box
     unit_of_measurement: m³
-    initial: 60
   energy_archive_electricity_mar:
     name: YoY archive electricity MAR · previous year
     min: 0
@@ -468,7 +466,6 @@ input_number:
     step: 0.001
     mode: box
     unit_of_measurement: kWh
-    initial: 368
   energy_archive_gas_apr:
     name: YoY archive gas APR · previous year
     min: 0
@@ -476,7 +473,6 @@ input_number:
     step: 0.001
     mode: box
     unit_of_measurement: m³
-    initial: 27
   energy_archive_electricity_apr:
     name: YoY archive electricity APR · previous year
     min: 0
@@ -484,7 +480,6 @@ input_number:
     step: 0.001
     mode: box
     unit_of_measurement: kWh
-    initial: 268
   energy_archive_gas_may:
     name: YoY archive gas MAY · previous year
     min: 0
@@ -492,7 +487,6 @@ input_number:
     step: 0.001
     mode: box
     unit_of_measurement: m³
-    initial: 37
   energy_archive_electricity_may:
     name: YoY archive electricity MAY · previous year
     min: 0
@@ -500,7 +494,6 @@ input_number:
     step: 0.001
     mode: box
     unit_of_measurement: kWh
-    initial: 281
   energy_archive_gas_jun:
     name: YoY archive gas JUN · previous year
     min: 0
@@ -508,7 +501,6 @@ input_number:
     step: 0.001
     mode: box
     unit_of_measurement: m³
-    initial: 33
   energy_archive_electricity_jun:
     name: YoY archive electricity JUN · previous year
     min: 0
@@ -516,7 +508,6 @@ input_number:
     step: 0.001
     mode: box
     unit_of_measurement: kWh
-    initial: 261
   energy_archive_gas_jul:
     name: YoY archive gas JUL · previous year
     min: 0
@@ -524,7 +515,6 @@ input_number:
     step: 0.001
     mode: box
     unit_of_measurement: m³
-    initial: 0
   energy_archive_electricity_jul:
     name: YoY archive electricity JUL · previous year
     min: 0
@@ -532,7 +522,6 @@ input_number:
     step: 0.001
     mode: box
     unit_of_measurement: kWh
-    initial: 0
   energy_archive_gas_aug:
     name: YoY archive gas AUG · previous year
     min: 0
@@ -540,7 +529,6 @@ input_number:
     step: 0.001
     mode: box
     unit_of_measurement: m³
-    initial: 0
   energy_archive_electricity_aug:
     name: YoY archive electricity AUG · previous year
     min: 0
@@ -548,7 +536,6 @@ input_number:
     step: 0.001
     mode: box
     unit_of_measurement: kWh
-    initial: 0
   energy_archive_gas_sep:
     name: YoY archive gas SEP · previous year
     min: 0
@@ -556,7 +543,6 @@ input_number:
     step: 0.001
     mode: box
     unit_of_measurement: m³
-    initial: 0
   energy_archive_electricity_sep:
     name: YoY archive electricity SEP · previous year
     min: 0
@@ -564,7 +550,6 @@ input_number:
     step: 0.001
     mode: box
     unit_of_measurement: kWh
-    initial: 0
   energy_archive_gas_oct:
     name: YoY archive gas OCT · previous year
     min: 0
@@ -572,7 +557,6 @@ input_number:
     step: 0.001
     mode: box
     unit_of_measurement: m³
-    initial: 0
   energy_archive_electricity_oct:
     name: YoY archive electricity OCT · previous year
     min: 0
@@ -580,7 +564,6 @@ input_number:
     step: 0.001
     mode: box
     unit_of_measurement: kWh
-    initial: 0
   energy_archive_gas_nov:
     name: YoY archive gas NOV · previous year
     min: 0
@@ -588,7 +571,6 @@ input_number:
     step: 0.001
     mode: box
     unit_of_measurement: m³
-    initial: 0
   energy_archive_electricity_nov:
     name: YoY archive electricity NOV · previous year
     min: 0
@@ -596,7 +578,6 @@ input_number:
     step: 0.001
     mode: box
     unit_of_measurement: kWh
-    initial: 0
   energy_archive_gas_dec:
     name: YoY archive gas DEC · previous year
     min: 0
@@ -604,7 +585,6 @@ input_number:
     step: 0.001
     mode: box
     unit_of_measurement: m³
-    initial: 0
   energy_archive_electricity_dec:
     name: YoY archive electricity DEC · previous year
     min: 0
@@ -612,7 +592,6 @@ input_number:
     step: 0.001
     mode: box
     unit_of_measurement: kWh
-    initial: 0
   energy_yoy_baseline_electricity_unit_rate:
     name: YoY comparison electricity rate · EUR per kWh
     min: 0
@@ -620,7 +599,6 @@ input_number:
     step: 0.0001
     mode: box
     unit_of_measurement: EUR/kWh
-    initial: 0.2345
   energy_yoy_baseline_gas_unit_rate:
     name: YoY comparison gas rate · EUR per m³
     min: 0
@@ -628,7 +606,6 @@ input_number:
     step: 0.0001
     mode: box
     unit_of_measurement: EUR/m³
-    initial: 1.8115
   energy_archive_cost_jan:
     name: YoY archive cost JAN · previous year
     min: 0
@@ -636,7 +613,6 @@ input_number:
     step: 0.01
     mode: box
     unit_of_measurement: EUR
-    initial: 296.45
   energy_archive_cost_feb:
     name: YoY archive cost FEB · previous year
     min: 0
@@ -644,7 +620,6 @@ input_number:
     step: 0.01
     mode: box
     unit_of_measurement: EUR
-    initial: 206
   energy_archive_cost_mar:
     name: YoY archive cost MAR · previous year
     min: 0
@@ -652,7 +627,6 @@ input_number:
     step: 0.01
     mode: box
     unit_of_measurement: EUR
-    initial: 194.99
   energy_archive_cost_apr:
     name: YoY archive cost APR · previous year
     min: 0
@@ -660,7 +634,6 @@ input_number:
     step: 0.01
     mode: box
     unit_of_measurement: EUR
-    initial: 111.76
   energy_archive_cost_may:
     name: YoY archive cost MAY · previous year
     min: 0
@@ -668,7 +641,6 @@ input_number:
     step: 0.01
     mode: box
     unit_of_measurement: EUR
-    initial: 132.89
   energy_archive_cost_jun:
     name: YoY archive cost JUN · previous year
     min: 0
@@ -676,7 +648,6 @@ input_number:
     step: 0.01
     mode: box
     unit_of_measurement: EUR
-    initial: 120.98
   energy_archive_cost_jul:
     name: YoY archive cost JUL · previous year
     min: 0
@@ -684,7 +655,6 @@ input_number:
     step: 0.01
     mode: box
     unit_of_measurement: EUR
-    initial: 0
   energy_archive_cost_aug:
     name: YoY archive cost AUG · previous year
     min: 0
@@ -692,7 +662,6 @@ input_number:
     step: 0.01
     mode: box
     unit_of_measurement: EUR
-    initial: 0
   energy_archive_cost_sep:
     name: YoY archive cost SEP · previous year
     min: 0
@@ -700,7 +669,6 @@ input_number:
     step: 0.01
     mode: box
     unit_of_measurement: EUR
-    initial: 0
   energy_archive_cost_oct:
     name: YoY archive cost OCT · previous year
     min: 0
@@ -708,7 +676,6 @@ input_number:
     step: 0.01
     mode: box
     unit_of_measurement: EUR
-    initial: 0
   energy_archive_cost_nov:
     name: YoY archive cost NOV · previous year
     min: 0
@@ -716,7 +683,6 @@ input_number:
     step: 0.01
     mode: box
     unit_of_measurement: EUR
-    initial: 0
   energy_archive_cost_dec:
     name: YoY archive cost DEC · previous year
     min: 0
@@ -724,7 +690,6 @@ input_number:
     step: 0.01
     mode: box
     unit_of_measurement: EUR
-    initial: 0
 # ------------------------------------------------------------
 # STATE-BASED TEMPLATE SENSORS
 # ------------------------------------------------------------
@@ -1941,6 +1906,121 @@ script:
       - action: script.energy_manual_activity_start
 
 automation:
+  - id: energy_seed_yoy_reference_archive
+    alias: Energy - Seed historical year-on-year reference data
+    description: Loads the supplied 2026 Jan-Jun usage and historic unit rates once; helper states then persist across restarts.
+    mode: single
+    triggers:
+      - trigger: homeassistant
+        event: start
+    conditions:
+      - condition: state
+        entity_id: input_boolean.energy_yoy_archive_seeded
+        state: "off"
+    actions:
+      - action: input_number.set_value
+        target:
+          entity_id: input_number.energy_archive_gas_jan
+        data:
+          value: 112
+      - action: input_number.set_value
+        target:
+          entity_id: input_number.energy_archive_electricity_jan
+        data:
+          value: 399
+      - action: input_number.set_value
+        target:
+          entity_id: input_number.energy_archive_cost_jan
+        data:
+          value: 296.45
+      - action: input_number.set_value
+        target:
+          entity_id: input_number.energy_archive_gas_feb
+        data:
+          value: 71
+      - action: input_number.set_value
+        target:
+          entity_id: input_number.energy_archive_electricity_feb
+        data:
+          value: 330
+      - action: input_number.set_value
+        target:
+          entity_id: input_number.energy_archive_cost_feb
+        data:
+          value: 206.00
+      - action: input_number.set_value
+        target:
+          entity_id: input_number.energy_archive_gas_mar
+        data:
+          value: 60
+      - action: input_number.set_value
+        target:
+          entity_id: input_number.energy_archive_electricity_mar
+        data:
+          value: 368
+      - action: input_number.set_value
+        target:
+          entity_id: input_number.energy_archive_cost_mar
+        data:
+          value: 194.99
+      - action: input_number.set_value
+        target:
+          entity_id: input_number.energy_archive_gas_apr
+        data:
+          value: 27
+      - action: input_number.set_value
+        target:
+          entity_id: input_number.energy_archive_electricity_apr
+        data:
+          value: 268
+      - action: input_number.set_value
+        target:
+          entity_id: input_number.energy_archive_cost_apr
+        data:
+          value: 111.76
+      - action: input_number.set_value
+        target:
+          entity_id: input_number.energy_archive_gas_may
+        data:
+          value: 37
+      - action: input_number.set_value
+        target:
+          entity_id: input_number.energy_archive_electricity_may
+        data:
+          value: 281
+      - action: input_number.set_value
+        target:
+          entity_id: input_number.energy_archive_cost_may
+        data:
+          value: 132.89
+      - action: input_number.set_value
+        target:
+          entity_id: input_number.energy_archive_gas_jun
+        data:
+          value: 33
+      - action: input_number.set_value
+        target:
+          entity_id: input_number.energy_archive_electricity_jun
+        data:
+          value: 261
+      - action: input_number.set_value
+        target:
+          entity_id: input_number.energy_archive_cost_jun
+        data:
+          value: 120.98
+      - action: input_number.set_value
+        target:
+          entity_id: input_number.energy_yoy_baseline_electricity_unit_rate
+        data:
+          value: 0.2345
+      - action: input_number.set_value
+        target:
+          entity_id: input_number.energy_yoy_baseline_gas_unit_rate
+        data:
+          value: 1.8115
+      - action: input_boolean.turn_on
+        target:
+          entity_id: input_boolean.energy_yoy_archive_seeded
   - id: energy_archive_completed_month_for_yoy
     alias: Energy - Archive completed month for yearly comparison
     description: Saves each completed calendar month's gas and electricity values for next year's comparison.
@@ -1953,6 +2033,7 @@ automation:
         value_template: >-
           {{ (now() + timedelta(days=1)).day == 1
              and is_state('input_boolean.energy_period_meters_seeded', 'on')
+             and is_state('input_boolean.energy_yoy_archive_seeded', 'on')
              and is_number(states('sensor.energy_gas_total_month'))
              and is_number(states('sensor.energy_electricity_total_month')) }}
     actions:
