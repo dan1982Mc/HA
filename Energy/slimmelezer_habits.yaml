@@ -551,6 +551,18 @@ template:
       # Existing combined presence sensors are the primary source of truth.
       # In the existing automations, ON means the person has arrived/home;
       # OFF means away. The empty-house sensor therefore requires BOTH OFF.
+      - name: Energy Shower Start Conditions Met
+        unique_id: energy_shower_start_conditions_met
+        icon: mdi:shower
+        availability: >
+          {{ is_number(states('sensor.thermometer_living_humidity'))
+             and states('light.bathroom_lights_all') in ['on', 'off']
+             and states('binary_sensor.bathroom_door_contact') in ['on', 'off'] }}
+        state: >
+          {{ states('sensor.thermometer_living_humidity') | float(0) > 85
+             and is_state('light.bathroom_lights_all', 'on')
+             and is_state('binary_sensor.bathroom_door_contact', 'off') }}
+
       - name: Energy Someone Home
         unique_id: energy_someone_home
         icon: mdi:home-account
