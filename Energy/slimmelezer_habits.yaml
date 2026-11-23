@@ -2023,7 +2023,7 @@ automation:
           entity_id: input_boolean.energy_yoy_archive_seeded
   - id: energy_archive_completed_month_for_yoy
     alias: Energy - Archive completed month for yearly comparison
-    description: Saves each completed calendar month's gas and electricity values for next year's comparison.
+    description: Saves each completed calendar month's gas, electricity and actual cost for next year's comparison.
     mode: single
     triggers:
       - trigger: time
