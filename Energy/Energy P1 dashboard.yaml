@@ -129,6 +129,8 @@ views:
             triggers_update:
               - sensor.energy_gas_shower_month
               - sensor.energy_gas_shower_week
+              - binary_sensor.energy_shower_start_conditions_met
+              - input_boolean.energy_shower_auto_active
               - sensor.thermometer_living_humidity
               - light.bathroom_lights_all
               - binary_sensor.bathroom_door_contact
@@ -137,10 +139,13 @@ views:
                 const month = Number(states['sensor.energy_gas_shower_month']?.state);
                 const week = Number(states['sensor.energy_gas_shower_week']?.state);
                 const fmt = (v) => Number.isFinite(v) ? v.toFixed(3) + ' m³' : '—';
+                const conditions = states['binary_sensor.energy_shower_start_conditions_met']?.state;
+                const humidity = states['sensor.thermometer_living_humidity']?.state || '—';
                 if (entity?.state === 'on') {
-                  return 'SHOWER DETECTED · ' + (states['sensor.thermometer_living_humidity']?.state || '—') + '% humidity';
+                  return 'SHOWER DETECTED · ' + humidity + '% humidity';
                 }
-                return 'This month ' + fmt(month) + ' · This week ' + fmt(week) + ' · auto-detection armed';
+                return (conditions === 'on' ? 'START CONDITIONS MET' : 'WAITING FOR START CONDITIONS') +
+                  ' · ' + humidity + '% humidity · month ' + fmt(month) + ' · week ' + fmt(week);
               ]]]
             tap_action:
               action: fire-dom-event
@@ -157,13 +162,44 @@ views:
                         show_header_toggle: false
                         entities:
                           - entity: input_boolean.energy_shower_auto_active
-                            name: Shower detected
+                            name: Shower detected / session active
+                          - entity: binary_sensor.energy_shower_start_conditions_met
+                            name: All three start conditions met
                           - entity: sensor.thermometer_living_humidity
                             name: Bathroom humidity
                           - entity: light.bathroom_lights_all
                             name: Bathroom lights
                           - entity: binary_sensor.bathroom_door_contact
                             name: Bathroom door contact
+                      - type: markdown
+                        content: >-
+                          **Start:** humidity strictly above 85% AND bathroom lights
+                          ON AND bathroom door contact OFF (closed). All three must
+                          be true together. The start automation checks when any
+                          input changes and also rechecks once per minute.
+
+                          **Stop:** bathroom lights OFF continuously for one minute.
+                          Optional fallback: door contact ON (open) for two minutes
+                          AND humidity below 85%. The door does not need to open
+                          when the lights-off condition occurs.
+
+                          **How to verify:** open Developer Tools → States and watch
+                          the three input entities and
+                          binary_sensor.energy_shower_start_conditions_met. When
+                          all three start conditions are true, that diagnostic
+                          sensor should turn ON and input_boolean.energy_shower_auto_active
+                          should turn ON within about one minute. The popup's logbook
+                          should then show “Automatic shower detection started”.
+                          When an end condition occurs, the helper should turn OFF
+                          and the logbook should show “Automatic shower detection ended”.
+
+                          Check Settings → Automations & Scenes to confirm both
+                          “Energy - Auto-detect shower start” and
+                          “Energy - Auto-detect shower end” are enabled.
+
+                          The shower gas estimate increases only when the gas meter
+                          registers a positive update, which may be roughly hourly.
+
                       - type: entities
                         title: Estimated shower gas use
                         show_header_toggle: false
@@ -703,11 +739,28 @@ views:
                     - opacity: 0.6
               - type: custom:button-card
                 entity: binary_sensor.energy_house_empty
-                name: Home & occupancy
+                name: House empty status
                 icon: mdi:home-search-outline
                 show_state: false
                 show_label: true
-                label: Presence · motion · empty periods
+                triggers_update:
+                  - binary_sensor.energy_someone_home
+                  - binary_sensor.energy_motion_detected
+                  - sensor.energy_house_empty_check
+                  - binary_sensor.dan_presence_combined
+                  - binary_sensor.anca_presence_combined
+                label: |
+                  [[[
+                    if (!entity || ['unknown', 'unavailable'].includes(entity.state)) {
+                      return 'STATUS UNAVAILABLE · both presence sensors must report';
+                    }
+                    const someoneHome = states['binary_sensor.energy_someone_home']?.state === 'on';
+                    const motion = states['binary_sensor.energy_motion_detected']?.state === 'on';
+                    if (entity.state === 'on') return 'EMPTY CONFIRMED · no presence or selected motion for 10 minutes';
+                    if (someoneHome) return 'OCCUPIED · a person-presence sensor reports home';
+                    if (motion) return 'NOT EMPTY · selected room motion detected';
+                    return 'NOT CONFIRMED EMPTY · waiting for both presence sensors and 10-minute check';
+                  ]]]
                 tap_action:
                   action: more-info
                 double_tap_action:
@@ -768,11 +821,31 @@ views:
                                 name: Dining exterior contact
                           - type: markdown
                             content: >
-                              Empty-house status requires both presence helpers OFF
-                              and the selected motion sensors clear for 10 minutes.
-                              Door contacts are diagnostic only. It is for energy
-                              analysis only; it does not control heating or
-                              appliances.
+                              **What this status means**
+
+                              ON = the apartment has been confirmed empty for 10
+                              continuous minutes. Both combined person-presence
+                              sensors must be OFF, and none of the selected room
+                              motion sensors may be ON.
+
+                              OFF = a person is reported home, motion is detected,
+                              or the ten-minute empty confirmation has not finished.
+                              Unavailable = one of the two person-presence sources
+                              cannot provide a valid ON/OFF state.
+
+                              **What is included**
+
+                              Presence: Dan and Anca combined presence sensors.
+                              Motion: kitchen, small bedroom, bathroom, big bedroom,
+                              hall and living room.
+
+                              Motion sensor unavailability is listed in the
+                              diagnostic reason, but does not itself block the
+                              empty result. Entry contacts are shown for diagnosis
+                              only and do not affect the empty result.
+
+                              This is an energy-analysis indicator only; it does
+                              not control heating, lights or appliances.
                 styles:
                   card:
                     - min-height: 68px
