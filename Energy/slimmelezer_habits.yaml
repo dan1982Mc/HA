@@ -1580,3 +1580,27 @@ sensor:
       days: 7
     sampling_size: 2016
     precision: 6
+
+# ------------------------------------------------------------
+# MONTHLY GAS SPLIT
+# Heating is tracked from the thermostat-based gas attribution counter.
+# Other gas is calculated in the dashboard as total monthly gas minus
+# this heating meter, so it includes idle/off and unclassified use.
+# The first monthly cycle is partial after installation; the first full
+# cycle begins at the next monthly reset.
+# ------------------------------------------------------------
+utility_meter:
+  energy_gas_total_month:
+    name: Energy Gas Total Month
+    unique_id: energy_gas_total_month
+    source: sensor.slimmelezer_mini_gas_consumed
+    cycle: monthly
+    periodically_resetting: true
+    always_available: true
+  energy_gas_heating_month:
+    name: Energy Gas Heating Month
+    unique_id: energy_gas_heating_month
+    source: sensor.slimmelezer_gas_during_heating_demand
+    cycle: monthly
+    periodically_resetting: true
+    always_available: true
