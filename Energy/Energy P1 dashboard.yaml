@@ -328,6 +328,850 @@ views:
                   target:
                     entity_id: script.energy_start_custom
       - type: grid
+        title: Appliance activity
+        column_span: 2
+        cards:
+          - type: grid
+            columns: 2
+            square: false
+            cards:
+          - type: vertical-stack
+            cards:
+              - type: custom:button-card
+                entity: binary_sensor.washing_machine_running
+                name: Washer
+                icon: mdi:washing-machine
+                show_state: false
+                show_label: true
+                label: |
+                  [[[
+                    if (!entity) return 'SENSOR MISSING';
+                    if (entity.state === 'on') return 'RUNNING';
+                    if (entity.state === 'off') return 'Idle';
+                    return entity.state.toUpperCase();
+                  ]]]
+                styles:
+                  card:
+                    - min-height: 54px
+                    - border-radius: 12px
+                    - padding: 8px 12px
+                  grid:
+                    - grid-template-areas: '"i n" "i l"'
+                    - grid-template-columns: 36px 1fr
+                    - grid-template-rows: min-content min-content
+                  icon:
+                    - width: 26px
+                  name:
+                    - justify-self: start
+                    - font-size: 14px
+                    - font-weight: 700
+                    - color: |
+                        [[[
+                          if (!entity) return 'var(--error-color)';
+                          return entity.state === 'on' ? 'var(--success-color)' : 'var(--primary-text-color)';
+                        ]]]
+                  label:
+                    - justify-self: start
+                    - font-size: 10px
+                    - opacity: 0.75
+              - type: entities
+                title: This month
+                show_header_toggle: false
+                entities:
+                  - entity: sensor.smart_plug_3_this_month_s_consumption
+                    name: Energy · kWh
+                  - entity: sensor.energy_washer_cost_this_month
+                    name: Cost · €
+                  - entity: sensor.energy_washer_runtime_this_month
+                    name: Runtime · hours
+                  - entity: sensor.energy_washer_starts_this_month
+                    name: Sessions started
+              - type: horizontal-stack
+                cards:
+              - type: custom:button-card
+                name: 24 hours activity
+                show_icon: false
+                show_state: false
+                tap_action:
+                  action: fire-dom-event
+                  browser_mod:
+                    service: browser_mod.popup
+                    data:
+                      title: "Washer · last 24 hours"
+                      size: normal
+                      content:
+                        type: vertical-stack
+                        cards:
+                          - type: history-graph
+                            title: Activity timeline · 24 hours
+                            hours_to_show: 24
+                            entities:
+                              - entity: binary_sensor.washing_machine_running
+                                name: Washer
+                          - type: logbook
+                            title: Start / stop times
+                            hours_to_show: 24
+                            entities:
+                              - entity: binary_sensor.washing_machine_running
+
+                styles:
+                  card:
+                    - background: transparent
+                    - box-shadow: none
+                    - border: 0
+                    - padding: 4px 2px
+                    - min-height: 30px
+                  name:
+                    - color: var(--primary-color)
+                    - font-size: 11px
+                    - font-weight: 600
+                    - text-decoration: underline
+                    - white-space: normal
+              - type: custom:button-card
+                name: Current week activity
+                show_icon: false
+                show_state: false
+                tap_action:
+                  action: fire-dom-event
+                  browser_mod:
+                    service: browser_mod.popup
+                    data:
+                      title: "Washer · current week activity"
+                      size: normal
+                      content:
+                        type: vertical-stack
+                        cards:
+                          - type: history-graph
+                            title: Activity timeline · last 7 days
+                            hours_to_show: 168
+                            entities:
+                              - entity: binary_sensor.washing_machine_running
+                                name: Washer
+                          - type: logbook
+                            title: Start / stop times
+                            hours_to_show: 168
+                            entities:
+                              - entity: binary_sensor.washing_machine_running
+          - type: entities
+            title: Current calendar-week count
+            entities:
+              - entity: sensor.energy_washer_starts_this_week
+                name: Sessions started Monday–now
+          - type: markdown
+            content: >-
+              The timeline and log show the last 7 rolling days. The session
+              count is for the current calendar week (Monday through now).
+                styles:
+                  card:
+                    - background: transparent
+                    - box-shadow: none
+                    - border: 0
+                    - padding: 4px 2px
+                    - min-height: 30px
+                  name:
+                    - color: var(--primary-color)
+                    - font-size: 11px
+                    - font-weight: 600
+                    - text-decoration: underline
+                    - white-space: normal
+          - type: vertical-stack
+            cards:
+              - type: custom:button-card
+                entity: binary_sensor.dryer_running
+                name: Dryer
+                icon: mdi:tumble-dryer
+                show_state: false
+                show_label: true
+                label: |
+                  [[[
+                    if (!entity) return 'SENSOR MISSING';
+                    if (entity.state === 'on') return 'RUNNING';
+                    if (entity.state === 'off') return 'Idle';
+                    return entity.state.toUpperCase();
+                  ]]]
+                styles:
+                  card:
+                    - min-height: 54px
+                    - border-radius: 12px
+                    - padding: 8px 12px
+                  grid:
+                    - grid-template-areas: '"i n" "i l"'
+                    - grid-template-columns: 36px 1fr
+                    - grid-template-rows: min-content min-content
+                  icon:
+                    - width: 26px
+                  name:
+                    - justify-self: start
+                    - font-size: 14px
+                    - font-weight: 700
+                    - color: |
+                        [[[
+                          if (!entity) return 'var(--error-color)';
+                          return entity.state === 'on' ? 'var(--success-color)' : 'var(--primary-text-color)';
+                        ]]]
+                  label:
+                    - justify-self: start
+                    - font-size: 10px
+                    - opacity: 0.75
+              - type: entities
+                title: This month
+                show_header_toggle: false
+                entities:
+                  - entity: sensor.fridge_2_this_month_s_consumption
+                    name: Energy · kWh
+                  - entity: sensor.energy_dryer_cost_this_month
+                    name: Cost · €
+                  - entity: sensor.energy_dryer_runtime_this_month
+                    name: Runtime · hours
+                  - entity: sensor.energy_dryer_starts_this_month
+                    name: Sessions started
+              - type: horizontal-stack
+                cards:
+              - type: custom:button-card
+                name: 24 hours activity
+                show_icon: false
+                show_state: false
+                tap_action:
+                  action: fire-dom-event
+                  browser_mod:
+                    service: browser_mod.popup
+                    data:
+                      title: "Dryer · last 24 hours"
+                      size: normal
+                      content:
+                        type: vertical-stack
+                        cards:
+                          - type: history-graph
+                            title: Activity timeline · 24 hours
+                            hours_to_show: 24
+                            entities:
+                              - entity: binary_sensor.dryer_running
+                                name: Dryer
+                          - type: logbook
+                            title: Start / stop times
+                            hours_to_show: 24
+                            entities:
+                              - entity: binary_sensor.dryer_running
+
+                styles:
+                  card:
+                    - background: transparent
+                    - box-shadow: none
+                    - border: 0
+                    - padding: 4px 2px
+                    - min-height: 30px
+                  name:
+                    - color: var(--primary-color)
+                    - font-size: 11px
+                    - font-weight: 600
+                    - text-decoration: underline
+                    - white-space: normal
+              - type: custom:button-card
+                name: Current week activity
+                show_icon: false
+                show_state: false
+                tap_action:
+                  action: fire-dom-event
+                  browser_mod:
+                    service: browser_mod.popup
+                    data:
+                      title: "Dryer · current week activity"
+                      size: normal
+                      content:
+                        type: vertical-stack
+                        cards:
+                          - type: history-graph
+                            title: Activity timeline · last 7 days
+                            hours_to_show: 168
+                            entities:
+                              - entity: binary_sensor.dryer_running
+                                name: Dryer
+                          - type: logbook
+                            title: Start / stop times
+                            hours_to_show: 168
+                            entities:
+                              - entity: binary_sensor.dryer_running
+          - type: entities
+            title: Current calendar-week count
+            entities:
+              - entity: sensor.energy_dryer_starts_this_week
+                name: Sessions started Monday–now
+          - type: markdown
+            content: >-
+              The timeline and log show the last 7 rolling days. The session
+              count is for the current calendar week (Monday through now).
+                styles:
+                  card:
+                    - background: transparent
+                    - box-shadow: none
+                    - border: 0
+                    - padding: 4px 2px
+                    - min-height: 30px
+                  name:
+                    - color: var(--primary-color)
+                    - font-size: 11px
+                    - font-weight: 600
+                    - text-decoration: underline
+                    - white-space: normal
+          - type: vertical-stack
+            cards:
+              - type: custom:button-card
+                entity: binary_sensor.energy_dishwasher_running
+                name: Dishwasher
+                icon: mdi:dishwasher
+                show_state: false
+                show_label: true
+                label: |
+                  [[[
+                    if (!entity) return 'SENSOR MISSING';
+                    if (entity.state === 'on') return 'RUNNING';
+                    if (entity.state === 'off') return 'Idle';
+                    return entity.state.toUpperCase();
+                  ]]]
+                styles:
+                  card:
+                    - min-height: 54px
+                    - border-radius: 12px
+                    - padding: 8px 12px
+                  grid:
+                    - grid-template-areas: '"i n" "i l"'
+                    - grid-template-columns: 36px 1fr
+                    - grid-template-rows: min-content min-content
+                  icon:
+                    - width: 26px
+                  name:
+                    - justify-self: start
+                    - font-size: 14px
+                    - font-weight: 700
+                    - color: |
+                        [[[
+                          if (!entity) return 'var(--error-color)';
+                          return entity.state === 'on' ? 'var(--success-color)' : 'var(--primary-text-color)';
+                        ]]]
+                  label:
+                    - justify-self: start
+                    - font-size: 10px
+                    - opacity: 0.75
+              - type: entities
+                title: This month
+                show_header_toggle: false
+                entities:
+                  - entity: sensor.tv_outlet_this_month_s_consumption
+                    name: Energy · kWh
+                  - entity: sensor.energy_dishwasher_cost_this_month
+                    name: Cost · €
+                  - entity: sensor.energy_dishwasher_runtime_this_month
+                    name: Runtime · hours
+                  - entity: sensor.energy_dishwasher_starts_this_month
+                    name: Sessions started
+              - type: horizontal-stack
+                cards:
+              - type: custom:button-card
+                name: 24 hours activity
+                show_icon: false
+                show_state: false
+                tap_action:
+                  action: fire-dom-event
+                  browser_mod:
+                    service: browser_mod.popup
+                    data:
+                      title: "Dishwasher · last 24 hours"
+                      size: normal
+                      content:
+                        type: vertical-stack
+                        cards:
+                          - type: history-graph
+                            title: Activity timeline · 24 hours
+                            hours_to_show: 24
+                            entities:
+                              - entity: binary_sensor.energy_dishwasher_running
+                                name: Dishwasher
+                          - type: logbook
+                            title: Start / stop times
+                            hours_to_show: 24
+                            entities:
+                              - entity: binary_sensor.energy_dishwasher_running
+
+                styles:
+                  card:
+                    - background: transparent
+                    - box-shadow: none
+                    - border: 0
+                    - padding: 4px 2px
+                    - min-height: 30px
+                  name:
+                    - color: var(--primary-color)
+                    - font-size: 11px
+                    - font-weight: 600
+                    - text-decoration: underline
+                    - white-space: normal
+              - type: custom:button-card
+                name: Current week activity
+                show_icon: false
+                show_state: false
+                tap_action:
+                  action: fire-dom-event
+                  browser_mod:
+                    service: browser_mod.popup
+                    data:
+                      title: "Dishwasher · current week activity"
+                      size: normal
+                      content:
+                        type: vertical-stack
+                        cards:
+                          - type: history-graph
+                            title: Activity timeline · last 7 days
+                            hours_to_show: 168
+                            entities:
+                              - entity: binary_sensor.energy_dishwasher_running
+                                name: Dishwasher
+                          - type: logbook
+                            title: Start / stop times
+                            hours_to_show: 168
+                            entities:
+                              - entity: binary_sensor.energy_dishwasher_running
+          - type: entities
+            title: Current calendar-week count
+            entities:
+              - entity: sensor.energy_dishwasher_starts_this_week
+                name: Sessions started Monday–now
+          - type: markdown
+            content: >-
+              The timeline and log show the last 7 rolling days. The session
+              count is for the current calendar week (Monday through now).
+                styles:
+                  card:
+                    - background: transparent
+                    - box-shadow: none
+                    - border: 0
+                    - padding: 4px 2px
+                    - min-height: 30px
+                  name:
+                    - color: var(--primary-color)
+                    - font-size: 11px
+                    - font-weight: 600
+                    - text-decoration: underline
+                    - white-space: normal
+          - type: vertical-stack
+            cards:
+              - type: custom:button-card
+                entity: binary_sensor.energy_laptop_running
+                name: Laptop
+                icon: mdi:laptop
+                show_state: false
+                show_label: true
+                label: |
+                  [[[
+                    if (!entity) return 'SENSOR MISSING';
+                    if (entity.state === 'on') return 'RUNNING';
+                    if (entity.state === 'off') return 'Idle';
+                    return entity.state.toUpperCase();
+                  ]]]
+                styles:
+                  card:
+                    - min-height: 54px
+                    - border-radius: 12px
+                    - padding: 8px 12px
+                  grid:
+                    - grid-template-areas: '"i n" "i l"'
+                    - grid-template-columns: 36px 1fr
+                    - grid-template-rows: min-content min-content
+                  icon:
+                    - width: 26px
+                  name:
+                    - justify-self: start
+                    - font-size: 14px
+                    - font-weight: 700
+                    - color: |
+                        [[[
+                          if (!entity) return 'var(--error-color)';
+                          return entity.state === 'on' ? 'var(--success-color)' : 'var(--primary-text-color)';
+                        ]]]
+                  label:
+                    - justify-self: start
+                    - font-size: 10px
+                    - opacity: 0.75
+              - type: entities
+                title: This month
+                show_header_toggle: false
+                entities:
+                  - entity: sensor.garden_house_this_month_s_consumption
+                    name: Energy · kWh
+                  - entity: sensor.energy_laptop_cost_this_month
+                    name: Cost · €
+                  - entity: sensor.energy_laptop_runtime_this_month
+                    name: Runtime · hours
+                  - entity: sensor.energy_laptop_starts_this_month
+                    name: Sessions started
+              - type: horizontal-stack
+                cards:
+              - type: custom:button-card
+                name: 24 hours activity
+                show_icon: false
+                show_state: false
+                tap_action:
+                  action: fire-dom-event
+                  browser_mod:
+                    service: browser_mod.popup
+                    data:
+                      title: "Laptop · last 24 hours"
+                      size: normal
+                      content:
+                        type: vertical-stack
+                        cards:
+                          - type: history-graph
+                            title: Activity timeline · 24 hours
+                            hours_to_show: 24
+                            entities:
+                              - entity: binary_sensor.energy_laptop_running
+                                name: Laptop
+                          - type: logbook
+                            title: Start / stop times
+                            hours_to_show: 24
+                            entities:
+                              - entity: binary_sensor.energy_laptop_running
+
+                styles:
+                  card:
+                    - background: transparent
+                    - box-shadow: none
+                    - border: 0
+                    - padding: 4px 2px
+                    - min-height: 30px
+                  name:
+                    - color: var(--primary-color)
+                    - font-size: 11px
+                    - font-weight: 600
+                    - text-decoration: underline
+                    - white-space: normal
+              - type: custom:button-card
+                name: Current week activity
+                show_icon: false
+                show_state: false
+                tap_action:
+                  action: fire-dom-event
+                  browser_mod:
+                    service: browser_mod.popup
+                    data:
+                      title: "Laptop · current week activity"
+                      size: normal
+                      content:
+                        type: vertical-stack
+                        cards:
+                          - type: history-graph
+                            title: Activity timeline · last 7 days
+                            hours_to_show: 168
+                            entities:
+                              - entity: binary_sensor.energy_laptop_running
+                                name: Laptop
+                          - type: logbook
+                            title: Start / stop times
+                            hours_to_show: 168
+                            entities:
+                              - entity: binary_sensor.energy_laptop_running
+          - type: entities
+            title: Current calendar-week count
+            entities:
+              - entity: sensor.energy_laptop_starts_this_week
+                name: Sessions started Monday–now
+          - type: markdown
+            content: >-
+              The timeline and log show the last 7 rolling days. The session
+              count is for the current calendar week (Monday through now).
+                styles:
+                  card:
+                    - background: transparent
+                    - box-shadow: none
+                    - border: 0
+                    - padding: 4px 2px
+                    - min-height: 30px
+                  name:
+                    - color: var(--primary-color)
+                    - font-size: 11px
+                    - font-weight: 600
+                    - text-decoration: underline
+                    - white-space: normal
+          - type: vertical-stack
+            cards:
+              - type: custom:button-card
+                entity: binary_sensor.energy_oven_powered
+                name: Oven
+                icon: mdi:stove
+                show_state: false
+                show_label: true
+                label: |
+                  [[[
+                    if (!entity) return 'SENSOR MISSING';
+                    if (entity.state === 'on') return 'RUNNING';
+                    if (entity.state === 'off') return 'Idle';
+                    return entity.state.toUpperCase();
+                  ]]]
+                styles:
+                  card:
+                    - min-height: 54px
+                    - border-radius: 12px
+                    - padding: 8px 12px
+                  grid:
+                    - grid-template-areas: '"i n" "i l"'
+                    - grid-template-columns: 36px 1fr
+                    - grid-template-rows: min-content min-content
+                  icon:
+                    - width: 26px
+                  name:
+                    - justify-self: start
+                    - font-size: 14px
+                    - font-weight: 700
+                    - color: |
+                        [[[
+                          if (!entity) return 'var(--error-color)';
+                          return entity.state === 'on' ? 'var(--success-color)' : 'var(--primary-text-color)';
+                        ]]]
+                  label:
+                    - justify-self: start
+                    - font-size: 10px
+                    - opacity: 0.75
+              - type: markdown
+                content: >-
+                  **Energy this month:** Not individually metered
+                  
+                  **Cost this month:** Not available
+              - type: entities
+                title: This month
+                show_header_toggle: false
+                entities:
+                  - entity: sensor.energy_oven_runtime_this_month
+                    name: Runtime · hours
+                  - entity: sensor.energy_oven_starts_this_month
+                    name: Sessions started
+              - type: horizontal-stack
+                cards:
+              - type: custom:button-card
+                name: 24 hours activity
+                show_icon: false
+                show_state: false
+                tap_action:
+                  action: fire-dom-event
+                  browser_mod:
+                    service: browser_mod.popup
+                    data:
+                      title: "Oven · last 24 hours"
+                      size: normal
+                      content:
+                        type: vertical-stack
+                        cards:
+                          - type: history-graph
+                            title: Activity timeline · 24 hours
+                            hours_to_show: 24
+                            entities:
+                              - entity: binary_sensor.energy_oven_powered
+                                name: Oven
+                          - type: logbook
+                            title: Start / stop times
+                            hours_to_show: 24
+                            entities:
+                              - entity: binary_sensor.energy_oven_powered
+
+                styles:
+                  card:
+                    - background: transparent
+                    - box-shadow: none
+                    - border: 0
+                    - padding: 4px 2px
+                    - min-height: 30px
+                  name:
+                    - color: var(--primary-color)
+                    - font-size: 11px
+                    - font-weight: 600
+                    - text-decoration: underline
+                    - white-space: normal
+              - type: custom:button-card
+                name: Current week activity
+                show_icon: false
+                show_state: false
+                tap_action:
+                  action: fire-dom-event
+                  browser_mod:
+                    service: browser_mod.popup
+                    data:
+                      title: "Oven · current week activity"
+                      size: normal
+                      content:
+                        type: vertical-stack
+                        cards:
+                          - type: history-graph
+                            title: Activity timeline · last 7 days
+                            hours_to_show: 168
+                            entities:
+                              - entity: binary_sensor.energy_oven_powered
+                                name: Oven
+                          - type: logbook
+                            title: Start / stop times
+                            hours_to_show: 168
+                            entities:
+                              - entity: binary_sensor.energy_oven_powered
+          - type: entities
+            title: Current calendar-week count
+            entities:
+              - entity: sensor.energy_oven_starts_this_week
+                name: Sessions started Monday–now
+          - type: markdown
+            content: >-
+              The timeline and log show the last 7 rolling days. The session
+              count is for the current calendar week (Monday through now).
+                styles:
+                  card:
+                    - background: transparent
+                    - box-shadow: none
+                    - border: 0
+                    - padding: 4px 2px
+                    - min-height: 30px
+                  name:
+                    - color: var(--primary-color)
+                    - font-size: 11px
+                    - font-weight: 600
+                    - text-decoration: underline
+                    - white-space: normal
+          - type: vertical-stack
+            cards:
+              - type: custom:button-card
+                entity: binary_sensor.energy_tv_box_awake
+                name: TV Box
+                icon: mdi:television
+                show_state: false
+                show_label: true
+                label: |
+                  [[[
+                    if (!entity) return 'SENSOR MISSING';
+                    if (entity.state === 'on') return 'RUNNING';
+                    if (entity.state === 'off') return 'Idle';
+                    return entity.state.toUpperCase();
+                  ]]]
+                styles:
+                  card:
+                    - min-height: 54px
+                    - border-radius: 12px
+                    - padding: 8px 12px
+                  grid:
+                    - grid-template-areas: '"i n" "i l"'
+                    - grid-template-columns: 36px 1fr
+                    - grid-template-rows: min-content min-content
+                  icon:
+                    - width: 26px
+                  name:
+                    - justify-self: start
+                    - font-size: 14px
+                    - font-weight: 700
+                    - color: |
+                        [[[
+                          if (!entity) return 'var(--error-color)';
+                          return entity.state === 'on' ? 'var(--success-color)' : 'var(--primary-text-color)';
+                        ]]]
+                  label:
+                    - justify-self: start
+                    - font-size: 10px
+                    - opacity: 0.75
+              - type: markdown
+                content: >-
+                  **Energy this month:** Not individually metered
+                  
+                  **Cost this month:** Not available
+              - type: entities
+                title: This month
+                show_header_toggle: false
+                entities:
+                  - entity: sensor.energy_tv_box_runtime_this_month
+                    name: Runtime · hours
+                  - entity: sensor.energy_tv_box_starts_this_month
+                    name: Sessions started
+              - type: horizontal-stack
+                cards:
+              - type: custom:button-card
+                name: 24 hours activity
+                show_icon: false
+                show_state: false
+                tap_action:
+                  action: fire-dom-event
+                  browser_mod:
+                    service: browser_mod.popup
+                    data:
+                      title: "TV Box · last 24 hours"
+                      size: normal
+                      content:
+                        type: vertical-stack
+                        cards:
+                          - type: history-graph
+                            title: Activity timeline · 24 hours
+                            hours_to_show: 24
+                            entities:
+                              - entity: binary_sensor.energy_tv_box_awake
+                                name: TV Box
+                          - type: logbook
+                            title: Start / stop times
+                            hours_to_show: 24
+                            entities:
+                              - entity: binary_sensor.energy_tv_box_awake
+
+                styles:
+                  card:
+                    - background: transparent
+                    - box-shadow: none
+                    - border: 0
+                    - padding: 4px 2px
+                    - min-height: 30px
+                  name:
+                    - color: var(--primary-color)
+                    - font-size: 11px
+                    - font-weight: 600
+                    - text-decoration: underline
+                    - white-space: normal
+              - type: custom:button-card
+                name: Current week activity
+                show_icon: false
+                show_state: false
+                tap_action:
+                  action: fire-dom-event
+                  browser_mod:
+                    service: browser_mod.popup
+                    data:
+                      title: "TV Box · current week activity"
+                      size: normal
+                      content:
+                        type: vertical-stack
+                        cards:
+                          - type: history-graph
+                            title: Activity timeline · last 7 days
+                            hours_to_show: 168
+                            entities:
+                              - entity: binary_sensor.energy_tv_box_awake
+                                name: TV Box
+                          - type: logbook
+                            title: Start / stop times
+                            hours_to_show: 168
+                            entities:
+                              - entity: binary_sensor.energy_tv_box_awake
+          - type: entities
+            title: Current calendar-week count
+            entities:
+              - entity: sensor.energy_tv_box_starts_this_week
+                name: Sessions started Monday–now
+          - type: markdown
+            content: >-
+              The timeline and log show the last 7 rolling days. The session
+              count is for the current calendar week (Monday through now).
+                styles:
+                  card:
+                    - background: transparent
+                    - box-shadow: none
+                    - border: 0
+                    - padding: 4px 2px
+                    - min-height: 30px
+                  name:
+                    - color: var(--primary-color)
+                    - font-size: 11px
+                    - font-weight: 600
+                    - text-decoration: underline
+                    - white-space: normal
+      - type: grid
         title: Recent consumption
         cards:
           - type: grid
@@ -532,109 +1376,6 @@ views:
                               appliance measurements and can include other
                               simultaneous household use. Only one manual session
                               can run at a time.
-                styles:
-                  card:
-                    - min-height: 68px
-                    - border-radius: 14px
-                    - padding: 12px
-                  grid:
-                    - grid-template-areas: '"i n" "i l"'
-                    - grid-template-columns: 38px 1fr
-                  icon:
-                    - width: 26px
-                  name:
-                    - justify-self: start
-                    - font-size: 13px
-                    - font-weight: 600
-                  label:
-                    - justify-self: start
-                    - font-size: 11px
-                    - opacity: 0.6
-              - type: custom:button-card
-                entity: binary_sensor.energy_dishwasher_running
-                name: Appliances
-                icon: mdi:washing-machine
-                show_state: false
-                show_label: true
-                label: Washer · dryer · dishwasher · oven · TV
-                tap_action:
-                  action: more-info
-                double_tap_action:
-                  action: fire-dom-event
-                  browser_mod:
-                    service: browser_mod.popup
-                    data:
-                      title: Appliance use
-                      size: normal
-                      content:
-                        type: vertical-stack
-                        cards:
-                          - type: entities
-                            title: Washer
-                            entities:
-                              - entity: binary_sensor.washing_machine_running
-                                name: Running
-                              - entity: sensor.smart_plug_3_current
-                                name: Smart-plug current
-                              - entity: sensor.smart_plug_3_this_month_s_consumption
-                                name: Energy this month · kWh
-                              - entity: sensor.energy_washer_cost_this_month
-                                name: Estimated cost this month · €
-                              - entity: sensor.energy_washer_runtime_today
-                                name: Runtime today · hours
-                          - type: entities
-                            title: Dryer
-                            entities:
-                              - entity: binary_sensor.dryer_running
-                                name: Running
-                              - entity: sensor.fridge_2_current
-                                name: Smart-plug current
-                              - entity: sensor.fridge_2_this_month_s_consumption
-                                name: Energy this month · kWh
-                              - entity: sensor.energy_dryer_cost_this_month
-                                name: Estimated cost this month · €
-                              - entity: sensor.energy_dryer_runtime_today
-                                name: Runtime today · hours
-                          - type: entities
-                            title: Other appliances · activity only
-                            entities:
-                              - entity: switch.dishwasher_power
-                                name: Dishwasher power
-                              - entity: sensor.dishwasher_program_progress
-                                name: Dishwasher program progress
-                              - entity: sensor.dishwasher_operation_state
-                                name: Dishwasher operation
-                              - entity: sensor.energy_dishwasher_runtime_today
-                                name: Dishwasher runtime today · hours
-                              - entity: switch.oven_power
-                                name: Oven power
-                              - entity: select.oven_active_program
-                                name: Oven program
-                              - entity: sensor.energy_oven_powered_hours_today
-                                name: Oven powered today · hours
-                              - entity: media_player.mibox4
-                                name: TV / MiBox activity
-                              - entity: sensor.energy_tv_box_awake_hours_today
-                                name: TV box awake today · hours
-                          - type: history-graph
-                            title: Appliance activity · 24 hours
-                            hours_to_show: 24
-                            entities:
-                              - entity: binary_sensor.washing_machine_running
-                                name: Washer
-                              - entity: binary_sensor.dryer_running
-                                name: Dryer
-                              - entity: binary_sensor.energy_dishwasher_running
-                                name: Dishwasher
-                              - entity: binary_sensor.energy_oven_powered
-                                name: Oven power
-                              - entity: binary_sensor.energy_tv_box_awake
-                                name: TV box
-                          - type: markdown
-                            content: >
-                              Washer and dryer have measured plug data. Dishwasher,
-                              oven and TV currently show activity/runtime only; they
-                              do not yet have individual kWh measurements.
                 styles:
                   card:
                     - min-height: 68px
