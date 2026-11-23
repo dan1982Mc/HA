@@ -1337,8 +1337,9 @@ views:
                     - opacity: 0.6
           - type: vertical-stack
             cards:
-              - type: markdown
-                content: "### Appliance activity · this month"
+              - type: heading
+                heading: Appliance activity · this month
+                heading_style: title
               - type: custom:button-card
                 entity: binary_sensor.washing_machine_running
                 show_icon: false
@@ -1398,6 +1399,31 @@ views:
                         const number = Number(item.state);
                         return Number.isFinite(number) ? '€' + number.toFixed(2) : item.state;
                       };
+                      const metered = appliances.filter((a) => a.energy && a.cost);
+                      const totalEnergyValues = metered.map((a) => {
+                        const item = hass.states[a.energy];
+                        return item && !['unknown', 'unavailable'].includes(item.state)
+                          ? Number(item.state) : NaN;
+                      });
+                      const totalCostValues = metered.map((a) => {
+                        const item = hass.states[a.cost];
+                        return item && !['unknown', 'unavailable'].includes(item.state)
+                          ? Number(item.state) : NaN;
+                      });
+                      const totalEnergy = totalEnergyValues.every(Number.isFinite)
+                        ? totalEnergyValues.reduce((sum, value) => sum + value, 0).toFixed(2) + ' kWh'
+                        : '—';
+                      const totalCost = totalCostValues.every(Number.isFinite)
+                        ? '€' + totalCostValues.reduce((sum, value) => sum + value, 0).toFixed(2)
+                        : '—';
+                      const totalRow =
+                        '<div style="padding:8px 10px;margin:0 0 5px;border-radius:9px;background:var(--secondary-background-color);">' +
+                          '<div style="font-size:13px;line-height:18px;font-weight:700;color:var(--primary-text-color);margin-bottom:3px;">Total</div>' +
+                          '<div style="display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);column-gap:8px;font-size:12px;line-height:17px;color:var(--secondary-text-color);">' +
+                            '<span>Usage: <b style="color:var(--primary-text-color);font-weight:700;">' + totalEnergy + '</b></span>' +
+                            '<span>Cost: <b style="color:var(--primary-text-color);font-weight:700;">' + totalCost + '</b></span>' +
+                          '</div>' +
+                        '</div>';
                       const rows = appliances.map((a) => {
                         const state = hass.states[a.entity];
                         const running = state && state.state === 'on';
@@ -1421,6 +1447,7 @@ views:
                         '</div>';
                       }).join('');
                       return '<div style="width:100%;">' +
+                        totalRow +
                         rows +
                         '<div style="padding-top:7px;font-size:9px;line-height:13px;color:var(--secondary-text-color);">' +
                           'Electricity cost uses the configured €0.26697/kWh estimate. Oven and TV Box are activity-only and have no individual kWh meter; Oven tracks powered state and TV Box tracks awake state. ' +
