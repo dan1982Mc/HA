@@ -1894,8 +1894,10 @@ sensor:
 # ------------------------------------------------------------
 # MONTHLY APPLIANCE RUNTIME AND SESSION COUNTS
 # Runtime is the duration in the active state.
-# Starts count transitions into ON (one count per started session).
+# History Stats count measures ON periods in the selected window. An ON
+# period already active at the start of the window can also be included.
 # Weekly counts use the current calendar week, Monday through now.
+# Complete month-to-date totals require Recorder history to cover the month.
 # ------------------------------------------------------------
   - platform: history_stats
     name: Energy Washer Runtime This Month
