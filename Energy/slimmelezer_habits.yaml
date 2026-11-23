@@ -35,6 +35,9 @@ input_boolean:
     name: Gas idle baseline sample valid
   energy_manual_last_net_valid:
     name: Last activity net estimate valid
+  energy_period_meters_seeded:
+    name: Month and energy-year meters initialized
+    icon: mdi:calendar-check
   energy_gas_attribution_initialized:
     name: Time-weighted gas attribution initialized
     icon: mdi:timer-check-outline
@@ -1515,6 +1518,144 @@ script:
       - action: script.energy_manual_activity_start
 
 automation:
+  - id: energy_period_meters_seed_from_statistics
+    alias: Energy - Initialize month and energy-year meters
+    description: >-
+      Seeds the current month and July-to-June utility meters from retained
+      long-term statistics, including the usage before this package change.
+    mode: single
+    triggers:
+      - trigger: homeassistant
+        event: start
+      - trigger: time_pattern
+        minutes: "/10"
+    conditions:
+      - condition: state
+        entity_id: input_boolean.energy_period_meters_seeded
+        state: "off"
+      - condition: template
+        value_template: >-
+          {{ is_number(states('sensor.slimmelezer_electricity_total'))
+             and is_number(states('sensor.slimmelezer_mini_gas_consumed'))
+             and is_number(states('sensor.slimmelezer_energy_cost_total')) }}
+    actions:
+      - variables:
+          month_start: >-
+            {{ now().replace(day=1, hour=0, minute=0, second=0,
+               microsecond=0).isoformat() }}
+          energy_year_start: >-
+            {% set y = now().year if now().month >= 7 else now().year - 1 %}
+            {{ now().replace(year=y, month=7, day=1, hour=0, minute=0,
+               second=0, microsecond=0).isoformat() }}
+      - action: recorder.get_statistics
+        data:
+          statistic_ids:
+            - sensor.slimmelezer_electricity_total
+            - sensor.slimmelezer_mini_gas_consumed
+            - sensor.slimmelezer_energy_cost_total
+          start_time: "{{ month_start }}"
+          period: hour
+          types:
+            - change
+            - state
+        response_variable: month_stats
+      - action: recorder.get_statistics
+        data:
+          statistic_ids:
+            - sensor.slimmelezer_electricity_total
+            - sensor.slimmelezer_mini_gas_consumed
+          start_time: "{{ energy_year_start }}"
+          period: hour
+          types:
+            - change
+            - state
+        response_variable: year_stats
+      - choose:
+          - conditions:
+              - condition: template
+                value_template: >-
+                  {% set m = month_stats.get('statistics', {}) %}
+                  {% set y = year_stats.get('statistics', {}) %}
+                  {{ m.get('sensor.slimmelezer_electricity_total', []) | count > 0
+                     and m.get('sensor.slimmelezer_mini_gas_consumed', []) | count > 0
+                     and m.get('sensor.slimmelezer_energy_cost_total', []) | count > 0
+                     and y.get('sensor.slimmelezer_electricity_total', []) | count > 0
+                     and y.get('sensor.slimmelezer_mini_gas_consumed', []) | count > 0 }}
+            sequence:
+              - variables:
+                  month_electricity: >-
+                    {% set p = month_stats.statistics['sensor.slimmelezer_electricity_total'] %}
+                    {% set n = namespace(total=0) %}
+                    {% for item in p %}
+                      {% set n.total = n.total + (item.change | float(0)) %}
+                    {% endfor %}
+                    {% set current = states('sensor.slimmelezer_electricity_total') | float(0) %}
+                    {% set last = p[-1].state | float(current) %}
+                    {{ [n.total + current - last, 0] | max | round(5) }}
+                  month_gas: >-
+                    {% set p = month_stats.statistics['sensor.slimmelezer_mini_gas_consumed'] %}
+                    {% set n = namespace(total=0) %}
+                    {% for item in p %}
+                      {% set n.total = n.total + (item.change | float(0)) %}
+                    {% endfor %}
+                    {% set current = states('sensor.slimmelezer_mini_gas_consumed') | float(0) %}
+                    {% set last = p[-1].state | float(current) %}
+                    {{ [n.total + current - last, 0] | max | round(5) }}
+                  month_cost: >-
+                    {% set p = month_stats.statistics['sensor.slimmelezer_energy_cost_total'] %}
+                    {% set n = namespace(total=0) %}
+                    {% for item in p %}
+                      {% set n.total = n.total + (item.change | float(0)) %}
+                    {% endfor %}
+                    {% set current = states('sensor.slimmelezer_energy_cost_total') | float(0) %}
+                    {% set last = p[-1].state | float(current) %}
+                    {{ [n.total + current - last, 0] | max | round(5) }}
+                  year_electricity: >-
+                    {% set p = year_stats.statistics['sensor.slimmelezer_electricity_total'] %}
+                    {% set n = namespace(total=0) %}
+                    {% for item in p %}
+                      {% set n.total = n.total + (item.change | float(0)) %}
+                    {% endfor %}
+                    {% set current = states('sensor.slimmelezer_electricity_total') | float(0) %}
+                    {% set last = p[-1].state | float(current) %}
+                    {{ [n.total + current - last, 0] | max | round(5) }}
+                  year_gas: >-
+                    {% set p = year_stats.statistics['sensor.slimmelezer_mini_gas_consumed'] %}
+                    {% set n = namespace(total=0) %}
+                    {% for item in p %}
+                      {% set n.total = n.total + (item.change | float(0)) %}
+                    {% endfor %}
+                    {% set current = states('sensor.slimmelezer_mini_gas_consumed') | float(0) %}
+                    {% set last = p[-1].state | float(current) %}
+                    {{ [n.total + current - last, 0] | max | round(5) }}
+              - action: utility_meter.calibrate
+                target:
+                  entity_id: sensor.energy_electricity_total_month
+                data:
+                  value: "{{ month_electricity }}"
+              - action: utility_meter.calibrate
+                target:
+                  entity_id: sensor.energy_gas_total_month
+                data:
+                  value: "{{ month_gas }}"
+              - action: utility_meter.calibrate
+                target:
+                  entity_id: sensor.energy_cost_total_month
+                data:
+                  value: "{{ month_cost }}"
+              - action: utility_meter.calibrate
+                target:
+                  entity_id: sensor.energy_electricity_total_energy_year
+                data:
+                  value: "{{ year_electricity }}"
+              - action: utility_meter.calibrate
+                target:
+                  entity_id: sensor.energy_gas_total_energy_year
+                data:
+                  value: "{{ year_gas }}"
+              - action: input_boolean.turn_on
+                target:
+                  entity_id: input_boolean.energy_period_meters_seeded
   - id: energy_shower_auto_detection_start
     alias: Energy - Auto-detect shower start
     description: >-
@@ -2338,6 +2479,34 @@ sensor:
 # cycle begins at the next monthly reset.
 # ------------------------------------------------------------
 utility_meter:
+  energy_electricity_total_month:
+    name: Energy Electricity Total Month
+    unique_id: energy_electricity_total_month
+    source: sensor.slimmelezer_electricity_total
+    cycle: monthly
+    periodically_resetting: true
+    always_available: true
+  energy_cost_total_month:
+    name: Energy Cost Total Month
+    unique_id: energy_cost_total_month
+    source: sensor.slimmelezer_energy_cost_total
+    cycle: monthly
+    periodically_resetting: true
+    always_available: true
+  energy_electricity_total_energy_year:
+    name: Energy Electricity Total Energy Year
+    unique_id: energy_electricity_total_energy_year
+    source: sensor.slimmelezer_electricity_total
+    cron: "0 0 1 7 *"
+    periodically_resetting: true
+    always_available: true
+  energy_gas_total_energy_year:
+    name: Energy Gas Total Energy Year
+    unique_id: energy_gas_total_energy_year
+    source: sensor.slimmelezer_mini_gas_consumed
+    cron: "0 0 1 7 *"
+    periodically_resetting: true
+    always_available: true
   energy_gas_total_month:
     name: Energy Gas Total Month
     unique_id: energy_gas_total_month
