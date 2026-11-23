@@ -373,10 +373,10 @@ views:
                         - font-size: 14px
                         - font-weight: 700
                         - color: |
-                          [[[
-                            if (!entity) return 'var(--error-color)';
-                            return entity.state === 'on' ? 'var(--success-color)' : 'var(--primary-text-color)';
-                          ]]]
+                            [[[
+                              if (!entity) return 'var(--error-color)';
+                              return entity.state === 'on' ? 'var(--success-color)' : 'var(--primary-text-color)';
+                            ]]]
                       label:
                         - justify-self: start
                         - font-size: 10px
@@ -512,10 +512,10 @@ views:
                         - font-size: 14px
                         - font-weight: 700
                         - color: |
-                          [[[
-                            if (!entity) return 'var(--error-color)';
-                            return entity.state === 'on' ? 'var(--success-color)' : 'var(--primary-text-color)';
-                          ]]]
+                            [[[
+                              if (!entity) return 'var(--error-color)';
+                              return entity.state === 'on' ? 'var(--success-color)' : 'var(--primary-text-color)';
+                            ]]]
                       label:
                         - justify-self: start
                         - font-size: 10px
@@ -651,10 +651,10 @@ views:
                         - font-size: 14px
                         - font-weight: 700
                         - color: |
-                          [[[
-                            if (!entity) return 'var(--error-color)';
-                            return entity.state === 'on' ? 'var(--success-color)' : 'var(--primary-text-color)';
-                          ]]]
+                            [[[
+                              if (!entity) return 'var(--error-color)';
+                              return entity.state === 'on' ? 'var(--success-color)' : 'var(--primary-text-color)';
+                            ]]]
                       label:
                         - justify-self: start
                         - font-size: 10px
@@ -790,10 +790,10 @@ views:
                         - font-size: 14px
                         - font-weight: 700
                         - color: |
-                          [[[
-                            if (!entity) return 'var(--error-color)';
-                            return entity.state === 'on' ? 'var(--success-color)' : 'var(--primary-text-color)';
-                          ]]]
+                            [[[
+                              if (!entity) return 'var(--error-color)';
+                              return entity.state === 'on' ? 'var(--success-color)' : 'var(--primary-text-color)';
+                            ]]]
                       label:
                         - justify-self: start
                         - font-size: 10px
@@ -929,10 +929,10 @@ views:
                         - font-size: 14px
                         - font-weight: 700
                         - color: |
-                          [[[
-                            if (!entity) return 'var(--error-color)';
-                            return entity.state === 'on' ? 'var(--success-color)' : 'var(--primary-text-color)';
-                          ]]]
+                            [[[
+                              if (!entity) return 'var(--error-color)';
+                              return entity.state === 'on' ? 'var(--success-color)' : 'var(--primary-text-color)';
+                            ]]]
                       label:
                         - justify-self: start
                         - font-size: 10px
@@ -1068,10 +1068,10 @@ views:
                         - font-size: 14px
                         - font-weight: 700
                         - color: |
-                          [[[
-                            if (!entity) return 'var(--error-color)';
-                            return entity.state === 'on' ? 'var(--success-color)' : 'var(--primary-text-color)';
-                          ]]]
+                            [[[
+                              if (!entity) return 'var(--error-color)';
+                              return entity.state === 'on' ? 'var(--success-color)' : 'var(--primary-text-color)';
+                            ]]]
                       label:
                         - justify-self: start
                         - font-size: 10px
