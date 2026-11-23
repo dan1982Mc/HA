@@ -266,8 +266,9 @@ views:
             content: >-
               Year-on-year values compare this month's usage so far with the full
               same month last year, so the comparison remains provisional until
-              month end. Previous-year cost is estimated using the supplied rates
-              of €0.2345/kWh and €1.8115/m³.
+              month end. The 2025 reference cost uses your supplied July 2025–June
+              2026 rates (€0.2345/kWh electricity and €1.8115/m³ gas). Later
+              completed months are archived with their actual monthly costs.
           - type: custom:button-card
             entity: sensor.energy_gas_total_month
             name: Gas use split this month
