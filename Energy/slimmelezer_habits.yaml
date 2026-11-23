@@ -8,9 +8,11 @@
 # - existing appliance entities
 # - existing presence, motion and entry-contact entities
 #
-# Gas attribution is an estimate based on thermostat hvac_action
-# at the moment the gas meter entity updates. It is NOT a separate
-# physical measurement of hot-water or space-heating gas.
+# Legacy gas attribution sensors retain the old snapshot-at-meter-update
+# method for comparison. The time-weighted sensors allocate each gas-meter
+# delta using the proportion of the interval spent in heating, idle/off,
+# or unknown thermostat states. This remains an estimate, not a direct
+# measurement of boiler gas flow.
 # ============================================================
 
 # ------------------------------------------------------------
@@ -33,6 +35,9 @@ input_boolean:
     name: Gas idle baseline sample valid
   energy_manual_last_net_valid:
     name: Last activity net estimate valid
+  energy_gas_attribution_initialized:
+    name: Time-weighted gas attribution initialized
+    icon: mdi:timer-check-outline
 
 input_select:
   energy_manual_activity_type:
@@ -49,6 +54,13 @@ input_select:
       - Gas
       - Electricity
     icon: mdi:meter-gas
+  energy_gas_previous_hvac_state:
+    name: Gas interval previous thermostat state
+    options:
+      - heating
+      - idle
+      - unknown
+    icon: mdi:thermostat
 
 input_text:
   energy_manual_last_baseline_status:
@@ -76,6 +88,10 @@ input_datetime:
     has_time: true
   energy_baseline_sampled_at:
     name: Energy baseline last sample time
+    has_date: true
+    has_time: true
+  energy_gas_interval_last_sample:
+    name: Gas attribution last time sample
     has_date: true
     has_time: true
 
@@ -334,7 +350,54 @@ input_number:
     step: 0.001
     mode: box
     unit_of_measurement: kWh
-
+  energy_gas_last_meter_m3:
+    name: Gas meter snapshot for attribution
+    min: 0
+    max: 1000000
+    step: 0.001
+    mode: box
+    unit_of_measurement: m³
+  energy_gas_interval_heating_seconds:
+    name: Gas interval heating seconds
+    min: 0
+    max: 31536000
+    step: 1
+    mode: box
+    unit_of_measurement: s
+  energy_gas_interval_idle_seconds:
+    name: Gas interval idle seconds
+    min: 0
+    max: 31536000
+    step: 1
+    mode: box
+    unit_of_measurement: s
+  energy_gas_interval_unknown_seconds:
+    name: Gas interval unknown seconds
+    min: 0
+    max: 31536000
+    step: 1
+    mode: box
+    unit_of_measurement: s
+  energy_gas_time_weighted_heating_total_m3:
+    name: Time-weighted heating gas total
+    min: 0
+    max: 1000000
+    step: 0.000001
+    mode: box
+    unit_of_measurement: m³
+  energy_gas_time_weighted_other_total_m3:
+    name: Time-weighted other gas total
+    min: 0
+    max: 1000000
+    step: 0.000001
+    mode: box
+    unit_of_measurement: m³
+  energy_gas_time_weighted_unknown_total_m3:
+    name: Time-weighted unclassified gas total
+    min: 0
+    max: 1000000
+    step: 0.000001
+    mode: box
 # ------------------------------------------------------------
 # STATE-BASED TEMPLATE SENSORS
 # ------------------------------------------------------------
@@ -608,6 +671,52 @@ template:
           {% else %}
             {{ previous_total | round(3) }}
           {% endif %}
+
+  - sensor:
+      # Time-weighted attribution counters. The legacy trigger-based sensors
+      # above are retained as a snapshot-based comparison, not used by the
+      # new monthly gas split.
+      - name: Slimmelezer Gas Heating Time Weighted
+        unique_id: slimmelezer_gas_heating_time_weighted
+        device_class: gas
+        state_class: total_increasing
+        unit_of_measurement: m³
+        icon: mdi:radiator
+        state: "{{ states('input_number.energy_gas_time_weighted_heating_total_m3') | float(0) | round(6) }}"
+      - name: Slimmelezer Gas Outside Heating Time Weighted
+        unique_id: slimmelezer_gas_outside_heating_time_weighted
+        device_class: gas
+        state_class: total_increasing
+        unit_of_measurement: m³
+        icon: mdi:water-boiler
+        state: "{{ states('input_number.energy_gas_time_weighted_other_total_m3') | float(0) | round(6) }}"
+      - name: Slimmelezer Gas Unclassified Time Weighted
+        unique_id: slimmelezer_gas_unclassified_time_weighted
+        device_class: gas
+        state_class: total_increasing
+        unit_of_measurement: m³
+        icon: mdi:help-circle-outline
+        state: "{{ states('input_number.energy_gas_time_weighted_unknown_total_m3') | float(0) | round(6) }}"
+
+  - sensor:
+      - name: Slimmelezer Gas Heating Time Weighted Cost Total
+        unique_id: slimmelezer_gas_heating_time_weighted_cost_total
+        device_class: monetary
+        state_class: total_increasing
+        unit_of_measurement: EUR
+        state: "{{ (states('sensor.slimmelezer_gas_heating_time_weighted') | float(0) * 1.43817) | round(5) }}"
+      - name: Slimmelezer Gas Outside Heating Time Weighted Cost Total
+        unique_id: slimmelezer_gas_outside_heating_time_weighted_cost_total
+        device_class: monetary
+        state_class: total_increasing
+        unit_of_measurement: EUR
+        state: "{{ (states('sensor.slimmelezer_gas_outside_heating_time_weighted') | float(0) * 1.43817) | round(5) }}"
+      - name: Slimmelezer Gas Unclassified Time Weighted Cost Total
+        unique_id: slimmelezer_gas_unclassified_time_weighted_cost_total
+        device_class: monetary
+        state_class: total_increasing
+        unit_of_measurement: EUR
+        state: "{{ (states('sensor.slimmelezer_gas_unclassified_time_weighted') | float(0) * 1.43817) | round(5) }}"
 
   - sensor:
       - name: Slimmelezer Gas Heating Cost Total
@@ -1478,6 +1587,184 @@ automation:
     actions:
       - action: script.energy_manual_record_hvac_segment
 
+  - id: energy_gas_time_weighted_attribution
+    alias: Energy - Attribute gas by thermostat time share
+    description: >-
+      Tracks the T6 hvac_action duration between gas meter updates. Each gas
+      meter delta is split by the proportion of the interval spent heating,
+      idle/off, or unknown. Assumes gas flow is uniform across that interval.
+    mode: queued
+    max: 50
+    triggers:
+      - trigger: homeassistant
+        event: start
+        id: startup
+      - trigger: time_pattern
+        minutes: "/1"
+        id: heartbeat
+      - trigger: state
+        entity_id: climate.tstat_838e9c_lyric_t6_thermostat
+        attribute: hvac_action
+        id: thermostat
+      - trigger: state
+        entity_id: sensor.slimmelezer_mini_gas_consumed
+        id: gas_meter
+    conditions:
+      - condition: template
+        value_template: >-
+          {{ (is_state('input_boolean.energy_gas_attribution_initialized', 'on')
+              or is_number(states('sensor.slimmelezer_mini_gas_consumed')))
+             and (trigger.id != 'gas_meter'
+              or is_number(states('sensor.slimmelezer_mini_gas_consumed'))) }}
+    actions:
+      - variables:
+          now_timestamp: "{{ as_timestamp(now()) }}"
+          last_sample_timestamp: >-
+            {{ as_timestamp(states('input_datetime.energy_gas_interval_last_sample'),
+               as_timestamp(now())) }}
+          elapsed_seconds: >-
+            {{ [now_timestamp | float(0) - last_sample_timestamp | float(0), 0] | max }}
+          previous_hvac_state: "{{ states('input_select.energy_gas_previous_hvac_state') }}"
+          current_hvac_state: >-
+            {% set action = state_attr('climate.tstat_838e9c_lyric_t6_thermostat', 'hvac_action') %}
+            {% if action == 'heating' %}heating
+            {% elif action in ['idle', 'off'] %}idle
+            {% else %}unknown
+            {% endif %}
+          gas_now: "{{ states('sensor.slimmelezer_mini_gas_consumed') | float(0) }}"
+          gas_previous: "{{ states('input_number.energy_gas_last_meter_m3') | float(0) }}"
+          gas_delta: >-
+            {{ [gas_now | float(0) - gas_previous | float(0), 0] | max }}
+          heating_seconds: >-
+            {{ states('input_number.energy_gas_interval_heating_seconds') | float(0)
+               + (elapsed_seconds | float(0) if previous_hvac_state == 'heating' else 0) }}
+          idle_seconds: >-
+            {{ states('input_number.energy_gas_interval_idle_seconds') | float(0)
+               + (elapsed_seconds | float(0) if previous_hvac_state == 'idle' else 0) }}
+          unknown_seconds: >-
+            {{ states('input_number.energy_gas_interval_unknown_seconds') | float(0)
+               + (elapsed_seconds | float(0) if previous_hvac_state not in ['heating', 'idle'] else 0) }}
+          total_interval_seconds: >-
+            {{ heating_seconds | float(0) + idle_seconds | float(0) + unknown_seconds | float(0) }}
+          heating_gas_delta: >-
+            {{ (gas_delta | float(0) * heating_seconds | float(0)
+                / total_interval_seconds | float(1)) if total_interval_seconds | float(0) > 0 else 0 }}
+          idle_gas_delta: >-
+            {{ (gas_delta | float(0) * idle_seconds | float(0)
+                / total_interval_seconds | float(1)) if total_interval_seconds | float(0) > 0 else 0 }}
+          unknown_gas_delta: >-
+            {{ [gas_delta | float(0) - heating_gas_delta | float(0)
+                - idle_gas_delta | float(0), 0] | max }}
+      - choose:
+          # First run: take a gas-meter baseline; do not backfill prior use.
+          - conditions:
+              - condition: state
+                entity_id: input_boolean.energy_gas_attribution_initialized
+                state: "off"
+            sequence:
+              - service: input_number.set_value
+                target:
+                  entity_id: input_number.energy_gas_last_meter_m3
+                data:
+                  value: "{{ gas_now }}"
+              - service: input_number.set_value
+                target:
+                  entity_id:
+                    - input_number.energy_gas_interval_heating_seconds
+                    - input_number.energy_gas_interval_idle_seconds
+                    - input_number.energy_gas_interval_unknown_seconds
+                    - input_number.energy_gas_time_weighted_heating_total_m3
+                    - input_number.energy_gas_time_weighted_other_total_m3
+                    - input_number.energy_gas_time_weighted_unknown_total_m3
+                data:
+                  value: 0
+              - service: input_boolean.turn_on
+                target:
+                  entity_id: input_boolean.energy_gas_attribution_initialized
+          # On restart, mark the period Home Assistant was offline as unknown.
+          - conditions:
+              - condition: template
+                value_template: "{{ trigger.id == 'startup' }}"
+            sequence:
+              - service: input_number.set_value
+                target:
+                  entity_id: input_number.energy_gas_interval_unknown_seconds
+                data:
+                  value: "{{ (unknown_seconds | float(0) + elapsed_seconds | float(0)) | round(0) }}"
+          # Normal interval accounting.
+          default:
+            - choose:
+                # Allocate the measured meter delta using the whole interval's
+                # heating / idle / unknown time proportions.
+                - conditions:
+                    - condition: template
+                      value_template: "{{ trigger.id == 'gas_meter' and gas_delta | float(0) > 0 }}"
+                  sequence:
+                    - service: input_number.set_value
+                      target:
+                        entity_id: input_number.energy_gas_time_weighted_heating_total_m3
+                      data:
+                        value: "{{ (states('input_number.energy_gas_time_weighted_heating_total_m3') | float(0) + heating_gas_delta | float(0)) | round(6) }}"
+                    - service: input_number.set_value
+                      target:
+                        entity_id: input_number.energy_gas_time_weighted_other_total_m3
+                      data:
+                        value: "{{ (states('input_number.energy_gas_time_weighted_other_total_m3') | float(0) + idle_gas_delta | float(0)) | round(6) }}"
+                    - service: input_number.set_value
+                      target:
+                        entity_id: input_number.energy_gas_time_weighted_unknown_total_m3
+                      data:
+                        value: "{{ (states('input_number.energy_gas_time_weighted_unknown_total_m3') | float(0) + unknown_gas_delta | float(0)) | round(6) }}"
+                    - service: input_number.set_value
+                      target:
+                        entity_id:
+                          - input_number.energy_gas_interval_heating_seconds
+                          - input_number.energy_gas_interval_idle_seconds
+                          - input_number.energy_gas_interval_unknown_seconds
+                      data:
+                        value: 0
+                    - service: input_number.set_value
+                      target:
+                        entity_id: input_number.energy_gas_last_meter_m3
+                      data:
+                        value: "{{ gas_now }}"
+              default:
+                # No positive meter delta yet: keep accumulating the interval.
+                - service: input_number.set_value
+                  target:
+                    entity_id: input_number.energy_gas_interval_heating_seconds
+                  data:
+                    value: "{{ heating_seconds | round(0) }}"
+                - service: input_number.set_value
+                  target:
+                    entity_id: input_number.energy_gas_interval_idle_seconds
+                  data:
+                    value: "{{ idle_seconds | round(0) }}"
+                - service: input_number.set_value
+                  target:
+                    entity_id: input_number.energy_gas_interval_unknown_seconds
+                  data:
+                    value: "{{ unknown_seconds | round(0) }}"
+                - if:
+                    - condition: template
+                      value_template: "{{ trigger.id == 'gas_meter' and gas_now | float(0) < gas_previous | float(0) }}"
+                  then:
+                    - service: input_number.set_value
+                      target:
+                        entity_id: input_number.energy_gas_last_meter_m3
+                      data:
+                        value: "{{ gas_now }}"
+      - service: input_datetime.set_datetime
+        target:
+          entity_id: input_datetime.energy_gas_interval_last_sample
+        data:
+          datetime: "{{ now().strftime('%Y-%m-%d %H:%M:%S') }}"
+      - service: input_select.select_option
+        target:
+          entity_id: input_select.energy_gas_previous_hvac_state
+        data:
+          option: "{{ current_hvac_state }}"
+
 sensor:
   - platform: history_stats
     name: Energy Heating Hours Today
@@ -1601,6 +1888,13 @@ utility_meter:
     name: Energy Gas Heating Month
     unique_id: energy_gas_heating_month
     source: sensor.slimmelezer_gas_during_heating_demand
+    cycle: monthly
+    periodically_resetting: true
+    always_available: true
+  energy_gas_heating_time_weighted_month:
+    name: Energy Gas Heating Time Weighted Month
+    unique_id: energy_gas_heating_time_weighted_month
+    source: sensor.slimmelezer_gas_heating_time_weighted
     cycle: monthly
     periodically_resetting: true
     always_available: true
