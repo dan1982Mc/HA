@@ -1698,20 +1698,49 @@ views:
                     styles:
                       state:
                         - color: var(--warning-color)
-          - type: entities
-            title: Schedule settings · editable
-            show_header_toggle: false
-            entities:
-              - entity: input_number.thermostat_target_home
-                name: Target when Dan is home
-              - entity: input_number.thermostat_target_away
-                name: Target when Dan is away
-              - entity: input_number.thermostat_target_weekday_night
-                name: Weekday overnight target
-              - entity: input_datetime.thermostat_weekday_night_start
-                name: Weekday overnight start
-              - entity: input_datetime.thermostat_weekday_night_end
-                name: Weekday overnight end
+          - type: custom:button-card
+            name: Schedule heating
+            icon: mdi:calendar-clock
+            show_state: false
+            tap_action:
+              action: fire-dom-event
+              browser_mod:
+                service: browser_mod.popup
+                data:
+                  title: Schedule heating
+                  size: normal
+                  content:
+                    type: entities
+                    title: Schedule settings · editable
+                    show_header_toggle: false
+                    entities:
+                      - entity: input_number.thermostat_target_home
+                        name: Target when Dan is home
+                      - entity: input_number.thermostat_target_away
+                        name: Target when Dan is away
+                      - entity: input_number.thermostat_target_weekday_night
+                        name: Weekday overnight target
+                      - entity: input_datetime.thermostat_weekday_night_start
+                        name: Weekday overnight start
+                      - entity: input_datetime.thermostat_weekday_night_end
+                        name: Weekday overnight end
+            styles:
+              card:
+                - min-height: 42px
+                - border-radius: 10px
+                - padding: 8px 12px
+                - box-shadow: none
+                - background: var(--secondary-background-color)
+              grid:
+                - grid-template-areas: '"i n"'
+                - grid-template-columns: 28px 1fr
+                - column-gap: 8px
+              icon:
+                - width: 20px
+              name:
+                - justify-self: start
+                - font-size: 12px
+                - font-weight: 600
   - title: Details
     path: energy-details
     icon: mdi:chart-box-outline
