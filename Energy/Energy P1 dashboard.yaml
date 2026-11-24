@@ -1341,19 +1341,19 @@ views:
                 heading: Appliance activity · this month
                 heading_style: title
               - type: custom:button-card
-                entity: binary_sensor.washing_machine_running
+                entity: binary_sensor.energy_washer_cycle_running
                 show_icon: false
                 show_name: false
                 show_state: false
                 tap_action:
                   action: none
                 triggers_update:
-                  - binary_sensor.washing_machine_running
+                  - binary_sensor.energy_washer_cycle_running
                   - sensor.smart_plug_3_this_month_s_consumption
                   - sensor.energy_washer_cost_this_month
                   - sensor.energy_washer_runtime_this_month
                   - sensor.energy_washer_starts_this_month
-                  - binary_sensor.dryer_running
+                  - binary_sensor.energy_dryer_cycle_running
                   - sensor.fridge_2_this_month_s_consumption
                   - sensor.energy_dryer_cost_this_month
                   - sensor.energy_dryer_runtime_this_month
@@ -1378,8 +1378,8 @@ views:
                   appliance_list: |
                     [[[
                       const appliances = [
-                        { name: 'Washer', entity: 'binary_sensor.washing_machine_running', energy: 'sensor.smart_plug_3_this_month_s_consumption', cost: 'sensor.energy_washer_cost_this_month', runtime: 'sensor.energy_washer_runtime_this_month', sessions: 'sensor.energy_washer_starts_this_month' },
-                        { name: 'Dryer', entity: 'binary_sensor.dryer_running', energy: 'sensor.fridge_2_this_month_s_consumption', cost: 'sensor.energy_dryer_cost_this_month', runtime: 'sensor.energy_dryer_runtime_this_month', sessions: 'sensor.energy_dryer_starts_this_month' },
+                        { name: 'Washer', entity: 'binary_sensor.energy_washer_cycle_running', energy: 'sensor.smart_plug_3_this_month_s_consumption', cost: 'sensor.energy_washer_cost_this_month', runtime: 'sensor.energy_washer_runtime_this_month', sessions: 'sensor.energy_washer_starts_this_month' },
+                        { name: 'Dryer', entity: 'binary_sensor.energy_dryer_cycle_running', energy: 'sensor.fridge_2_this_month_s_consumption', cost: 'sensor.energy_dryer_cost_this_month', runtime: 'sensor.energy_dryer_runtime_this_month', sessions: 'sensor.energy_dryer_starts_this_month' },
                         { name: 'Dishwasher', entity: 'binary_sensor.energy_dishwasher_running', energy: 'sensor.tv_outlet_this_month_s_consumption', cost: 'sensor.energy_dishwasher_cost_this_month', runtime: 'sensor.energy_dishwasher_runtime_this_month', sessions: 'sensor.energy_dishwasher_starts_this_month' },
                         { name: 'Laptop', entity: 'binary_sensor.energy_laptop_running', energy: 'sensor.garden_house_this_month_s_consumption', cost: 'sensor.energy_laptop_cost_this_month', runtime: 'sensor.energy_laptop_runtime_this_month', sessions: 'sensor.energy_laptop_starts_this_month' },
                         { name: 'Oven', entity: 'binary_sensor.energy_oven_powered', energy: null, cost: null, runtime: 'sensor.energy_oven_runtime_this_month', sessions: 'sensor.energy_oven_starts_this_month' },
@@ -1474,9 +1474,9 @@ views:
                               show_names: true
                               label_position: below
                               entities:
-                                - entity: binary_sensor.washing_machine_running
+                                - entity: binary_sensor.energy_washer_cycle_running
                                   name: Washer
-                                - entity: binary_sensor.dryer_running
+                                - entity: binary_sensor.energy_dryer_cycle_running
                                   name: Dryer
                                 - entity: binary_sensor.energy_dishwasher_running
                                   name: Dishwasher
@@ -1518,9 +1518,9 @@ views:
                               show_names: true
                               label_position: below
                               entities:
-                                - entity: binary_sensor.washing_machine_running
+                                - entity: binary_sensor.energy_washer_cycle_running
                                   name: Washer
-                                - entity: binary_sensor.dryer_running
+                                - entity: binary_sensor.energy_dryer_cycle_running
                                   name: Dryer
                                 - entity: binary_sensor.energy_dishwasher_running
                                   name: Dishwasher
