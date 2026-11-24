@@ -1612,11 +1612,11 @@ views:
                                 - entity: input_number.thermostat_target_away
                                   name: Target when Dan is away
                                 - entity: input_number.thermostat_target_weekday_night
-                                  name: Weekday overnight target
+                                  name: Daily overnight target
                                 - entity: input_datetime.thermostat_weekday_night_start
-                                  name: Weekday overnight start
+                                  name: Daily overnight start
                                 - entity: input_datetime.thermostat_weekday_night_end
-                                  name: Weekday overnight end
+                                  name: Daily overnight end
                       styles:
                         card:
                           - background: var(--secondary-background-color)
@@ -1651,15 +1651,15 @@ views:
                               content: |
                                 **Master switch:** Automatic schedule must be ON for Home Assistant to manage the thermostat target. OFF pauses automatic target changes.
 
-                                **Presence:** Only person.dan is used. When Dan is home, the home target is used; when Dan is away, the away target is used.
+                                **Presence:** Only person.dan is used. When Dan is home, the home target is used. When Dan is away, the away target is used — except while the active calendar event is exactly **Eva - vacanta**, when the home target is used instead.
 
-                                **Weekday overnight:** Monday–Friday, between the adjustable start and end times, the overnight target is used instead of the home/away target. This overnight rule is skipped while the active calendar event is **Eva - vacanta**.
+                                **Daily overnight:** Every day, between the adjustable start and end times, the overnight target is used instead of the home/away target. This rule has no calendar exception.
 
                                 **Evening bedroom boost:** When enabled, between 20:00 and 23:00, any one of the three bedroom sensors more than 1.5°C below the thermostat starts a +1.5°C boost. It ends when all three sensors are back within 1.5°C, the 90-minute timer expires, or 23:00 is reached — whichever happens first.
 
-                                **Open-window / door protection:** When enabled, any of the three listed contacts open for 10 minutes applies −1.5°C. The reduction clears only after all three contacts have been closed for 10 minutes.
+                                **Open-window / door protection:** When enabled, any of the three listed contacts open for 10 minutes applies −2°C. The reduction clears only after all three contacts have been closed for 10 minutes.
 
-                                **Adjusting the schedule:** Select Heating schedule to change the home, away or overnight target values and the weekday overnight start/end time. Changes are applied automatically and retained after Home Assistant restarts.
+                                **Adjusting the schedule:** Select Heating schedule to change the home, away or overnight target values and the daily overnight start/end time. Changes are applied automatically and retained after Home Assistant restarts.
                       styles:
                         card:
                           - background: var(--secondary-background-color)
