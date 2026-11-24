@@ -2244,16 +2244,19 @@ automation:
     actions:
       - variables:
           november_electricity: >-
-            {{ (states('sensor.slimmelezer_electricity_total') | float(0) - 18436)
-               | max(0) | round(3) }}
+            {{ [states('sensor.slimmelezer_electricity_total') | float(0) - 18436, 0]
+               | max | round(3) }}
           november_gas: >-
-            {{ (states('sensor.slimmelezer_mini_gas_consumed') | float(0) - 9693)
-               | max(0) | round(3) }}
+            {{ [states('sensor.slimmelezer_mini_gas_consumed') | float(0) - 9693, 0]
+               | max | round(3) }}
           november_cost: >-
-            {{ (((states('sensor.slimmelezer_electricity_total') | float(0) - 18436)
-                 * 0.26697)
-                + ((states('sensor.slimmelezer_mini_gas_consumed') | float(0) - 9693)
-                   * 1.43817)) | max(0) | round(2) }}
+            {{ [
+                 ((states('sensor.slimmelezer_electricity_total') | float(0) - 18436)
+                  * 0.26697)
+                 + ((states('sensor.slimmelezer_mini_gas_consumed') | float(0) - 9693)
+                    * 1.43817),
+                 0
+               ] | max | round(2) }}
       - action: utility_meter.calibrate
         target:
           entity_id: sensor.energy_electricity_total_month
