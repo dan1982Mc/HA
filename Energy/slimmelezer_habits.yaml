@@ -2851,8 +2851,8 @@ automation:
     description: >-
       One automation for presence-based heating, weekday overnight setback,
       the evening bedroom temperature boost and open-window/door protection.
-      All three bedroom sensors must be more than 1.5 C below the thermostat
-      for the evening boost to start.
+      Any one bedroom sensor more than 1.5 C below the thermostat starts the boost.
+      The boost stops when all three bedrooms are back within 1.5 C of the thermostat.
     mode: restart
     max_exceeded: silent
     triggers:
@@ -2921,13 +2921,11 @@ automation:
             {% set big_bedroom = states('sensor.miaomiaoce_t2_da88_temperature') | float(none) %}
             {% set eva_bedroom = states('sensor.miaomiaoce_t2_8089_temperature') | float(none) %}
             {% set small_bedroom = states('sensor.meter_53c4') | float(none) %}
-            {{ reference is not none
-               and big_bedroom is not none
-               and eva_bedroom is not none
-               and small_bedroom is not none
-               and big_bedroom < reference - 1.5
-               and eva_bedroom < reference - 1.5
-               and small_bedroom < reference - 1.5 }}
+            {{ reference is not none and (
+                 (big_bedroom is not none and big_bedroom < reference - 1.5)
+                 or (eva_bedroom is not none and eva_bedroom < reference - 1.5)
+                 or (small_bedroom is not none and small_bedroom < reference - 1.5)
+               ) }}
           window_open_long: >-
             {% set ids = [
               'binary_sensor.kitchen_window_contact',
