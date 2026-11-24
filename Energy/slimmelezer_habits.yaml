@@ -38,6 +38,9 @@ input_boolean:
   energy_period_meters_seeded:
     name: Month and energy-year meters initialized
     icon: mdi:calendar-check
+  energy_november_2026_baseline_applied:
+    name: November 2026 meter baseline applied
+    icon: mdi:calendar-check
   energy_yoy_archive_seeded:
     name: Year-on-year monthly archive initialized
     icon: mdi:database-check
@@ -2212,6 +2215,63 @@ automation:
               - action: input_boolean.turn_on
                 target:
                   entity_id: input_boolean.energy_period_meters_seeded
+  - id: energy_apply_november_2026_meter_baseline
+    alias: Energy - Apply 1 November 2026 meter readings
+    description: >-
+      Corrects November electricity, gas and cost totals using the cumulative
+      meter readings recorded on 1 November 2026. Runs once after the monthly
+      meters are initialized and the live P1 registers are confirmed above
+      those baseline readings.
+    mode: single
+    triggers:
+      - trigger: homeassistant
+        event: start
+      - trigger: time_pattern
+        minutes: "/10"
+    conditions:
+      - condition: state
+        entity_id: input_boolean.energy_november_2026_baseline_applied
+        state: "off"
+      - condition: template
+        value_template: >-
+          {{ now().year == 2026
+             and now().month == 11
+             and is_state('input_boolean.energy_period_meters_seeded', 'on')
+             and is_number(states('sensor.slimmelezer_electricity_total'))
+             and is_number(states('sensor.slimmelezer_mini_gas_consumed'))
+             and (states('sensor.slimmelezer_electricity_total') | float(0)) >= 18436
+             and (states('sensor.slimmelezer_mini_gas_consumed') | float(0)) >= 9693 }}
+    actions:
+      - variables:
+          november_electricity: >-
+            {{ (states('sensor.slimmelezer_electricity_total') | float(0) - 18436)
+               | max(0) | round(3) }}
+          november_gas: >-
+            {{ (states('sensor.slimmelezer_mini_gas_consumed') | float(0) - 9693)
+               | max(0) | round(3) }}
+          november_cost: >-
+            {{ (((states('sensor.slimmelezer_electricity_total') | float(0) - 18436)
+                 * 0.26697)
+                + ((states('sensor.slimmelezer_mini_gas_consumed') | float(0) - 9693)
+                   * 1.43817)) | max(0) | round(2) }}
+      - action: utility_meter.calibrate
+        target:
+          entity_id: sensor.energy_electricity_total_month
+        data:
+          value: "{{ november_electricity }}"
+      - action: utility_meter.calibrate
+        target:
+          entity_id: sensor.energy_gas_total_month
+        data:
+          value: "{{ november_gas }}"
+      - action: utility_meter.calibrate
+        target:
+          entity_id: sensor.energy_cost_total_month
+        data:
+          value: "{{ november_cost }}"
+      - action: input_boolean.turn_on
+        target:
+          entity_id: input_boolean.energy_november_2026_baseline_applied
   - id: energy_shower_auto_detection_start
     alias: Energy - Auto-detect shower start
     description: >-
