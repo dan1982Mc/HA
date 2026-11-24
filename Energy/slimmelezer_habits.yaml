@@ -135,8 +135,42 @@ input_datetime:
     name: Gas attribution last time sample
     has_date: true
     has_time: true
+  thermostat_weekday_night_start:
+    name: Thermostat weekday overnight start
+    has_date: false
+    has_time: true
+    initial: "00:00:00"
+  thermostat_weekday_night_end:
+    name: Thermostat weekday overnight end
+    has_date: false
+    has_time: true
+    initial: "08:00:00"
 
 input_number:
+  thermostat_target_home:
+    name: Thermostat target when Dan is home
+    min: 15
+    max: 24
+    step: 0.5
+    initial: 19
+    mode: box
+    unit_of_measurement: "°C"
+  thermostat_target_away:
+    name: Thermostat target when Dan is away
+    min: 15
+    max: 22
+    step: 0.5
+    initial: 17
+    mode: box
+    unit_of_measurement: "°C"
+  thermostat_target_weekday_night:
+    name: Thermostat weekday overnight target
+    min: 15
+    max: 22
+    step: 0.5
+    initial: 18
+    mode: box
+    unit_of_measurement: "°C"
   energy_manual_start_gas_m3:
     name: Manual session gas meter at start
     min: 0
@@ -2849,8 +2883,8 @@ automation:
   - id: thermostat_household_schedule_and_overrides
     alias: Thermostat - Household schedule and smart overrides
     description: >-
-      One automation for presence-based heating, weekday overnight setback,
-      the evening bedroom temperature boost and open-window/door protection.
+      One automation for Dan-presence-based heating, editable weekday overnight
+      setback, the evening bedroom temperature boost and open-window/door protection.
       Any one bedroom sensor more than 1.5 C below the thermostat starts the boost.
       The boost stops when all three bedrooms are back within 1.5 C of the thermostat.
     mode: restart
@@ -2869,7 +2903,6 @@ automation:
       - trigger: state
         entity_id:
           - person.dan
-          - person.anca
           - calendar.eva_vacante
       - trigger: state
         entity_id: calendar.eva_vacante
@@ -2885,6 +2918,11 @@ automation:
           - input_boolean.thermostat_heating_schedule_enabled
           - input_boolean.thermostat_evening_bonus_enabled
           - input_boolean.thermostat_window_protection_enabled
+          - input_number.thermostat_target_home
+          - input_number.thermostat_target_away
+          - input_number.thermostat_target_weekday_night
+          - input_datetime.thermostat_weekday_night_start
+          - input_datetime.thermostat_weekday_night_end
       - trigger: state
         entity_id:
           - binary_sensor.kitchen_window_contact
@@ -2909,12 +2947,17 @@ automation:
           base_target: >-
             {% set eva_vacanta = is_state('calendar.eva_vacante', 'on')
               and state_attr('calendar.eva_vacante', 'message') == 'Eva - vacanta' %}
-            {% if now().weekday() < 5 and now().hour < 8 and not eva_vacanta %}
-              18
-            {% elif is_state('person.dan', 'home') or is_state('person.anca', 'home') %}
-              19
+            {% set current_time = now().strftime('%H:%M:%S') %}
+            {% set night_start = states('input_datetime.thermostat_weekday_night_start') %}
+            {% set night_end = states('input_datetime.thermostat_weekday_night_end') %}
+            {% set overnight = (night_start <= night_end and night_start <= current_time < night_end)
+              or (night_start > night_end and (current_time >= night_start or current_time < night_end)) %}
+            {% if now().weekday() < 5 and overnight and not eva_vacanta %}
+              {{ states('input_number.thermostat_target_weekday_night') | float(18) }}
+            {% elif is_state('person.dan', 'home') %}
+              {{ states('input_number.thermostat_target_home') | float(19) }}
             {% else %}
-              17
+              {{ states('input_number.thermostat_target_away') | float(17) }}
             {% endif %}
           bedrooms_cold: >-
             {% set reference = states('sensor.tstat_838e9c_current_temperature') | float(none) %}
