@@ -1585,10 +1585,54 @@ views:
           - type: vertical-stack
             cards:
               - type: custom:button-card
-                name: Automation Controls
                 show_icon: false
+                show_name: false
                 show_state: false
                 custom_fields:
+                  schedule:
+                    card:
+                      type: custom:button-card
+                      name: Heating schedule
+                      icon: mdi:calendar-clock
+                      show_state: false
+                      tap_action:
+                        action: fire-dom-event
+                        browser_mod:
+                          service: browser_mod.popup
+                          data:
+                            title: Schedule heating
+                            size: normal
+                            content:
+                              type: entities
+                              title: Schedule settings · editable
+                              show_header_toggle: false
+                              entities:
+                                - entity: input_number.thermostat_target_home
+                                  name: Target when Dan is home
+                                - entity: input_number.thermostat_target_away
+                                  name: Target when Dan is away
+                                - entity: input_number.thermostat_target_weekday_night
+                                  name: Weekday overnight target
+                                - entity: input_datetime.thermostat_weekday_night_start
+                                  name: Weekday overnight start
+                                - entity: input_datetime.thermostat_weekday_night_end
+                                  name: Weekday overnight end
+                      styles:
+                        card:
+                          - background: var(--secondary-background-color)
+                          - box-shadow: none
+                          - border-radius: 9px
+                          - padding: 5px 9px
+                          - min-height: 34px
+                        grid:
+                          - grid-template-areas: '"i n"'
+                          - grid-template-columns: 19px auto
+                          - column-gap: 5px
+                        icon:
+                          - width: 16px
+                        name:
+                          - font-size: 12px
+                          - font-weight: 600
                   info:
                     card:
                       type: custom:button-card
@@ -1615,15 +1659,14 @@ views:
 
                                 **Open-window / door protection:** When enabled, any of the three listed contacts open for 10 minutes applies −1.5°C. The reduction clears only after all three contacts have been closed for 10 minutes.
 
-                                **Adjusting the schedule:** Change the home, away or overnight target values in the Schedule settings below. Change the weekday overnight start/end time there too. Changes are applied automatically.
+                                **Adjusting the schedule:** Select Heating schedule to change the home, away or overnight target values and the weekday overnight start/end time. Changes are applied automatically and retained after Home Assistant restarts.
                       styles:
                         card:
-                          - width: 76px
-                          - min-height: 34px
-                          - padding: 3px 7px
-                          - border-radius: 9px
-                          - box-shadow: none
                           - background: var(--secondary-background-color)
+                          - box-shadow: none
+                          - border-radius: 9px
+                          - padding: 5px 9px
+                          - min-height: 34px
                         grid:
                           - grid-template-areas: '"i n"'
                           - grid-template-columns: 17px auto
@@ -1637,18 +1680,18 @@ views:
                   card:
                     - background: none
                     - box-shadow: none
-                    - padding: 0 4px 5px
+                    - padding: 0 2px 5px
                   grid:
-                    - grid-template-areas: '"n info"'
+                    - grid-template-areas: '"schedule info"'
                     - grid-template-columns: 1fr auto
-                  name:
-                    - justify-self: start
-                    - font-size: 14px
-                    - font-weight: 700
+                    - column-gap: 8px
                   custom_fields:
+                    schedule:
+                      - justify-self: start
                     info:
                       - justify-self: end
               - type: entities
+                title: Automation Controls
                 show_header_toggle: false
                 entities:
                   - entity: input_boolean.thermostat_heating_schedule_enabled
@@ -1659,88 +1702,8 @@ views:
                     name: Open-window / door protection · enable
                   - entity: timer.thermostat_evening_bonus
                     name: Evening boost timer
-              - type: custom:button-card
-                entity: input_boolean.thermostat_window_open_override
-                name: Contact temperature reduction
-                icon: mdi:window-open-variant
-                show_state: true
-                state_display: |
-                  [[[
-                    return entity?.state === 'on' ? 'ACTIVE · −1.5°C applied' : 'Inactive';
-                  ]]]
-                tap_action:
-                  action: none
-                hold_action:
-                  action: none
-                styles:
-                  card:
-                    - min-height: 42px
-                    - border-radius: 10px
-                    - padding: 6px 12px
-                    - box-shadow: none
-                  grid:
-                    - grid-template-areas: '"i n" "i s"'
-                    - grid-template-columns: 32px 1fr
-                    - grid-template-rows: min-content min-content
-                    - row-gap: 1px
-                  icon:
-                    - width: 20px
-                  name:
-                    - justify-self: start
-                    - font-size: 11px
-                    - font-weight: 600
-                  state:
-                    - justify-self: start
-                    - font-size: 12px
-                    - font-weight: 600
-                state:
-                  - value: "on"
-                    styles:
-                      state:
-                        - color: var(--warning-color)
-          - type: custom:button-card
-            name: Schedule heating
-            icon: mdi:calendar-clock
-            show_state: false
-            tap_action:
-              action: fire-dom-event
-              browser_mod:
-                service: browser_mod.popup
-                data:
-                  title: Schedule heating
-                  size: normal
-                  content:
-                    type: entities
-                    title: Schedule settings · editable
-                    show_header_toggle: false
-                    entities:
-                      - entity: input_number.thermostat_target_home
-                        name: Target when Dan is home
-                      - entity: input_number.thermostat_target_away
-                        name: Target when Dan is away
-                      - entity: input_number.thermostat_target_weekday_night
-                        name: Weekday overnight target
-                      - entity: input_datetime.thermostat_weekday_night_start
-                        name: Weekday overnight start
-                      - entity: input_datetime.thermostat_weekday_night_end
-                        name: Weekday overnight end
-            styles:
-              card:
-                - min-height: 42px
-                - border-radius: 10px
-                - padding: 8px 12px
-                - box-shadow: none
-                - background: var(--secondary-background-color)
-              grid:
-                - grid-template-areas: '"i n"'
-                - grid-template-columns: 28px 1fr
-                - column-gap: 8px
-              icon:
-                - width: 20px
-              name:
-                - justify-self: start
-                - font-size: 12px
-                - font-weight: 600
+                  - entity: binary_sensor.thermostat_contact_temperature_reduction
+                    name: Contact temperature reduction
   - title: Details
     path: energy-details
     icon: mdi:chart-box-outline
