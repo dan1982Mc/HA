@@ -257,7 +257,10 @@ views:
                 const heatingPct = safeTotal > 0 ? safeHeating / safeTotal * 100 : 0;
                 const otherPct = safeTotal > 0 ? safeOther / safeTotal * 100 : 0;
                 const unallocatedPct = safeTotal > 0 ? unallocated / safeTotal * 100 : 0;
-                return `<span style="color:var(--warning-color);font-weight:600">Heating ${safeHeating.toFixed(2)} m³ · ${heatingPct.toFixed(0)}%</span> &nbsp; <span style="color:var(--info-color);font-weight:600">Other ${safeOther.toFixed(2)} m³ · ${otherPct.toFixed(0)}%</span> &nbsp; <span style="color:#b8b8b8;font-weight:600">Pre-installation / unallocated ${unallocated.toFixed(2)} m³ · ${unallocatedPct.toFixed(0)}%</span>`;
+                const unallocatedLabel = unallocated >= 0.005
+                  ? ` &nbsp; <span style="color:#b8b8b8;font-weight:600">Unallocated ${unallocated.toFixed(2)} m³ · ${unallocatedPct.toFixed(0)}%</span>`
+                  : '';
+                return `<span style="color:var(--warning-color);font-weight:600">Heating ${safeHeating.toFixed(2)} m³ · ${heatingPct.toFixed(0)}%</span> &nbsp; <span style="color:var(--info-color);font-weight:600">Other ${safeOther.toFixed(2)} m³ · ${otherPct.toFixed(0)}%</span>` + unallocatedLabel;
               ]]]
             custom_fields:
               gas_bar: |
