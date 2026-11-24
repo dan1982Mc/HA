@@ -713,7 +713,7 @@ views:
             content: |
               **Base schedule:** 19°C while Dan or Anca is home; otherwise 17°C. Weekdays 00:00–08:00: 18°C, except when the active calendar event is **Eva - vacanta**.
 
-              **Evening boost:** 20:00–23:00 when all three bedroom sensors are more than 1.5°C below the thermostat. Adds 1.5°C for up to 90 minutes.
+              **Evening boost:** 20:00–23:00. Starts when any one bedroom sensor is more than 1.5°C below the thermostat. Stops when all three bedrooms are back within 1.5°C, after 90 minutes maximum, or at 23:00 — whichever comes first. Adds 1.5°C while active.
 
               **Contact protection:** any listed contact open for 10 minutes applies −1.5°C. The reduction clears after all three contacts have been closed for 10 minutes.
 
