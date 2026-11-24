@@ -1019,6 +1019,12 @@ template:
         availability: "{{ is_number(states('sensor.garden_house_current')) }}"
         state: "{{ states('sensor.garden_house_current') | float(0) > 0.05 }}"
 
+      - name: Thermostat Contact Temperature Reduction
+        unique_id: thermostat_contact_temperature_reduction
+        icon: mdi:window-open-variant
+        availability: "{{ states('input_boolean.thermostat_window_open_override') in ['on', 'off'] }}"
+        state: "{{ is_state('input_boolean.thermostat_window_open_override', 'on') }}"
+
 # ------------------------------------------------------------
 # TRIGGER-BASED GAS ATTRIBUTION
 # ------------------------------------------------------------
