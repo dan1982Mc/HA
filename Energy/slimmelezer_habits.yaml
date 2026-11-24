@@ -904,6 +904,25 @@ template:
         state: >
           {{ state_attr('climate.tstat_838e9c_lyric_t6_thermostat', 'hvac_action') == 'heating' }}
 
+      # Use the same current thresholds as the laundry completion automations.
+      # The off delays keep a machine marked active through short load/thermostat
+      # pauses, so one appliance program is counted as one session.
+      - name: Energy Washer Cycle Running
+        unique_id: energy_washer_cycle_running
+        device_class: running
+        icon: mdi:washing-machine
+        availability: "{{ is_number(states('sensor.smart_plug_3_current')) }}"
+        state: "{{ states('sensor.smart_plug_3_current') | float(0) > 0.1 }}"
+        delay_off: "00:15:00"
+
+      - name: Energy Dryer Cycle Running
+        unique_id: energy_dryer_cycle_running
+        device_class: running
+        icon: mdi:tumble-dryer
+        availability: "{{ is_number(states('sensor.fridge_2_current')) }}"
+        state: "{{ states('sensor.fridge_2_current') | float(0) > 0.25 }}"
+        delay_off: "00:05:00"
+
       - name: Energy Dishwasher Running
         unique_id: energy_dishwasher_running
         icon: mdi:dishwasher
@@ -2330,8 +2349,8 @@ automation:
               hvac_action: "{{ state_attr('climate.tstat_838e9c_lyric_t6_thermostat', 'hvac_action') }}"
               quiet_power: >-
                 {% set appliance_ids = [
-                  'binary_sensor.washing_machine_running',
-                  'binary_sensor.dryer_running',
+                  'binary_sensor.energy_washer_cycle_running',
+                  'binary_sensor.energy_dryer_cycle_running',
                   'switch.dishwasher_power',
                   'switch.oven_power'
                 ] %}
@@ -2694,7 +2713,7 @@ sensor:
   - platform: history_stats
     name: Energy Washer Runtime Today
     unique_id: energy_washer_runtime_today
-    entity_id: binary_sensor.washing_machine_running
+    entity_id: binary_sensor.energy_washer_cycle_running
     state: "on"
     type: time
     start: "{{ today_at() }}"
@@ -2704,7 +2723,7 @@ sensor:
   - platform: history_stats
     name: Energy Dryer Runtime Today
     unique_id: energy_dryer_runtime_today
-    entity_id: binary_sensor.dryer_running
+    entity_id: binary_sensor.energy_dryer_cycle_running
     state: "on"
     type: time
     start: "{{ today_at() }}"
@@ -2775,16 +2794,17 @@ sensor:
 
 # ------------------------------------------------------------
 # MONTHLY APPLIANCE RUNTIME AND SESSION COUNTS
-# Runtime is the duration in the active state.
-# History Stats count measures ON periods in the selected window. An ON
-# period already active at the start of the window can also be included.
+# Runtime is the duration of the stable appliance-cycle state.
+# Washer/Dryer cycle sensors use current thresholds and delayed OFF states
+# matching the existing laundry completion automations. History Stats count
+# each continuous ON period as one session.
 # Weekly counts use the current calendar week, Monday through now.
 # Complete month-to-date totals require Recorder history to cover the month.
 # ------------------------------------------------------------
   - platform: history_stats
     name: Energy Washer Runtime This Month
     unique_id: energy_washer_runtime_this_month
-    entity_id: binary_sensor.washing_machine_running
+    entity_id: binary_sensor.energy_washer_cycle_running
     state: "on"
     type: time
     start: "{{ now().replace(day=1, hour=0, minute=0, second=0, microsecond=0) }}"
@@ -2794,7 +2814,7 @@ sensor:
   - platform: history_stats
     name: Energy Washer Starts This Month
     unique_id: energy_washer_starts_this_month
-    entity_id: binary_sensor.washing_machine_running
+    entity_id: binary_sensor.energy_washer_cycle_running
     state: "on"
     type: count
     start: "{{ now().replace(day=1, hour=0, minute=0, second=0, microsecond=0) }}"
@@ -2804,7 +2824,7 @@ sensor:
   - platform: history_stats
     name: Energy Washer Starts This Week
     unique_id: energy_washer_starts_this_week
-    entity_id: binary_sensor.washing_machine_running
+    entity_id: binary_sensor.energy_washer_cycle_running
     state: "on"
     type: count
     start: "{{ now().replace(hour=0, minute=0, second=0, microsecond=0) - timedelta(days=now().weekday()) }}"
@@ -2814,7 +2834,7 @@ sensor:
   - platform: history_stats
     name: Energy Dryer Runtime This Month
     unique_id: energy_dryer_runtime_this_month
-    entity_id: binary_sensor.dryer_running
+    entity_id: binary_sensor.energy_dryer_cycle_running
     state: "on"
     type: time
     start: "{{ now().replace(day=1, hour=0, minute=0, second=0, microsecond=0) }}"
@@ -2824,7 +2844,7 @@ sensor:
   - platform: history_stats
     name: Energy Dryer Starts This Month
     unique_id: energy_dryer_starts_this_month
-    entity_id: binary_sensor.dryer_running
+    entity_id: binary_sensor.energy_dryer_cycle_running
     state: "on"
     type: count
     start: "{{ now().replace(day=1, hour=0, minute=0, second=0, microsecond=0) }}"
@@ -2834,7 +2854,7 @@ sensor:
   - platform: history_stats
     name: Energy Dryer Starts This Week
     unique_id: energy_dryer_starts_this_week
-    entity_id: binary_sensor.dryer_running
+    entity_id: binary_sensor.energy_dryer_cycle_running
     state: "on"
     type: count
     start: "{{ now().replace(hour=0, minute=0, second=0, microsecond=0) - timedelta(days=now().weekday()) }}"
