@@ -139,11 +139,11 @@ input_datetime:
     has_date: true
     has_time: true
   thermostat_weekday_night_start:
-    name: Thermostat weekday overnight start
+    name: Thermostat daily overnight start
     has_date: false
     has_time: true
   thermostat_weekday_night_end:
-    name: Thermostat weekday overnight end
+    name: Thermostat daily overnight end
     has_date: false
     has_time: true
 
@@ -163,7 +163,7 @@ input_number:
     mode: box
     unit_of_measurement: "°C"
   thermostat_target_weekday_night:
-    name: Thermostat weekday overnight target
+    name: Thermostat daily overnight target
     min: 12
     max: 24
     step: 0.5
@@ -2887,7 +2887,7 @@ automation:
   - id: thermostat_household_schedule_and_overrides
     alias: Thermostat - Household schedule and smart overrides
     description: >-
-      One automation for Dan-presence-based heating, editable weekday overnight
+      One automation for Dan-presence-based heating, editable daily overnight
       setback, the evening bedroom temperature boost and open-window/door protection.
       Any one bedroom sensor more than 1.5 C below the thermostat starts the boost.
       The boost stops when all three bedrooms are back within 1.5 C of the thermostat.
@@ -2977,9 +2977,9 @@ automation:
             {% set night_end = states('input_datetime.thermostat_weekday_night_end') %}
             {% set overnight = (night_start <= night_end and night_start <= current_time < night_end)
               or (night_start > night_end and (current_time >= night_start or current_time < night_end)) %}
-            {% if now().weekday() < 5 and overnight and not eva_vacanta %}
+            {% if overnight %}
               {{ states('input_number.thermostat_target_weekday_night') | float(18) }}
-            {% elif is_state('person.dan', 'home') %}
+            {% elif is_state('person.dan', 'home') or eva_vacanta %}
               {{ states('input_number.thermostat_target_home') | float(19) }}
             {% else %}
               {{ states('input_number.thermostat_target_away') | float(17) }}
@@ -3184,7 +3184,7 @@ automation:
               effective_target: >-
                 {{ ((base_target | float)
                   + (1.5 if is_state('timer.thermostat_evening_bonus', 'active') else 0)
-                  - (1.5 if is_state('input_boolean.thermostat_window_open_override', 'on') else 0)) | round(1) }}
+                  - (2.0 if is_state('input_boolean.thermostat_window_open_override', 'on') else 0)) | round(1) }}
               current_target: >-
                 {{ state_attr('climate.tstat_838e9c_lyric_t6_thermostat', 'temperature') | float(none) }}
           - if:
