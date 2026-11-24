@@ -1582,60 +1582,136 @@ views:
           - type: thermostat
             entity: climate.tstat_838e9c_lyric_t6_thermostat
             name: Room thermostat
+          - type: vertical-stack
+            cards:
+              - type: custom:button-card
+                name: Automation Controls
+                show_icon: false
+                show_state: false
+                custom_fields:
+                  info:
+                    card:
+                      type: custom:button-card
+                      name: Info
+                      icon: mdi:information-outline
+                      show_state: false
+                      tap_action:
+                        action: fire-dom-event
+                        browser_mod:
+                          service: browser_mod.popup
+                          data:
+                            title: Thermostat schedule · how it works
+                            size: normal
+                            content:
+                              type: markdown
+                              content: |
+                                **Master switch:** Automatic schedule must be ON for Home Assistant to manage the thermostat target. OFF pauses automatic target changes.
+
+                                **Presence:** Only person.dan is used. When Dan is home, the home target is used; when Dan is away, the away target is used.
+
+                                **Weekday overnight:** Monday–Friday, between the adjustable start and end times, the overnight target is used instead of the home/away target. This overnight rule is skipped while the active calendar event is **Eva - vacanta**.
+
+                                **Evening bedroom boost:** When enabled, between 20:00 and 23:00, any one of the three bedroom sensors more than 1.5°C below the thermostat starts a +1.5°C boost. It ends when all three sensors are back within 1.5°C, the 90-minute timer expires, or 23:00 is reached — whichever happens first.
+
+                                **Open-window / door protection:** When enabled, any of the three listed contacts open for 10 minutes applies −1.5°C. The reduction clears only after all three contacts have been closed for 10 minutes.
+
+                                **Adjusting the schedule:** Change the home, away or overnight target values in the Schedule settings below. Change the weekday overnight start/end time there too. Changes are applied automatically.
+                      styles:
+                        card:
+                          - width: 76px
+                          - min-height: 34px
+                          - padding: 3px 7px
+                          - border-radius: 9px
+                          - box-shadow: none
+                          - background: var(--secondary-background-color)
+                        grid:
+                          - grid-template-areas: '"i n"'
+                          - grid-template-columns: 17px auto
+                          - column-gap: 4px
+                        icon:
+                          - width: 15px
+                        name:
+                          - font-size: 11px
+                          - font-weight: 600
+                styles:
+                  card:
+                    - background: none
+                    - box-shadow: none
+                    - padding: 0 4px 5px
+                  grid:
+                    - grid-template-areas: '"n info"'
+                    - grid-template-columns: 1fr auto
+                  name:
+                    - justify-self: start
+                    - font-size: 14px
+                    - font-weight: 700
+                  custom_fields:
+                    info:
+                      - justify-self: end
+              - type: entities
+                show_header_toggle: false
+                entities:
+                  - entity: input_boolean.thermostat_heating_schedule_enabled
+                    name: Automatic schedule · master enable
+                  - entity: input_boolean.thermostat_evening_bonus_enabled
+                    name: Evening bedroom boost · enable
+                  - entity: input_boolean.thermostat_window_protection_enabled
+                    name: Open-window / door protection · enable
+                  - entity: timer.thermostat_evening_bonus
+                    name: Evening boost timer
+              - type: custom:button-card
+                entity: input_boolean.thermostat_window_open_override
+                name: Contact temperature reduction
+                icon: mdi:window-open-variant
+                show_state: true
+                state_display: |
+                  [[[
+                    return entity?.state === 'on' ? 'ACTIVE · −1.5°C applied' : 'Inactive';
+                  ]]]
+                tap_action:
+                  action: none
+                hold_action:
+                  action: none
+                styles:
+                  card:
+                    - min-height: 42px
+                    - border-radius: 10px
+                    - padding: 6px 12px
+                    - box-shadow: none
+                  grid:
+                    - grid-template-areas: '"i n" "i s"'
+                    - grid-template-columns: 32px 1fr
+                    - grid-template-rows: min-content min-content
+                    - row-gap: 1px
+                  icon:
+                    - width: 20px
+                  name:
+                    - justify-self: start
+                    - font-size: 11px
+                    - font-weight: 600
+                  state:
+                    - justify-self: start
+                    - font-size: 12px
+                    - font-weight: 600
+                state:
+                  - value: "on"
+                    styles:
+                      state:
+                        - color: var(--warning-color)
           - type: entities
-            title: Automatic controls
+            title: Schedule settings · editable
             show_header_toggle: false
             entities:
-              - entity: input_boolean.thermostat_heating_schedule_enabled
-                name: Automatic schedule · master enable
-              - entity: input_boolean.thermostat_evening_bonus_enabled
-                name: Evening bedroom boost · enable
-              - entity: input_boolean.thermostat_window_protection_enabled
-                name: Open-window / door protection · enable
-              - entity: timer.thermostat_evening_bonus
-                name: Evening boost timer
-          - type: custom:button-card
-            entity: input_boolean.thermostat_window_open_override
-            name: Contact temperature reduction
-            icon: mdi:window-open-variant
-            show_state: true
-            state_display: |
-              [[[
-                return entity?.state === 'on' ? 'ACTIVE · −1.5°C applied' : 'Inactive';
-              ]]]
-            tap_action:
-              action: none
-            hold_action:
-              action: none
-            styles:
-              card:
-                - border-radius: 12px
-                - padding: 10px 12px
-              name:
-                - justify-self: start
-                - font-size: 12px
-                - font-weight: 600
-              state:
-                - justify-self: start
-                - font-size: 13px
-                - font-weight: 600
-            state:
-              - value: "on"
-                styles:
-                  state:
-                    - color: var(--warning-color)
-          - type: markdown
-            content: |
-              **Master switch:** Turn **Automatic schedule · master enable** ON to let Home Assistant control the thermostat target. OFF pauses automatic target changes; the thermostat keeps its current setpoint unless another controller changes it.
-
-              **Base schedule:** 19°C while Dan or Anca is home; otherwise 17°C. Monday–Friday, 00:00–08:00: 18°C, except during the active calendar event **Eva - vacanta**.
-
-              **Evening boost:** Requires the master switch and **Evening bedroom boost** to be ON. From 20:00–23:00, any one bedroom sensor more than 1.5°C below the thermostat starts a +1.5°C boost. It stops when all three bedrooms are back within 1.5°C, after 90 minutes maximum, or at 23:00.
-
-              **Open-window / door protection:** This is an enable switch. When ON, any listed contact left open for 10 minutes applies a −1.5°C reduction. It clears after all three contacts have been closed for 10 minutes.
-
-              **Contact temperature reduction:** Read-only status. **ACTIVE** means the −1.5°C contact reduction is currently being applied; it is not another switch.
-
+              - entity: input_number.thermostat_target_home
+                name: Target when Dan is home
+              - entity: input_number.thermostat_target_away
+                name: Target when Dan is away
+              - entity: input_number.thermostat_target_weekday_night
+                name: Weekday overnight target
+              - entity: input_datetime.thermostat_weekday_night_start
+                name: Weekday overnight start
+              - entity: input_datetime.thermostat_weekday_night_end
+                name: Weekday overnight end
   - title: Details
     path: energy-details
     icon: mdi:chart-box-outline
