@@ -57,6 +57,29 @@ input_boolean:
     name: Previous shower state in gas interval
     icon: mdi:shower
 
+
+  thermostat_heating_schedule_enabled:
+    name: Thermostat automatic schedule
+    icon: mdi:calendar-clock
+  thermostat_evening_bonus_enabled:
+    name: Thermostat evening bedroom boost
+    icon: mdi:weather-night
+  thermostat_evening_bonus_latched:
+    name: Thermostat evening boost cold-spell latch
+    icon: mdi:lock-clock
+  thermostat_window_protection_enabled:
+    name: Thermostat open-contact protection
+    icon: mdi:window-open-variant
+  thermostat_window_open_override:
+    name: Thermostat open-contact reduction active
+    icon: mdi:window-open
+
+timer:
+  thermostat_evening_bonus:
+    name: Thermostat evening bedroom boost
+    duration: "01:30:00"
+    restore: true
+
 input_select:
   energy_manual_activity_type:
     name: Manual activity type
@@ -2821,6 +2844,294 @@ automation:
           - service: input_boolean.turn_off
             target:
               entity_id: input_boolean.energy_gas_previous_shower_active
+
+
+  - id: thermostat_household_schedule_and_overrides
+    alias: Thermostat - Household schedule and smart overrides
+    description: >-
+      One automation for presence-based heating, weekday overnight setback,
+      the evening bedroom temperature boost and open-window/door protection.
+      All three bedroom sensors must be more than 1.5 C below the thermostat
+      for the evening boost to start.
+    mode: restart
+    max_exceeded: silent
+    triggers:
+      - trigger: homeassistant
+        event: start
+      - trigger: time
+        at:
+          - "00:00:00"
+          - "08:00:00"
+          - "20:00:00"
+          - "23:00:00"
+      - trigger: time_pattern
+        minutes: "/1"
+      - trigger: state
+        entity_id:
+          - person.dan
+          - person.anca
+          - calendar.eva_vacante
+      - trigger: state
+        entity_id: calendar.eva_vacante
+        attribute: message
+      - trigger: state
+        entity_id:
+          - sensor.tstat_838e9c_current_temperature
+          - sensor.miaomiaoce_t2_da88_temperature
+          - sensor.miaomiaoce_t2_8089_temperature
+          - sensor.meter_53c4
+      - trigger: state
+        entity_id:
+          - input_boolean.thermostat_heating_schedule_enabled
+          - input_boolean.thermostat_evening_bonus_enabled
+          - input_boolean.thermostat_window_protection_enabled
+      - trigger: state
+        entity_id:
+          - binary_sensor.kitchen_window_contact
+          - binary_sensor.eva_door_contact
+          - binary_sensor.contactsensor_front_door_2
+        to: "on"
+        for: "00:10:00"
+      - trigger: state
+        entity_id:
+          - binary_sensor.kitchen_window_contact
+          - binary_sensor.eva_door_contact
+          - binary_sensor.contactsensor_front_door_2
+        to: "off"
+        for: "00:10:00"
+      - trigger: event
+        event_type: timer.finished
+        event_data:
+          entity_id: timer.thermostat_evening_bonus
+
+    actions:
+      - variables:
+          base_target: >-
+            {% set eva_vacanta = is_state('calendar.eva_vacante', 'on')
+              and state_attr('calendar.eva_vacante', 'message') == 'Eva - vacanta' %}
+            {% if now().weekday() < 5 and now().hour < 8 and not eva_vacanta %}
+              18
+            {% elif is_state('person.dan', 'home') or is_state('person.anca', 'home') %}
+              19
+            {% else %}
+              17
+            {% endif %}
+          bedrooms_cold: >-
+            {% set reference = states('sensor.tstat_838e9c_current_temperature') | float(none) %}
+            {% set big_bedroom = states('sensor.miaomiaoce_t2_da88_temperature') | float(none) %}
+            {% set eva_bedroom = states('sensor.miaomiaoce_t2_8089_temperature') | float(none) %}
+            {% set small_bedroom = states('sensor.meter_53c4') | float(none) %}
+            {{ reference is not none
+               and big_bedroom is not none
+               and eva_bedroom is not none
+               and small_bedroom is not none
+               and big_bedroom < reference - 1.5
+               and eva_bedroom < reference - 1.5
+               and small_bedroom < reference - 1.5 }}
+          window_open_long: >-
+            {% set ids = [
+              'binary_sensor.kitchen_window_contact',
+              'binary_sensor.eva_door_contact',
+              'binary_sensor.contactsensor_front_door_2'
+            ] %}
+            {% set ns = namespace(value=false) %}
+            {% for entity_id in ids %}
+              {% set item = states[entity_id] %}
+              {% if item is not none and item.state == 'on'
+                and (as_timestamp(now()) - as_timestamp(item.last_changed)) >= 600 %}
+                {% set ns.value = true %}
+              {% endif %}
+            {% endfor %}
+            {{ ns.value }}
+          windows_all_closed_long: >-
+            {% set ids = [
+              'binary_sensor.kitchen_window_contact',
+              'binary_sensor.eva_door_contact',
+              'binary_sensor.contactsensor_front_door_2'
+            ] %}
+            {% set ns = namespace(value=true) %}
+            {% for entity_id in ids %}
+              {% set item = states[entity_id] %}
+              {% if item is none or item.state != 'off'
+                or (as_timestamp(now()) - as_timestamp(item.last_changed)) < 600 %}
+                {% set ns.value = false %}
+              {% endif %}
+            {% endfor %}
+            {{ ns.value }}
+
+      # Manage the evening boost. The latch prevents sensor updates from
+      # repeatedly restarting the 90-minute timer during one continuous cold spell.
+      - choose:
+          - conditions:
+              - condition: state
+                entity_id: input_boolean.thermostat_heating_schedule_enabled
+                state: "off"
+            sequence:
+              - if:
+                  - condition: state
+                    entity_id: timer.thermostat_evening_bonus
+                    state: active
+                then:
+                  - action: timer.cancel
+                    target:
+                      entity_id: timer.thermostat_evening_bonus
+              - if:
+                  - condition: state
+                    entity_id: input_boolean.thermostat_evening_bonus_latched
+                    state: "on"
+                then:
+                  - action: input_boolean.turn_off
+                    target:
+                      entity_id: input_boolean.thermostat_evening_bonus_latched
+
+          - conditions:
+              - condition: state
+                entity_id: input_boolean.thermostat_heating_schedule_enabled
+                state: "on"
+              - condition: template
+                value_template: >-
+                  {{ not is_state('input_boolean.thermostat_evening_bonus_enabled', 'on')
+                     or not bedrooms_cold
+                     or now().hour < 20
+                     or now().hour >= 23 }}
+            sequence:
+              - if:
+                  - condition: state
+                    entity_id: timer.thermostat_evening_bonus
+                    state: active
+                then:
+                  - action: timer.cancel
+                    target:
+                      entity_id: timer.thermostat_evening_bonus
+              - if:
+                  - condition: state
+                    entity_id: input_boolean.thermostat_evening_bonus_latched
+                    state: "on"
+                then:
+                  - action: input_boolean.turn_off
+                    target:
+                      entity_id: input_boolean.thermostat_evening_bonus_latched
+
+          - conditions:
+              - condition: state
+                entity_id: input_boolean.thermostat_heating_schedule_enabled
+                state: "on"
+              - condition: state
+                entity_id: input_boolean.thermostat_evening_bonus_enabled
+                state: "on"
+              - condition: template
+                value_template: "{{ bedrooms_cold and 20 <= now().hour < 23 }}"
+              - condition: state
+                entity_id: timer.thermostat_evening_bonus
+                state: idle
+              - condition: state
+                entity_id: input_boolean.thermostat_evening_bonus_latched
+                state: "off"
+            sequence:
+              - action: input_boolean.turn_on
+                target:
+                  entity_id: input_boolean.thermostat_evening_bonus_latched
+              - action: timer.start
+                target:
+                  entity_id: timer.thermostat_evening_bonus
+                data:
+                  duration: "01:30:00"
+              - action: notify.dan_sm_a528b
+                data:
+                  title: Evening heating boost
+                  message: >-
+                    Evening bedroom boost started. Big bedroom:
+                    {{ states('sensor.miaomiaoce_t2_da88_temperature') | float(0) | round(1) }}°C;
+                    Eva's bedroom:
+                    {{ states('sensor.miaomiaoce_t2_8089_temperature') | float(0) | round(1) }}°C;
+                    small bedroom:
+                    {{ states('sensor.meter_53c4') | float(0) | round(1) }}°C;
+                    thermostat:
+                    {{ states('sensor.tstat_838e9c_current_temperature') | float(0) | round(1) }}°C.
+                    Target increased by 1.5°C for up to 90 minutes, ending no later than 23:00.
+
+      # Apply a reduction after any one contact has stayed open for 10 minutes.
+      # Keep it active until every listed contact has been closed for 10 minutes.
+      - choose:
+          - conditions:
+              - condition: state
+                entity_id: input_boolean.thermostat_heating_schedule_enabled
+                state: "off"
+            sequence:
+              - if:
+                  - condition: state
+                    entity_id: input_boolean.thermostat_window_open_override
+                    state: "on"
+                then:
+                  - action: input_boolean.turn_off
+                    target:
+                      entity_id: input_boolean.thermostat_window_open_override
+
+          - conditions:
+              - condition: state
+                entity_id: input_boolean.thermostat_window_protection_enabled
+                state: "off"
+            sequence:
+              - if:
+                  - condition: state
+                    entity_id: input_boolean.thermostat_window_open_override
+                    state: "on"
+                then:
+                  - action: input_boolean.turn_off
+                    target:
+                      entity_id: input_boolean.thermostat_window_open_override
+
+          - conditions:
+              - condition: template
+                value_template: "{{ window_open_long }}"
+            sequence:
+              - if:
+                  - condition: state
+                    entity_id: input_boolean.thermostat_window_open_override
+                    state: "off"
+                then:
+                  - action: input_boolean.turn_on
+                    target:
+                      entity_id: input_boolean.thermostat_window_open_override
+
+          - conditions:
+              - condition: template
+                value_template: "{{ windows_all_closed_long }}"
+            sequence:
+              - if:
+                  - condition: state
+                    entity_id: input_boolean.thermostat_window_open_override
+                    state: "on"
+                then:
+                  - action: input_boolean.turn_off
+                    target:
+                      entity_id: input_boolean.thermostat_window_open_override
+
+      # Recalculate one combined target so the two temporary offsets never
+      # overwrite each other.
+      - if:
+          - condition: state
+            entity_id: input_boolean.thermostat_heating_schedule_enabled
+            state: "on"
+        then:
+          - variables:
+              effective_target: >-
+                {{ ((base_target | float)
+                  + (1.5 if is_state('timer.thermostat_evening_bonus', 'active') else 0)
+                  - (1.5 if is_state('input_boolean.thermostat_window_open_override', 'on') else 0)) | round(1) }}
+              current_target: >-
+                {{ state_attr('climate.tstat_838e9c_lyric_t6_thermostat', 'temperature') | float(none) }}
+          - if:
+              - condition: template
+                value_template: >-
+                  {{ current_target is none
+                     or ((current_target | float) - (effective_target | float)) | abs > 0.05 }}
+            then:
+              - action: climate.set_temperature
+                target:
+                  entity_id: climate.tstat_838e9c_lyric_t6_thermostat
+                data:
+                  temperature: "{{ effective_target }}"
 
 sensor:
   - platform: history_stats
