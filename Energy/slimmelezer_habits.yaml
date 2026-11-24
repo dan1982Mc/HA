@@ -58,6 +58,9 @@ input_boolean:
     icon: mdi:shower
 
 
+  thermostat_schedule_times_initialized:
+    name: Thermostat schedule default times initialized
+    icon: mdi:calendar-check
   thermostat_heating_schedule_enabled:
     name: Thermostat automatic schedule
     icon: mdi:calendar-clock
@@ -139,36 +142,31 @@ input_datetime:
     name: Thermostat weekday overnight start
     has_date: false
     has_time: true
-    initial: "00:00:00"
   thermostat_weekday_night_end:
     name: Thermostat weekday overnight end
     has_date: false
     has_time: true
-    initial: "08:00:00"
 
 input_number:
   thermostat_target_home:
     name: Thermostat target when Dan is home
-    min: 15
+    min: 14
     max: 24
     step: 0.5
-    initial: 19
     mode: box
     unit_of_measurement: "°C"
   thermostat_target_away:
     name: Thermostat target when Dan is away
-    min: 15
+    min: 12
     max: 22
     step: 0.5
-    initial: 17
     mode: box
     unit_of_measurement: "°C"
   thermostat_target_weekday_night:
     name: Thermostat weekday overnight target
-    min: 15
-    max: 22
+    min: 12
+    max: 24
     step: 0.5
-    initial: 18
     mode: box
     unit_of_measurement: "°C"
   energy_manual_start_gas_m3:
@@ -2943,6 +2941,27 @@ automation:
           entity_id: timer.thermostat_evening_bonus
 
     actions:
+      # Seed the default overnight times once. With no "initial" values,
+      # user-adjusted time and temperature helpers are restored after restarts.
+      - choose:
+          - conditions:
+              - condition: state
+                entity_id: input_boolean.thermostat_schedule_times_initialized
+                state: "off"
+            sequence:
+              - action: input_datetime.set_datetime
+                target:
+                  entity_id: input_datetime.thermostat_weekday_night_start
+                data:
+                  time: "00:00:00"
+              - action: input_datetime.set_datetime
+                target:
+                  entity_id: input_datetime.thermostat_weekday_night_end
+                data:
+                  time: "08:00:00"
+              - action: input_boolean.turn_on
+                target:
+                  entity_id: input_boolean.thermostat_schedule_times_initialized
       - variables:
           base_target: >-
             {% set eva_vacanta = is_state('calendar.eva_vacante', 'on')
