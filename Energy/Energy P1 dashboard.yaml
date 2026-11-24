@@ -1585,8 +1585,8 @@ views:
           - type: vertical-stack
             cards:
               - type: custom:button-card
+                name: Automation Controls
                 show_icon: false
-                show_name: false
                 show_state: false
                 custom_fields:
                   schedule:
@@ -1682,16 +1682,23 @@ views:
                     - box-shadow: none
                     - padding: 0 2px 5px
                   grid:
-                    - grid-template-areas: '"schedule info"'
-                    - grid-template-columns: 1fr auto
+                    - grid-template-areas: '"n schedule info"'
+                    - grid-template-columns: 1fr auto auto
                     - column-gap: 8px
+                  name:
+                    - justify-self: start
+                    - font-size: 14px
+                    - font-weight: 700
                   custom_fields:
                     schedule:
-                      - justify-self: start
+                      - justify-self: end
                     info:
                       - justify-self: end
+                tap_action:
+                  action: none
+                hold_action:
+                  action: none
               - type: entities
-                title: Automation Controls
                 show_header_toggle: false
                 entities:
                   - entity: input_boolean.thermostat_heating_schedule_enabled
