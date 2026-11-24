@@ -47,6 +47,9 @@ input_boolean:
   energy_gas_attribution_initialized:
     name: Time-weighted gas attribution initialized
     icon: mdi:timer-check-outline
+  energy_gas_other_month_seeded:
+    name: Monthly other gas meter initialized
+    icon: mdi:calendar-check
   energy_shower_auto_active:
     name: Automatic shower detection active
     icon: mdi:shower
@@ -2275,6 +2278,73 @@ automation:
       - action: input_boolean.turn_on
         target:
           entity_id: input_boolean.energy_november_2026_baseline_applied
+  - id: energy_seed_gas_other_month_from_statistics
+    alias: Energy - Initialize monthly other gas attribution
+    description: >-
+      Seeds the new monthly other-gas meter from retained statistics of the
+      time-weighted outside-heating counter, preserving tracked November use
+      since the attribution counter was first initialized.
+    mode: single
+    triggers:
+      - trigger: homeassistant
+        event: start
+      - trigger: time_pattern
+        minutes: "/10"
+    conditions:
+      - condition: state
+        entity_id: input_boolean.energy_gas_other_month_seeded
+        state: "off"
+      - condition: state
+        entity_id: input_boolean.energy_period_meters_seeded
+        state: "on"
+      - condition: state
+        entity_id: input_boolean.energy_gas_attribution_initialized
+        state: "on"
+      - condition: template
+        value_template: >-
+          {{ is_number(states('sensor.slimmelezer_gas_outside_heating_time_weighted')) }}
+    actions:
+      - variables:
+          month_start: >-
+            {{ now().replace(day=1, hour=0, minute=0, second=0,
+               microsecond=0).isoformat() }}
+      - action: recorder.get_statistics
+        data:
+          statistic_ids:
+            - sensor.slimmelezer_gas_outside_heating_time_weighted
+          start_time: "{{ month_start }}"
+          period: hour
+          types:
+            - change
+            - state
+        response_variable: other_gas_month_stats
+      - choose:
+          - conditions:
+              - condition: template
+                value_template: >-
+                  {% set p = other_gas_month_stats.get('statistics', {}).get(
+                     'sensor.slimmelezer_gas_outside_heating_time_weighted', []) %}
+                  {{ p | count > 0 }}
+            sequence:
+              - variables:
+                  month_other_gas: >-
+                    {% set p = other_gas_month_stats.statistics[
+                       'sensor.slimmelezer_gas_outside_heating_time_weighted'] %}
+                    {% set n = namespace(total=0) %}
+                    {% for item in p %}
+                      {% set n.total = n.total + (item.change | float(0)) %}
+                    {% endfor %}
+                    {% set current = states('sensor.slimmelezer_gas_outside_heating_time_weighted') | float(0) %}
+                    {% set last = p[-1].state | float(current) %}
+                    {{ [n.total + current - last, 0] | max | round(6) }}
+              - action: utility_meter.calibrate
+                target:
+                  entity_id: sensor.energy_gas_other_time_weighted_month
+                data:
+                  value: "{{ month_other_gas }}"
+              - action: input_boolean.turn_on
+                target:
+                  entity_id: input_boolean.energy_gas_other_month_seeded
   - id: energy_shower_auto_detection_start
     alias: Energy - Auto-detect shower start
     description: >-
@@ -3145,6 +3215,13 @@ utility_meter:
     name: Energy Gas Heating Time Weighted Month
     unique_id: energy_gas_heating_time_weighted_month
     source: sensor.slimmelezer_gas_heating_time_weighted
+    cycle: monthly
+    periodically_resetting: true
+    always_available: true
+  energy_gas_other_time_weighted_month:
+    name: Energy Gas Other Time Weighted Month
+    unique_id: energy_gas_other_time_weighted_month
+    source: sensor.slimmelezer_gas_outside_heating_time_weighted
     cycle: monthly
     periodically_resetting: true
     always_available: true
