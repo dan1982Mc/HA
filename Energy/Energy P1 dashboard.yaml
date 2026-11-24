@@ -688,6 +688,35 @@ views:
                   perform_action: script.turn_on
                   target:
                     entity_id: script.energy_start_custom
+
+      - type: grid
+        title: Thermostat schedule
+        cards:
+          - type: thermostat
+            entity: climate.tstat_838e9c_lyric_t6_thermostat
+            name: Room thermostat
+          - type: entities
+            title: Automatic controls
+            show_header_toggle: false
+            entities:
+              - entity: input_boolean.thermostat_heating_schedule_enabled
+                name: Automatic schedule
+              - entity: input_boolean.thermostat_evening_bonus_enabled
+                name: Evening bedroom boost
+              - entity: input_boolean.thermostat_window_protection_enabled
+                name: Open-window / door protection
+              - entity: timer.thermostat_evening_bonus
+                name: Evening boost timer
+              - entity: input_boolean.thermostat_window_open_override
+                name: Contact temperature reduction active
+          - type: markdown
+            content: |
+              **Base schedule:** 19°C while Dan or Anca is home; otherwise 17°C. Weekdays 00:00–08:00: 18°C, except when the active calendar event is **Eva - vacanta**.
+
+              **Evening boost:** 20:00–23:00 when all three bedroom sensors are more than 1.5°C below the thermostat. Adds 1.5°C for up to 90 minutes.
+
+              **Contact protection:** any listed contact open for 10 minutes applies −1.5°C. The reduction clears after all three contacts have been closed for 10 minutes.
+
       - type: grid
         title: Recent consumption
         cards:
