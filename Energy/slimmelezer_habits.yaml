@@ -169,6 +169,30 @@ input_number:
     step: 0.5
     mode: box
     unit_of_measurement: "°C"
+  thermostat_bedroom_boost_trigger_diff:
+    name: Bedroom boost trigger difference
+    min: 0.5
+    max: 5
+    step: 0.5
+    initial: 2
+    mode: box
+    unit_of_measurement: "°C"
+  thermostat_bedroom_boost_stop_diff:
+    name: Bedroom boost stop difference
+    min: 0
+    max: 2.5
+    step: 0.5
+    initial: 1
+    mode: box
+    unit_of_measurement: "°C"
+  thermostat_bedroom_boost_duration:
+    name: Bedroom boost maximum duration
+    min: 15
+    max: 180
+    step: 5
+    initial: 60
+    mode: box
+    unit_of_measurement: min
   energy_manual_start_gas_m3:
     name: Manual session gas meter at start
     min: 0
@@ -2995,25 +3019,27 @@ automation:
             {% set big_bedroom = states('sensor.miaomiaoce_t2_da88_temperature') | float(none) %}
             {% set eva_bedroom = states('sensor.miaomiaoce_t2_8089_temperature') | float(none) %}
             {% set small_bedroom = states('sensor.meter_53c4') | float(none) %}
+            {% set trigger_diff = states('input_number.thermostat_bedroom_boost_trigger_diff') | float(2) %}
             {{ reference is not none and (
-                 (big_bedroom is not none and big_bedroom <= reference - 2.0)
-                 or (eva_bedroom is not none and eva_bedroom <= reference - 2.0)
-                 or (small_bedroom is not none and small_bedroom <= reference - 2.0)
+                 (big_bedroom is not none and big_bedroom <= reference - trigger_diff)
+                 or (eva_bedroom is not none and eva_bedroom <= reference - trigger_diff)
+                 or (small_bedroom is not none and small_bedroom <= reference - trigger_diff)
                ) }}
           bedrooms_recovered: >-
             {% set reference = states('sensor.tstat_838e9c_current_temperature') | float(none) %}
             {% set big_bedroom = states('sensor.miaomiaoce_t2_da88_temperature') | float(none) %}
             {% set eva_bedroom = states('sensor.miaomiaoce_t2_8089_temperature') | float(none) %}
             {% set small_bedroom = states('sensor.meter_53c4') | float(none) %}
+            {% set stop_diff = states('input_number.thermostat_bedroom_boost_stop_diff') | float(1) %}
             {{ reference is not none
                and big_bedroom is not none
                and eva_bedroom is not none
                and small_bedroom is not none
-               and big_bedroom >= reference - 1.0
+               and big_bedroom >= reference - stop_diff
                and big_bedroom <= reference
-               and eva_bedroom >= reference - 1.0
+               and eva_bedroom >= reference - stop_diff
                and eva_bedroom <= reference
-               and small_bedroom >= reference - 1.0
+               and small_bedroom >= reference - stop_diff
                and small_bedroom <= reference }}
           boost_window_active: >-
             {% set current_time = now().strftime('%H:%M:%S') %}
@@ -3125,7 +3151,9 @@ automation:
                 target:
                   entity_id: timer.thermostat_evening_bonus
                 data:
-                  duration: "01:00:00"
+                  duration: >-
+                    {% set minutes = states('input_number.thermostat_bedroom_boost_duration') | int(60) %}
+                    {{ '%02d:%02d:00' | format(minutes // 60, minutes % 60) }}
               - action: notify.dan_sm_a528b
                 data:
                   title: Overnight bedroom heating boost
@@ -3138,7 +3166,9 @@ automation:
                     {{ states('sensor.meter_53c4') | float(0) | round(1) }}°C;
                     thermostat:
                     {{ states('sensor.tstat_838e9c_current_temperature') | float(0) | round(1) }}°C.
-                    Target increased by 1.5°C for up to 60 minutes, ending no later than 04:30.
+                    Target increased by 1.5°C for up to
+                    {{ states('input_number.thermostat_bedroom_boost_duration') | int(60) }} minutes,
+                    ending no later than 04:30.
 
       # Apply a reduction after any one contact has stayed open for 10 minutes.
       # Keep it active until every listed contact has been closed for 10 minutes.
