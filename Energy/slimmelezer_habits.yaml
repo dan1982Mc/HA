@@ -152,6 +152,10 @@ input_datetime:
     name: Thermostat daily overnight end
     has_date: false
     has_time: true
+  thermostat_evening_bonus_last_stopped:
+    name: Thermostat overnight boost last stopped
+    has_date: true
+    has_time: true
 
 input_number:
   thermostat_target_home:
@@ -3217,6 +3221,19 @@ automation:
           entity_id: timer.thermostat_evening_bonus
 
     actions:
+      # Record the natural timer expiry as the end of the previous boost.
+      - if:
+          - condition: template
+            value_template: >-
+              {{ trigger.platform == 'event'
+                 and trigger.event.data.entity_id == 'timer.thermostat_evening_bonus' }}
+        then:
+          - action: input_datetime.set_datetime
+            target:
+              entity_id: input_datetime.thermostat_evening_bonus_last_stopped
+            data:
+              datetime: "{{ now().strftime('%Y-%m-%d %H:%M:%S') }}"
+
       # Seed the default overnight times once. With no "initial" values,
       # user-adjusted time and temperature helpers are restored after restarts.
       - choose:
@@ -3337,6 +3354,11 @@ automation:
                   - action: timer.cancel
                     target:
                       entity_id: timer.thermostat_evening_bonus
+                  - action: input_datetime.set_datetime
+                    target:
+                      entity_id: input_datetime.thermostat_evening_bonus_last_stopped
+                    data:
+                      datetime: "{{ now().strftime('%Y-%m-%d %H:%M:%S') }}"
               - if:
                   - condition: state
                     entity_id: input_boolean.thermostat_evening_bonus_latched
@@ -3364,6 +3386,11 @@ automation:
                   - action: timer.cancel
                     target:
                       entity_id: timer.thermostat_evening_bonus
+                  - action: input_datetime.set_datetime
+                    target:
+                      entity_id: input_datetime.thermostat_evening_bonus_last_stopped
+                    data:
+                      datetime: "{{ now().strftime('%Y-%m-%d %H:%M:%S') }}"
               - if:
                   - condition: state
                     entity_id: input_boolean.thermostat_evening_bonus_latched
@@ -3374,6 +3401,14 @@ automation:
                       entity_id: input_boolean.thermostat_evening_bonus_latched
 
           - conditions:
+              # First gate: do not restart the bedroom boost until 2 hours
+              # have passed since its previous stop. An unset helper allows
+              # the first boost after installation.
+              - condition: template
+                value_template: >-
+                  {{ as_timestamp(now()) -
+                     as_timestamp(states('input_datetime.thermostat_evening_bonus_last_stopped'), 0)
+                     >= 7200 }}
               - condition: state
                 entity_id: input_boolean.thermostat_heating_schedule_enabled
                 state: "on"
