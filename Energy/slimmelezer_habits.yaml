@@ -65,10 +65,10 @@ input_boolean:
     name: Thermostat automatic schedule
     icon: mdi:calendar-clock
   thermostat_evening_bonus_enabled:
-    name: Thermostat evening bedroom boost
+    name: Thermostat overnight bedroom boost
     icon: mdi:weather-night
   thermostat_evening_bonus_latched:
-    name: Thermostat evening boost cold-spell latch
+    name: Thermostat overnight boost cold-spell latch
     icon: mdi:lock-clock
   thermostat_window_protection_enabled:
     name: Thermostat open-contact protection
@@ -79,8 +79,8 @@ input_boolean:
 
 timer:
   thermostat_evening_bonus:
-    name: Thermostat evening bedroom boost
-    duration: "01:30:00"
+    name: Thermostat overnight bedroom boost
+    duration: "01:00:00"
     restore: true
 
 input_select:
@@ -2887,10 +2887,11 @@ automation:
   - id: thermostat_household_schedule_and_overrides
     alias: Thermostat - Household schedule and smart overrides
     description: >-
-      One automation for Dan-presence-based heating, editable daily overnight
-      setback, the evening bedroom temperature boost and open-window/door protection.
-      Any one bedroom sensor more than 1.5 C below the thermostat starts the boost.
-      The boost stops when all three bedrooms are back within 1.5 C of the thermostat.
+      One automation for Energy-dashboard home occupancy, editable daily overnight
+      setback, the overnight bedroom temperature boost and open-window/door protection.
+      Any one bedroom sensor at least 2 C below the thermostat starts the boost.
+      It stops when all three bedroom sensors are within 1 C of the thermostat,
+      or after 60 minutes / at 04:30.
     mode: restart
     max_exceeded: silent
     triggers:
@@ -2899,14 +2900,14 @@ automation:
       - trigger: time
         at:
           - "00:00:00"
+          - "04:30:00"
           - "08:00:00"
           - "20:00:00"
-          - "23:00:00"
       - trigger: time_pattern
         minutes: "/1"
       - trigger: state
         entity_id:
-          - person.dan
+          - binary_sensor.energy_house_empty
           - calendar.eva_vacante
       - trigger: state
         entity_id: calendar.eva_vacante
@@ -2969,6 +2970,9 @@ automation:
                 target:
                   entity_id: input_boolean.thermostat_schedule_times_initialized
       - variables:
+          # Use the same aggregate as the Energy dashboard: Dan + Anca presence
+          # plus the six monitored room-motion sensors. Unknown/unavailable is
+          # treated as occupied, so a sensor outage cannot select the away target.
           base_target: >-
             {% set eva_vacanta = is_state('calendar.eva_vacante', 'on')
               and state_attr('calendar.eva_vacante', 'message') == 'Eva - vacanta' %}
@@ -2977,9 +2981,11 @@ automation:
             {% set night_end = states('input_datetime.thermostat_weekday_night_end') %}
             {% set overnight = (night_start <= night_end and night_start <= current_time < night_end)
               or (night_start > night_end and (current_time >= night_start or current_time < night_end)) %}
+            {% set occupancy_state = states('binary_sensor.energy_house_empty') %}
+            {% set home_occupied = occupancy_state != 'on' %}
             {% if overnight %}
               {{ states('input_number.thermostat_target_weekday_night') | float(18) }}
-            {% elif is_state('person.dan', 'home') or eva_vacanta %}
+            {% elif home_occupied or eva_vacanta %}
               {{ states('input_number.thermostat_target_home') | float(19) }}
             {% else %}
               {{ states('input_number.thermostat_target_away') | float(17) }}
@@ -2990,10 +2996,25 @@ automation:
             {% set eva_bedroom = states('sensor.miaomiaoce_t2_8089_temperature') | float(none) %}
             {% set small_bedroom = states('sensor.meter_53c4') | float(none) %}
             {{ reference is not none and (
-                 (big_bedroom is not none and big_bedroom < reference - 1.5)
-                 or (eva_bedroom is not none and eva_bedroom < reference - 1.5)
-                 or (small_bedroom is not none and small_bedroom < reference - 1.5)
+                 (big_bedroom is not none and big_bedroom <= reference - 2.0)
+                 or (eva_bedroom is not none and eva_bedroom <= reference - 2.0)
+                 or (small_bedroom is not none and small_bedroom <= reference - 2.0)
                ) }}
+          bedrooms_recovered: >-
+            {% set reference = states('sensor.tstat_838e9c_current_temperature') | float(none) %}
+            {% set big_bedroom = states('sensor.miaomiaoce_t2_da88_temperature') | float(none) %}
+            {% set eva_bedroom = states('sensor.miaomiaoce_t2_8089_temperature') | float(none) %}
+            {% set small_bedroom = states('sensor.meter_53c4') | float(none) %}
+            {{ reference is not none
+               and big_bedroom is not none
+               and eva_bedroom is not none
+               and small_bedroom is not none
+               and big_bedroom >= reference - 1.0
+               and eva_bedroom >= reference - 1.0
+               and small_bedroom >= reference - 1.0 }}
+          boost_window_active: >-
+            {% set current_time = now().strftime('%H:%M:%S') %}
+            {{ current_time >= '20:00:00' or current_time < '04:30:00' }}
           window_open_long: >-
             {% set ids = [
               'binary_sensor.kitchen_window_contact',
@@ -3025,8 +3046,9 @@ automation:
             {% endfor %}
             {{ ns.value }}
 
-      # Manage the evening boost. The latch prevents sensor updates from
-      # repeatedly restarting the 90-minute timer during one continuous cold spell.
+      # Manage the overnight bedroom boost. The latch prevents sensor updates
+      # from repeatedly restarting the 60-minute timer during one continuous cold spell.
+      # The 2 C start / 1 C recovery thresholds provide 1 C of hysteresis.
       - choose:
           - conditions:
               - condition: state
@@ -3057,9 +3079,8 @@ automation:
               - condition: template
                 value_template: >-
                   {{ not is_state('input_boolean.thermostat_evening_bonus_enabled', 'on')
-                     or not bedrooms_cold
-                     or now().hour < 20
-                     or now().hour >= 23 }}
+                   or not boost_window_active
+                   or bedrooms_recovered }}
             sequence:
               - if:
                   - condition: state
@@ -3086,7 +3107,7 @@ automation:
                 entity_id: input_boolean.thermostat_evening_bonus_enabled
                 state: "on"
               - condition: template
-                value_template: "{{ bedrooms_cold and 20 <= now().hour < 23 }}"
+                value_template: "{{ bedrooms_cold and boost_window_active }}"
               - condition: state
                 entity_id: timer.thermostat_evening_bonus
                 state: idle
@@ -3101,12 +3122,12 @@ automation:
                 target:
                   entity_id: timer.thermostat_evening_bonus
                 data:
-                  duration: "01:30:00"
+                  duration: "01:00:00"
               - action: notify.dan_sm_a528b
                 data:
-                  title: Evening heating boost
+                  title: Overnight bedroom heating boost
                   message: >-
-                    Evening bedroom boost started. Big bedroom:
+                    Overnight bedroom boost started. Big bedroom:
                     {{ states('sensor.miaomiaoce_t2_da88_temperature') | float(0) | round(1) }}°C;
                     Eva's bedroom:
                     {{ states('sensor.miaomiaoce_t2_8089_temperature') | float(0) | round(1) }}°C;
@@ -3114,7 +3135,7 @@ automation:
                     {{ states('sensor.meter_53c4') | float(0) | round(1) }}°C;
                     thermostat:
                     {{ states('sensor.tstat_838e9c_current_temperature') | float(0) | round(1) }}°C.
-                    Target increased by 1.5°C for up to 90 minutes, ending no later than 23:00.
+                    Target increased by 1.5°C for up to 60 minutes, ending no later than 04:30.
 
       # Apply a reduction after any one contact has stayed open for 10 minutes.
       # Keep it active until every listed contact has been closed for 10 minutes.
