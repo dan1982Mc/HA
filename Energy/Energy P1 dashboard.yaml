@@ -726,7 +726,7 @@ views:
                               - entity: sensor.energy_electricity_total_energy_year
                                 name: Electricity · energy year since 1 July · kWh
                               - entity: sensor.energy_gas_total_energy_year
-                                name: Gas · energy year since 1 July · m³
+                                name: Gas · energy year since 1 July (9,585 m³ start)
                           - type: statistics-graph
                             title: Electricity by hour · 7 days
                             chart_type: bar-stack
