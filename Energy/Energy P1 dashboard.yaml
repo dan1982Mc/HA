@@ -1655,7 +1655,7 @@ views:
 
                                 **Daily overnight:** Every day, between the adjustable start and end times, the overnight target is used instead of the home/away target. This rule has no calendar exception.
 
-                                **Overnight bedroom boost:** When enabled, between 20:00 and 04:30 the next day, any one of the three bedroom sensors at least 2°C below the thermostat starts a +1.5°C boost. It ends when all three bedroom sensors are between the thermostat temperature and 1°C below it, the 60-minute timer expires, or 04:30 is reached — whichever happens first. To prevent repeated cycling, the boost runs once per cold spell; after the timer expires it will not restart until all three bedrooms recover into that temperature band or the time window closes.
+                                **Overnight bedroom boost:** When enabled, between 20:00 and 04:30 the next day, any one of the three bedroom sensors reaching the configurable trigger difference below the thermostat starts a +1.5°C boost. It ends when all three bedrooms are between the thermostat temperature and the configurable stop difference below it, the configurable maximum timer expires, or 04:30 is reached — whichever happens first. The duration and both temperature differences are editable from the Overnight boost timer popup. To prevent repeated cycling, the boost runs once per cold spell; after the timer expires it will not restart until all bedrooms recover into the stop band or the time window closes.
 
                                 **Open-window / door protection:** When enabled, any of the three listed contacts open for 10 minutes applies −2°C. The reduction clears only after all three contacts have been closed for 10 minutes.
 
@@ -1707,8 +1707,31 @@ views:
                     name: Overnight bedroom boost · enable
                   - entity: input_boolean.thermostat_window_protection_enabled
                     name: Open-window / door protection · enable
-                  - entity: timer.thermostat_evening_bonus
-                    name: Overnight boost timer
+              - type: entity
+                entity: timer.thermostat_evening_bonus
+                name: Overnight boost timer
+                tap_action:
+                  action: fire-dom-event
+                  browser_mod:
+                    service: browser_mod.popup
+                    data:
+                      title: Overnight bedroom boost settings
+                      size: normal
+                      content:
+                        type: entities
+                        show_header_toggle: false
+                        entities:
+                          - entity: timer.thermostat_evening_bonus
+                            name: Timer · remaining / duration
+                          - entity: input_number.thermostat_bedroom_boost_duration
+                            name: Maximum boost duration · minutes
+                          - entity: input_number.thermostat_bedroom_boost_trigger_diff
+                            name: Start when bedroom is this much colder
+                          - entity: input_number.thermostat_bedroom_boost_stop_diff
+                            name: Stop when all bedrooms are within this difference
+              - type: entities
+                show_header_toggle: false
+                entities:
                   - entity: binary_sensor.thermostat_contact_temperature_reduction
                     name: Contact temperature reduction
   - title: Details
