@@ -84,7 +84,7 @@ views:
                       size: normal
                       content:
                         type: markdown
-                        content: >-
+                        content: |
                           ## Cost comparison
 
                           | Period | Current | Last year | Difference | Change |
@@ -162,7 +162,7 @@ views:
                       size: normal
                       content:
                         type: markdown
-                        content: >-
+                        content: |
                           ## Electricity comparison
 
                           | Period | Current | Last year | Difference | Change |
@@ -240,7 +240,7 @@ views:
                       size: normal
                       content:
                         type: markdown
-                        content: >-
+                        content: |
                           ## Gas comparison
 
                           | Period | Current | Last year | Difference | Change |
