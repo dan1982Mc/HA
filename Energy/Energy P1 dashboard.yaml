@@ -1608,9 +1608,9 @@ views:
                               show_header_toggle: false
                               entities:
                                 - entity: input_number.thermostat_target_home
-                                  name: Target when Dan is home
+                                  name: Target when someone is home
                                 - entity: input_number.thermostat_target_away
-                                  name: Target when Dan is away
+                                  name: Target when nobody is home
                                 - entity: input_number.thermostat_target_weekday_night
                                   name: Daily overnight target
                                 - entity: input_datetime.thermostat_weekday_night_start
@@ -1651,11 +1651,11 @@ views:
                               content: |
                                 **Master switch:** Automatic schedule must be ON for Home Assistant to manage the thermostat target. OFF pauses automatic target changes.
 
-                                **Presence:** Only person.dan is used. When Dan is home, the home target is used. When Dan is away, the away target is used — except while the active calendar event is exactly **Eva - vacanta**, when the home target is used instead.
+                                **Home occupancy:** The home target is used whenever the Energy dashboard does not confirm the apartment empty. This includes Dan and Anca's combined presence sensors plus monitored motion in the kitchen, small bedroom, bathroom, big bedroom, hall and living room. The dashboard requires 10 minutes with both people away and no monitored motion before switching to the away target. If the occupancy aggregate is unavailable, the home target is used as a safe fallback. The active calendar event **Eva - vacanta** also selects the home target.
 
                                 **Daily overnight:** Every day, between the adjustable start and end times, the overnight target is used instead of the home/away target. This rule has no calendar exception.
 
-                                **Evening bedroom boost:** When enabled, between 20:00 and 23:00, any one of the three bedroom sensors more than 1.5°C below the thermostat starts a +1.5°C boost. It ends when all three sensors are back within 1.5°C, the 90-minute timer expires, or 23:00 is reached — whichever happens first.
+                                **Overnight bedroom boost:** When enabled, between 20:00 and 04:30 the next day, any one of the three bedroom sensors at least 2°C below the thermostat starts a +1.5°C boost. It ends when all three bedroom sensors are within 1°C of the thermostat, the 60-minute timer expires, or 04:30 is reached — whichever happens first.
 
                                 **Open-window / door protection:** When enabled, any of the three listed contacts open for 10 minutes applies −2°C. The reduction clears only after all three contacts have been closed for 10 minutes.
 
@@ -1704,11 +1704,11 @@ views:
                   - entity: input_boolean.thermostat_heating_schedule_enabled
                     name: Automatic schedule · master enable
                   - entity: input_boolean.thermostat_evening_bonus_enabled
-                    name: Evening bedroom boost · enable
+                    name: Overnight bedroom boost · enable
                   - entity: input_boolean.thermostat_window_protection_enabled
                     name: Open-window / door protection · enable
                   - entity: timer.thermostat_evening_bonus
-                    name: Evening boost timer
+                    name: Overnight boost timer
                   - entity: binary_sensor.thermostat_contact_temperature_reduction
                     name: Contact temperature reduction
   - title: Details
