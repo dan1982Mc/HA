@@ -1705,12 +1705,31 @@ views:
                     name: Automatic schedule · master enable
                   - entity: input_boolean.thermostat_evening_bonus_enabled
                     name: Overnight bedroom boost · enable
-                  - entity: timer.thermostat_evening_bonus
-                    name: Overnight boost timer
-                  - entity: binary_sensor.thermostat_contact_temperature_reduction
-                    name: Contact temperature reduction
                   - entity: input_boolean.thermostat_window_protection_enabled
                     name: Open-window / door protection · enable
+                  - entity: timer.thermostat_evening_bonus
+                    name: Overnight boost timer
+                    tap_action:
+                      action: fire-dom-event
+                      browser_mod:
+                        service: browser_mod.popup
+                        data:
+                          title: Overnight bedroom boost settings
+                          size: normal
+                          content:
+                            type: entities
+                            show_header_toggle: false
+                            entities:
+                              - entity: timer.thermostat_evening_bonus
+                                name: Timer · remaining / duration
+                              - entity: input_number.thermostat_bedroom_boost_duration
+                                name: Maximum boost duration · minutes
+                              - entity: input_number.thermostat_bedroom_boost_trigger_diff
+                                name: Start when bedroom is this much colder
+                              - entity: input_number.thermostat_bedroom_boost_stop_diff
+                                name: Stop when all bedrooms are within this difference
+                  - entity: binary_sensor.thermostat_contact_temperature_reduction
+                    name: Contact temperature reduction
   - title: Details
     path: energy-details
     icon: mdi:chart-box-outline
