@@ -724,7 +724,7 @@ views:
                               - entity: sensor.energy_gas_total_month
                                 name: Gas · current month · m³
                               - entity: sensor.energy_electricity_total_energy_year
-                                name: Electricity · energy year since 1 July · kWh
+                                name: Electricity · energy year since 1 July (T1 8,687 + T2 8,881 kWh start)
                               - entity: sensor.energy_gas_total_energy_year
                                 name: Gas · energy year since 1 July (9,585 m³ start)
                           - type: statistics-graph
