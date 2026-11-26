@@ -1458,6 +1458,169 @@ template:
       # Current month comparison baseline. Calendar 2025 values are the
       # supplied meter history; 2026 values are seeded from Jan-Jun supplied
       # readings and archived automatically as each later month closes.
+      - name: Energy Cost Total Energy Year
+        unique_id: energy_cost_total_energy_year
+        device_class: monetary
+        state_class: measurement
+        unit_of_measurement: EUR
+        icon: mdi:currency-eur
+        availability: >
+          {{ is_number(states('sensor.energy_electricity_total_energy_year'))
+             and is_number(states('sensor.energy_gas_total_energy_year')) }}
+        state: >
+          {{ ((states('sensor.energy_electricity_total_energy_year') | float(0) * 0.26697)
+              + (states('sensor.energy_gas_total_energy_year') | float(0) * 1.43817)) | round(2) }}
+
+      - name: Energy Previous Energy Year Reference
+        unique_id: energy_previous_energy_year_reference
+        icon: mdi:calendar-arrow-left
+        state: "{{ now().strftime('%Y-%m') }}"
+        attributes:
+          current_period: >
+            {% set start_year = now().year if now().month >= 7 else now().year - 1 %}
+            July {{ start_year }} – {{ now().strftime('%B %Y') }}
+          reference_period: >
+            {% set start_year = now().year if now().month >= 7 else now().year - 1 %}
+            {% set reference_start = start_year - 1 %}
+            {% set reference_end = start_year - 1 if now().month >= 7 else start_year %}
+            July {{ reference_start }} – {{ now().strftime('%B') }} {{ reference_end }}
+          gas_m3: >
+            {% set start_year = (now().year if now().month >= 7 else now().year - 1) - 1 %}
+            {% set names = ['jan','feb','mar','apr','may','jun','jul','aug','sep','oct','nov','dec'] %}
+            {% set historic = {1: 269, 2: 233, 3: 147, 4: 44, 5: 23, 6: 18, 7: 12, 8: 23, 9: 41, 10: 47, 11: 108, 12: 151} %}
+            {% set total = namespace(value=0, valid=true) %}
+            {% if now().month >= 7 %}
+              {% set months = range(7, now().month + 1) | list %}
+            {% else %}
+              {% set months = (range(7, 13) | list) + (range(1, now().month + 1) | list) %}
+            {% endif %}
+            {% for month in months %}
+              {% set data_year = start_year if month >= 7 else start_year + 1 %}
+              {% if data_year == 2025 %}
+                {% set value = historic.get(month) %}
+              {% else %}
+                {% set value = states('input_number.energy_archive_gas_' ~ names[month - 1]) | float(0) %}
+                {% if value <= 0 %}{% set total.valid = false %}{% endif %}
+              {% endif %}
+              {% if value is none %}
+                {% set total.valid = false %}
+              {% else %}
+                {% set total.value = total.value + (value | float(0)) %}
+              {% endif %}
+            {% endfor %}
+            {{ total.value | round(2) if total.valid else none }}
+          electricity_kwh: >
+            {% set start_year = (now().year if now().month >= 7 else now().year - 1) - 1 %}
+            {% set names = ['jan','feb','mar','apr','may','jun','jul','aug','sep','oct','nov','dec'] %}
+            {% set historic = {1: 383, 2: 349, 3: 331, 4: 244, 5: 302, 6: 249, 7: 141, 8: 114, 9: 229, 10: 304, 11: 269, 12: 337} %}
+            {% set total = namespace(value=0, valid=true) %}
+            {% if now().month >= 7 %}
+              {% set months = range(7, now().month + 1) | list %}
+            {% else %}
+              {% set months = (range(7, 13) | list) + (range(1, now().month + 1) | list) %}
+            {% endif %}
+            {% for month in months %}
+              {% set data_year = start_year if month >= 7 else start_year + 1 %}
+              {% if data_year == 2025 %}
+                {% set value = historic.get(month) %}
+              {% else %}
+                {% set value = states('input_number.energy_archive_electricity_' ~ names[month - 1]) | float(0) %}
+                {% if value <= 0 %}{% set total.valid = false %}{% endif %}
+              {% endif %}
+              {% if value is none %}
+                {% set total.valid = false %}
+              {% else %}
+                {% set total.value = total.value + (value | float(0)) %}
+              {% endif %}
+            {% endfor %}
+            {{ total.value | round(2) if total.valid else none }}
+          cost_eur: >
+            {% set start_year = (now().year if now().month >= 7 else now().year - 1) - 1 %}
+            {% set names = ['jan','feb','mar','apr','may','jun','jul','aug','sep','oct','nov','dec'] %}
+            {% set gas_2025 = {1: 269, 2: 233, 3: 147, 4: 44, 5: 23, 6: 18, 7: 12, 8: 23, 9: 41, 10: 47, 11: 108, 12: 151} %}
+            {% set electricity_2025 = {1: 383, 2: 349, 3: 331, 4: 244, 5: 302, 6: 249, 7: 141, 8: 114, 9: 229, 10: 304, 11: 269, 12: 337} %}
+            {% set total = namespace(value=0, valid=true) %}
+            {% if now().month >= 7 %}
+              {% set months = range(7, now().month + 1) | list %}
+            {% else %}
+              {% set months = (range(7, 13) | list) + (range(1, now().month + 1) | list) %}
+            {% endif %}
+            {% for month in months %}
+              {% set data_year = start_year if month >= 7 else start_year + 1 %}
+              {% if data_year == 2025 %}
+                {% set gas = gas_2025.get(month) %}
+                {% set electricity = electricity_2025.get(month) %}
+                {% if gas is not none and electricity is not none %}
+                  {% set total.value = total.value + (gas * 1.8115) + (electricity * 0.2345) %}
+                {% else %}
+                  {% set total.valid = false %}
+                {% endif %}
+              {% else %}
+                {% set value = states('input_number.energy_archive_cost_' ~ names[month - 1]) | float(0) %}
+                {% if value > 0 %}
+                  {% set total.value = total.value + value %}
+                {% else %}
+                  {% set total.valid = false %}
+                {% endif %}
+              {% endif %}
+            {% endfor %}
+            {{ total.value | round(2) if total.valid else none }}
+
+      - name: Energy Gas Energy Year YoY Difference
+        unique_id: energy_gas_energy_year_yoy_difference
+        state_class: measurement
+        unit_of_measurement: m³
+        availability: >
+          {{ is_number(states('sensor.energy_gas_total_energy_year'))
+             and state_attr('sensor.energy_previous_energy_year_reference', 'gas_m3') is not none }}
+        state: >
+          {{ (states('sensor.energy_gas_total_energy_year') | float(0)
+              - state_attr('sensor.energy_previous_energy_year_reference', 'gas_m3') | float(0)) | round(2) }}
+        attributes:
+          percentage: >
+            {% set previous = state_attr('sensor.energy_previous_energy_year_reference', 'gas_m3') | float(0) %}
+            {% set current = states('sensor.energy_gas_total_energy_year') | float(0) %}
+            {{ ((current - previous) / previous * 100) | round(1) if previous > 0 else none }}
+          reference_value: "{{ state_attr('sensor.energy_previous_energy_year_reference', 'gas_m3') }}"
+          reference_period: "{{ state_attr('sensor.energy_previous_energy_year_reference', 'reference_period') }}"
+
+      - name: Energy Electricity Energy Year YoY Difference
+        unique_id: energy_electricity_energy_year_yoy_difference
+        state_class: measurement
+        unit_of_measurement: kWh
+        availability: >
+          {{ is_number(states('sensor.energy_electricity_total_energy_year'))
+             and state_attr('sensor.energy_previous_energy_year_reference', 'electricity_kwh') is not none }}
+        state: >
+          {{ (states('sensor.energy_electricity_total_energy_year') | float(0)
+              - state_attr('sensor.energy_previous_energy_year_reference', 'electricity_kwh') | float(0)) | round(2) }}
+        attributes:
+          percentage: >
+            {% set previous = state_attr('sensor.energy_previous_energy_year_reference', 'electricity_kwh') | float(0) %}
+            {% set current = states('sensor.energy_electricity_total_energy_year') | float(0) %}
+            {{ ((current - previous) / previous * 100) | round(1) if previous > 0 else none }}
+          reference_value: "{{ state_attr('sensor.energy_previous_energy_year_reference', 'electricity_kwh') }}"
+          reference_period: "{{ state_attr('sensor.energy_previous_energy_year_reference', 'reference_period') }}"
+
+      - name: Energy Cost Energy Year YoY Difference
+        unique_id: energy_cost_energy_year_yoy_difference
+        device_class: monetary
+        state_class: measurement
+        unit_of_measurement: EUR
+        availability: >
+          {{ is_number(states('sensor.energy_cost_total_energy_year'))
+             and state_attr('sensor.energy_previous_energy_year_reference', 'cost_eur') is not none }}
+        state: >
+          {{ (states('sensor.energy_cost_total_energy_year') | float(0)
+              - state_attr('sensor.energy_previous_energy_year_reference', 'cost_eur') | float(0)) | round(2) }}
+        attributes:
+          percentage: >
+            {% set previous = state_attr('sensor.energy_previous_energy_year_reference', 'cost_eur') | float(0) %}
+            {% set current = states('sensor.energy_cost_total_energy_year') | float(0) %}
+            {{ ((current - previous) / previous * 100) | round(1) if previous > 0 else none }}
+          reference_value: "{{ state_attr('sensor.energy_previous_energy_year_reference', 'cost_eur') }}"
+          reference_period: "{{ state_attr('sensor.energy_previous_energy_year_reference', 'reference_period') }}"
+
       - name: Energy Previous Year Monthly Reference
         unique_id: energy_previous_year_monthly_reference
         icon: mdi:calendar-arrow-left
