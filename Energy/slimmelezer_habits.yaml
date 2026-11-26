@@ -3010,8 +3010,11 @@ automation:
                and eva_bedroom is not none
                and small_bedroom is not none
                and big_bedroom >= reference - 1.0
+               and big_bedroom <= reference
                and eva_bedroom >= reference - 1.0
-               and small_bedroom >= reference - 1.0 }}
+               and eva_bedroom <= reference
+               and small_bedroom >= reference - 1.0
+               and small_bedroom <= reference }}
           boost_window_active: >-
             {% set current_time = now().strftime('%H:%M:%S') %}
             {{ current_time >= '20:00:00' or current_time < '04:30:00' }}
