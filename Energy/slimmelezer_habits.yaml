@@ -73,9 +73,6 @@ input_boolean:
   thermostat_evening_bonus_enabled:
     name: Thermostat overnight bedroom boost
     icon: mdi:weather-night
-  thermostat_evening_bonus_latched:
-    name: Thermostat overnight boost cold-spell latch
-    icon: mdi:lock-clock
   thermostat_window_protection_enabled:
     name: Thermostat open-contact protection
     icon: mdi:window-open-variant
@@ -3162,11 +3159,14 @@ automation:
     description: >-
       One automation for Energy-dashboard home occupancy, editable daily overnight
       setback, the overnight bedroom temperature boost and open-window/door protection.
-      Any one bedroom sensor at least 2 C below the thermostat starts the boost.
-      It stops when all three bedroom sensors are within 1 C of the thermostat,
-      or after 60 minutes / at 04:30.
+      Any one bedroom sensor reaching the configured trigger difference starts the boost.
+      An active boost stops when all three bedrooms recover into the configured stop band,
+      the maximum timer expires, or 04:30 is reached. A new boost can start after a
+      two-hour cooldown from the previous stop; full-bedroom recovery is not required.
     mode: restart
     max_exceeded: silent
+    trace:
+      stored_traces: 100
     triggers:
       - trigger: homeassistant
         event: start
@@ -3337,9 +3337,9 @@ automation:
             {% endfor %}
             {{ ns.value }}
 
-      # Manage the overnight bedroom boost. The latch prevents sensor updates
-      # from repeatedly restarting the 60-minute timer during one continuous cold spell.
-      # The 2 C start / 1 C recovery thresholds provide 1 C of hysteresis.
+      # Manage the overnight bedroom boost. The two-hour cooldown is the only
+      # re-trigger lockout after a boost stops; no full-bedroom recovery is needed.
+      # Recovery remains an early-stop condition for a boost that is already active.
       - choose:
           - conditions:
               - condition: state
@@ -3359,15 +3359,6 @@ automation:
                       entity_id: input_datetime.thermostat_evening_bonus_last_stopped
                     data:
                       datetime: "{{ now().strftime('%Y-%m-%d %H:%M:%S') }}"
-              - if:
-                  - condition: state
-                    entity_id: input_boolean.thermostat_evening_bonus_latched
-                    state: "on"
-                then:
-                  - action: input_boolean.turn_off
-                    target:
-                      entity_id: input_boolean.thermostat_evening_bonus_latched
-
           - conditions:
               - condition: state
                 entity_id: input_boolean.thermostat_heating_schedule_enabled
@@ -3391,15 +3382,6 @@ automation:
                       entity_id: input_datetime.thermostat_evening_bonus_last_stopped
                     data:
                       datetime: "{{ now().strftime('%Y-%m-%d %H:%M:%S') }}"
-              - if:
-                  - condition: state
-                    entity_id: input_boolean.thermostat_evening_bonus_latched
-                    state: "on"
-                then:
-                  - action: input_boolean.turn_off
-                    target:
-                      entity_id: input_boolean.thermostat_evening_bonus_latched
-
           - conditions:
               # First gate: do not restart the bedroom boost until 2 hours
               # have passed since its previous stop. An unset helper allows
@@ -3420,13 +3402,7 @@ automation:
               - condition: state
                 entity_id: timer.thermostat_evening_bonus
                 state: idle
-              - condition: state
-                entity_id: input_boolean.thermostat_evening_bonus_latched
-                state: "off"
             sequence:
-              - action: input_boolean.turn_on
-                target:
-                  entity_id: input_boolean.thermostat_evening_bonus_latched
               - action: timer.start
                 target:
                   entity_id: timer.thermostat_evening_bonus
