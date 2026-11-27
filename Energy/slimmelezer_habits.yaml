@@ -3166,7 +3166,7 @@ automation:
     mode: restart
     max_exceeded: silent
     trace:
-      stored_traces: 100
+      stored_traces: 1000
     triggers:
       - trigger: homeassistant
         event: start
